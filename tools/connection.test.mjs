@@ -336,3 +336,32 @@ test('failed carry move send leaves both items and clears pending swap intent',(
  const w=world();w.inventory[6]={uniqueid:'a'};w.inventory[7]={uniqueid:'b'};w.selectedBag=6;w.connection.send=()=>false;w.bagCell(7);
  assert.equal(w.inventory[6].uniqueid,'a');assert.equal(w.inventory[7].uniqueid,'b');assert.equal(w.bagMovePending,false);assert.equal(w.bagSwapSource,-1);
 });
+
+test('taking off equipment carries locally and only commits after server reply',()=>{
+ const w=world(),sent=[];w.notice=()=>{};w.inventory=Array(46).fill(null);w.equipment[0]={uniqueid:'sword'};w.connection.send=v=>{sent.push(v);return true;};
+ w.equipmentCell(0);assert.equal(w.selectedEquipment,0);assert.equal(sent.length,0);assert.equal(w.equipment[0].uniqueid,'sword');
+ w.bagCell(8);assert.equal(sent[0].type,'unequip');assert.equal(sent[0].to,8);assert.equal(w.inventory[8],null);assert.equal(w.equipmentPending,true);
+ w.equipmentCell(0);w.bagCell(9);assert.equal(sent.length,1);
+ w.packet('RemoveItem',{UniqueID:'sword',To:8,Success:true});assert.equal(w.equipmentPending,false);assert.equal(w.equipment[0],null);assert.equal(w.inventory[8].uniqueid,'sword');
+});
+test('cancel or failed takeoff never removes authoritative equipment',()=>{
+ for(const failure of ['cancel','send','reply']){
+ const w=world();w.notice=()=>{};w.inventory=Array(46).fill(null);w.equipment[0]={uniqueid:'sword'};w.equipmentCell(0);
+ if(failure==='cancel')w.equipmentCell(0);
+ else{w.connection.send=()=>failure!=='send';w.bagCell(8);if(failure==='reply')w.packet('RemoveItem',{UniqueID:'sword',To:8,Success:false});}
+ assert.equal(w.selectedEquipment,-1);assert.equal(w.equipmentPending,false);assert.equal(w.equipment[0].uniqueid,'sword');assert.equal(w.inventory[8],null);
+ }
+});
+test('occupied destination uses free bag cell and full bag retains carried equipment',()=>{
+ const w=world(),sent=[];w.notice=()=>{};w.inventory=Array(46).fill(null);w.inventory[8]={uniqueid:'potion'};w.equipment[0]={uniqueid:'sword'};w.connection.send=v=>{sent.push(v);return true;};w.equipmentCell(0);w.bagCell(8);
+ assert.equal(sent[0].to,6);assert.equal(w.inventory[8].uniqueid,'potion');
+ w.equipmentPending=false;w.inventory.fill({uniqueid:'occupied'});w.equipmentCell(0);w.bagCell(8);assert.equal(sent.length,1);assert.equal(w.selectedEquipment,0);assert.equal(w.equipment[0].uniqueid,'sword');
+});
+test('disconnect cancels carried equipment and pending action',()=>{
+ const w=world();w.selectedEquipment=0;w.equipmentPending=true;w.serverEvent({type:'disconnected'});assert.equal(w.selectedEquipment,-1);assert.equal(w.equipmentPending,false);
+});
+
+test('missing equipment reply resynchronizes instead of retrying the transaction',()=>{
+ const w=world();w.notice=()=>{};w.serverReady=true;w.equipmentPending=true;w.equipmentPendingAt=Date.now()-6000;w.equipment[0]={uniqueid:'sword'};w.syncCarriedItem();
+ assert.equal(w.reconnected,true);assert.equal(w.serverReady,false);assert.equal(w.equipmentPending,false);assert.equal(w.equipment[0].uniqueid,'sword');
+});
