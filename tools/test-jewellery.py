@@ -34,7 +34,7 @@ atlas=Image.open(npc.OUT/'classic-npc.png')
 for key,f in manifest['frames'].items():
  im,meta=originals[int(key.split(':')[-1])];got=atlas.crop((f['x'],f['y'],f['x']+f['w'],f['y']+f['h']))
  assert im.tobytes()==got.tobytes() and all(f[k]==meta[k] for k in ['w','h','offsetX','offsetY'])
-for i in [4,5,6]:
+for i in [2,4,5,6,11]:
  actor=manifest['actors'][f'npc{i}'];assert actor['actionFrameMs']['stand']==200
  assert actor['stand']==[[f'classicnpc:{i*60+d*10+f}' for f in range(4)] for d in range(3)]
-print('11 cross-checked goods; conflicting prices excluded; 3 merchants; 36 NPC frames pixel/offset exact')
+print(f'11 cross-checked jewellery goods; {len(manifest["actors"])} original NPC appearances; {len(manifest["frames"])} frames pixel/offset exact')

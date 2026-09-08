@@ -6,6 +6,7 @@ import ts from 'typescript';
 import * as grid from '../client/assets/scripts/core/grid.ts';
 import * as classicLayout from '../client/assets/scripts/core/classicLayout.ts';
 import * as inventory from '../client/assets/scripts/core/inventory.ts';
+import * as itemStats from '../client/assets/scripts/core/itemStats.ts';
 
 function load(file, mocks = {}, globals = {}) {
   const exports = {};
@@ -18,7 +19,7 @@ function load(file, mocks = {}, globals = {}) {
 const cc = {Node:{EventType:{TOUCH_END:'touch',MOUSE_UP:'mouse'}},_decorator: {ccclass: () => cls => cls}, Component: class {}, Color: class {constructor(r,g,b,a){Object.assign(this,{r,g,b,a});}},
   KeyCode: {F1:112,F8:119,F11:122,ESCAPE:27,ENTER:13,KEY_D: 68, ARROW_RIGHT: 39, KEY_A: 65, ARROW_LEFT: 37, KEY_S: 83, ARROW_DOWN: 40, KEY_W: 87, ARROW_UP: 38}};
 const {MirWorld} = load('../client/assets/scripts/MirWorld.ts', {
-  cc, './core/classicLayout':classicLayout, './core/inventory':inventory, './platform/MirAudio':{MirAudio:class{stop(){}play(){}unlock(){}}}, './core/stepSound':{stepSound:()=>1}, './core/grid': grid, './platform/connection': {}, './renderer/MirSprite': {}, './renderer/TerrainStream':{TerrainStream:class{constructor(){this.newTerrain=true;}destroy(){}}},
+  cc, './core/itemStats':itemStats, './core/classicLayout':classicLayout, './core/inventory':inventory, './platform/MirAudio':{MirAudio:class{stop(){}play(){}unlock(){}}}, './core/stepSound':{stepSound:()=>1}, './core/grid': grid, './platform/connection': {}, './renderer/MirSprite': {}, './renderer/TerrainStream':{TerrainStream:class{constructor(){this.newTerrain=true;}destroy(){}}},
 });
 function world() {
   const w = new MirWorld();
@@ -295,4 +296,11 @@ test('small map is hidden underneath native windows and restored when closed',()
  w.menu.active=true;w.panelRects=[{x:540,y:0,w:260,h:360}];w.update(.1);
  w.menu.active=false;w.update(.1);w.menu.active=true;w.panelRects=[{x:0,y:0,w:400,h:300}];w.update(.1);
  assert.deepEqual(states,[false,true,true]);
+});
+
+test('book hints show sourced class and learning level in Chinese',()=>{
+ const w=world();for(const [requiredclass,name] of [[1,'战士'],[2,'法师'],[4,'道士']]){
+  const hint=w.itemHint({info:{name:'技能书',type:20,requiredclass,requiredamount:7,price:500}});
+  assert.ok(hint.includes(name+' 7级'));assert.ok(hint.includes('双击学习'));assert.ok(hint.includes('500 金币'));
+ }
 });

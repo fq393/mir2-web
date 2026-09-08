@@ -36,6 +36,7 @@ static class ChineseText
             ["ChatBanRemainingTimeBySecond"]="还需等待{0}秒才能发言。",
 
             ["GameName"]="热血传奇",["Welcome"]="欢迎来到{0}。",["OnlinePlayers"]="当前在线人数：{0}",
+            ["WarriorsCannotUseItem"]="战士不能使用此物品。",["WizardsCannotUseItem"]="法师不能使用此物品。",["TaoistsCannotUseItem"]="道士不能使用此物品。",
             ["LowLevel"]="等级不足。",["LowGold"]="金币不足。",["LevelUp"]="恭喜你升级了！生命和魔法已经恢复。",
             ["CannotPickupNotOwner"]="物品暂时属于其他玩家。",["YouCannotCarryAnymore"]="背包空间或负重不足。",["NothingWasFound"]="没有找到可采集的物品。",["NoNearbyOwnedCarcasses"]="附近没有属于你或队伍的可采集尸体。",
             ["LowDC"]="攻击力不足。",["LowMC"]="魔法力不足。",["LowSC"]="道术不足。",

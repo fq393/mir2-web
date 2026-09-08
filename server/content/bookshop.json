@@ -1,0 +1,65 @@
+{
+  "status": "Cross-checked candidate book fields; not authenticated official 1.76 training or stock rules",
+  "sources": [
+    {
+      "path": "raw-assets/reference-server176/MerChant.txt",
+      "sha256": "4dc310f4594b717ed9dcf7b82eee589a04fb7ebcc2b8e17cb77c64299db41f9a"
+    },
+    {
+      "path": "raw-assets/reference-server176/modules/比奇书店老板-0.txt",
+      "sha256": "65dcf78f8f2ef2e05aba2d572bf23a3f16f529c24b5a6397515c7bdd0801d2ca"
+    },
+    {
+      "path": "raw-assets/reference-server176/modules/书店.txt",
+      "sha256": "3bce7b770d0b1dae45b89561791a5d03d4c2e585867acadc5f9e4e4cd134eeee"
+    },
+    {
+      "path": "raw-assets/reference-server176/StdItems.json",
+      "sha256": "bb222ee1b9112a234cd1ced7c25fb722ce2b48237f1022dc14c56bd461ff01e9"
+    },
+    {
+      "path": "raw-assets/reference-delphi/StdItems.json",
+      "sha256": "351635636d2f6325fcae502e0fe2fb3e0f002df09b55978bd88133f869ad51b5"
+    }
+  ],
+  "merchant": {
+    "file": "BichonBookshop",
+    "name": "比奇书店老板",
+    "map": "0",
+    "x": 325,
+    "y": 250,
+    "image": 2
+  },
+  "items": [
+    {
+      "name": "火球术",
+      "spell": "FireBall",
+      "requiredClass": "Wizard",
+      "level": 7,
+      "weight": 1,
+      "price": 500,
+      "image": 0,
+      "legacyShape": 1
+    },
+    {
+      "name": "治愈术",
+      "spell": "Healing",
+      "requiredClass": "Taoist",
+      "level": 7,
+      "weight": 1,
+      "price": 500,
+      "image": 0,
+      "legacyShape": 2
+    },
+    {
+      "name": "基本剑术",
+      "spell": "Fencing",
+      "requiredClass": "Warrior",
+      "level": 7,
+      "weight": 1,
+      "price": 500,
+      "image": 0,
+      "legacyShape": 0
+    }
+  ]
+}

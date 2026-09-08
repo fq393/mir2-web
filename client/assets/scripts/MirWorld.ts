@@ -537,10 +537,10 @@ export class MirWorld extends Component {
                 if(item)hit.on(Node.EventType.MOUSE_ENTER,()=>this.targetText.string=this.itemHint(item));continue;
             }
             if(!item)continue;
-            this.nativeItem(bag,item,x,y,()=>{if(this.menuKind==='merchant'){this.requestTrade(item);return;}const info=item.info??this.itemInfo.get(item.itemindex);const target=equipmentTarget(info?.type,this.equipment);if(info?.type===13||info?.type===20)this.useInventoryItem(item);else if(target>=0)this.connection?.send({type:'equip',uniqueId:String(item.uniqueid),slot:target});},(item.info??this.itemInfo.get(item.itemindex))?.type===20);
+            this.nativeItem(bag,item,x,y,()=>{if(this.menuKind==='merchant'){this.requestTrade(item);return;}const info=item.info??this.itemInfo.get(item.itemindex);const target=equipmentTarget(info?.type,this.equipment);if(info?.type===13||info?.type===20)this.useInventoryItem(item);else if(target>=0)this.connection?.send({type:'equip',uniqueId:String(item.uniqueid),slot:target});},this.menuKind!=='merchant'&&(item.info??this.itemInfo.get(item.itemindex))?.type===20);
         }
     }
-    private itemHint(item:any):string {const info=item.info??this.itemInfo.get(item.itemindex);return `${this.itemName(item)}${info?.type===20?' · 双击学习':''}${info?.type===15?' · 品质 '+Math.floor((item.currentdura??0)/1000):''}${info?.type===13?' · 持续恢复 '+((info.hp??info.stats?.values?.hp)?'HP '+(info.hp??info.stats.values.hp):'MP '+(info.mp??info.stats?.values?.mp??0)):''}${info?.type===15?'':` · ${info?.price??25} 金币`}${itemStatLines(item,info).length?' · '+itemStatLines(item,info).join(' · '):''}`;}
+    private itemHint(item:any):string {const info=item.info??this.itemInfo.get(item.itemindex);return `${this.itemName(item)}${info?.type===20?' · '+({1:'战士',2:'法师',4:'道士'} as Record<number,string>)[info.requiredclass]+' '+info.requiredamount+'级 · 双击学习':''}${info?.type===15?' · 品质 '+Math.floor((item.currentdura??0)/1000):''}${info?.type===13?' · 持续恢复 '+((info.hp??info.stats?.values?.hp)?'HP '+(info.hp??info.stats.values.hp):'MP '+(info.mp??info.stats?.values?.mp??0)):''}${info?.type===15?'':` · ${info?.price??25} 金币`}${itemStatLines(item,info).length?' · '+itemStatLines(item,info).join(' · '):''}`;}
     private nativeItem(parent:Node,item:any,x:number,y:number,action:()=>void,double=false):void {
         const info=item.info??this.itemInfo.get(item.itemindex),key=`ui:Items:${info?.image}`;if(!this.frames.has(key))return;
         const f=this.frames.get(key)!;const icon=this.nativeImage(parent,key,x+(36-f.meta.w)/2,y+(32-f.meta.h)/2);if(double)this.nativeDoubleClick(icon.node,action);else this.nativeClick(icon.node,action);
@@ -592,7 +592,7 @@ export class MirWorld extends Component {
             const selected=String(this.selectedGood?.uniqueid)===String(item.uniqueid),color=selected?Color.RED:Color.WHITE,y=38+i*13;
             if(selected)this.nativeLabel(dialog,'•',10,y,12,10,Color.RED);
             const row=this.makeNode('商品 '+this.itemName(item),dialog);row.setPosition(14,-(32+i*13));row.getComponent(UITransform)!.setAnchorPoint(0,1);row.getComponent(UITransform)!.setContentSize(265,13);
-            this.nativeClick(row,()=>{this.selectedGood=item;this.showShop();});
+            this.nativeClick(row,()=>{this.selectedGood=item;this.showShop();this.targetText.string=this.itemHint(item);});
             this.nativeLabel(dialog,this.itemName(item),19,y,12,130,color);
             this.nativeLabel(dialog,String(this.shopPrice(item))+' 金币',156,y,12,87,color);
             this.nativeLabel(dialog,item.maxdura?String(Math.ceil(item.maxdura/1000)):'-',245,y,12,42,color);
