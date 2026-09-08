@@ -59,7 +59,7 @@ npm run build
 npm start
 ```
 
-[素材来源](docs/asset-sources.md)、[原生UI](docs/native-ui.md)、[音频映射](docs/audio-sources.md)、[首饰对照](docs/jewellery-sources.md)。本仓库**不包含原客户端、原资源、转换图集/音频、运行环境、账号存档及游戏截图**；缺少资源时不能只clone后直接打开游戏。
+[素材来源](docs/asset-sources.md)、[原生UI](docs/native-ui.md)、[文字排版](docs/native-text-layout.md)、[音频映射](docs/audio-sources.md)、[首饰对照](docs/jewellery-sources.md)。本仓库**不包含原客户端、原资源、转换图集/音频、运行环境、账号存档及游戏截图**；缺少资源时不能只clone后直接打开游戏。
 
 完整[模块目录与版本边界](docs/module-catalogue.md)记录系统范围和待核对项。
 
