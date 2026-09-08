@@ -233,3 +233,19 @@ test('late merchant quotes cannot replace a new item or reopen a closed window',
  w.menu.active=false;w.serverEvent({type:'tradeQuote',request:8,token:'closed',quote:{Gold:2}});assert.equal(shown,0);
  w.menu.active=true;w.serverEvent({type:'tradeQuote',request:8,token:'current',quote:{Gold:3}});assert.equal(w.tradeQuote.quote.gold,3);assert.equal(shown,1);
 });
+
+test('bag move uses server acknowledgement, supports swaps, and rejects other grids',()=>{
+ const w=world();w.notice=()=>{};w.inventory=Array(46).fill(null);const a={uniqueid:'a',count:3,addedstats:{maxdc:3}},b={uniqueid:'b',count:1};w.inventory[6]=a;w.inventory[7]=b;w.bagMovePending=true;
+ w.packet('MoveItem',{Grid:1,From:6,To:7,Success:false});assert.equal(w.inventory[6],a);assert.equal(w.inventory[7],b);assert.equal(w.bagMovePending,false);
+ w.packet('MoveItem',{Grid:4,From:6,To:7,Success:true});assert.equal(w.inventory[6],a);
+ w.packet('MoveItem',{Grid:1,From:6,To:7,Success:true});assert.equal(w.inventory[7],a);assert.equal(w.inventory[6],b);assert.equal(w.inventory[7].addedstats.maxdc,3);
+ w.packet('MoveItem',{Grid:1,From:7,To:8,Success:true});assert.equal(w.inventory[8],a);assert.equal(w.inventory[7],null);
+});
+test('bag selection sends one move and keeps inventory until the server replies',()=>{
+ const w=world();w.inventory=Array(46).fill(null);const item={uniqueid:'23',count:1};w.inventory[6]=item;w.showInventory=()=>{};const sent=[];w.connection.send=c=>{sent.push(c);return true};
+ w.bagCell(6);assert.equal(sent.length,0);w.bagCell(9);w.bagCell(10);assert.equal(sent.length,1);assert.equal(sent[0].from,6);assert.equal(sent[0].to,9);assert.equal(w.inventory[6],item);
+});
+test('first bag click keeps the hit region alive for a fast second click',()=>{
+ const w=world();w.inventory=Array(46).fill(null);w.inventory[6]={uniqueid:'weapon',info:{type:1}};w.equipment=[];let renders=0;w.showInventory=()=>renders++;const sent=[];w.connection.send=c=>{sent.push(c);return true};
+ w.bagCell(6);assert.equal(renders,0);w.bagCell(6);assert.equal(sent.length,1);assert.equal(sent[0].type,'equip');assert.equal(sent[0].uniqueId,'weapon');
+});

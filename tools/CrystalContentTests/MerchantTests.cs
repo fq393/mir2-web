@@ -15,6 +15,12 @@ static class MerchantTests {
   definition.Location=new Point(5,5);var npc=new NPCObject(definition){CurrentMap=map};map.NPCs.Add(npc);
   var p=new RecordingPlayer{Info=new CharacterInfo{Level=7,Name="交易校验"},Stats=new Stats{[Stat.BagWeight]=100},Account=new AccountInfo{Gold=10000},Connection=connection,CurrentMap=map,CurrentLocation=new Point(5,6),NPCObjectID=npc.ObjectID,NPCScriptID=npc.ScriptID,NPCPage=new NPCPage(NPCScript.RepairKey)};p.Report=new Reporting(p);p.Info.Mount=new MountInfo(p);
   var ring=envir.CreateFreshItem(envir.ItemInfoList.First(i=>i.Name=="牛角戒指"));ring.CurrentDura=(ushort)(ring.MaxDura/2);ring.AddedStats[Stat.MaxDC]=3;p.Info.Inventory[6]=ring;
+  var spare=envir.CreateFreshItem(ring.Info);p.Info.Inventory[7]=spare;
+  p.MoveItem(MirGridType.Inventory,6,7);Check(p.Info.Inventory[7]==ring&&p.Info.Inventory[6]==spare&&ring.AddedStats[Stat.MaxDC]==3,"bag swap lost identity/bonus");
+  p.MoveItem(MirGridType.Inventory,7,8);Check(p.Info.Inventory[8]==ring&&p.Info.Inventory[7]==null,"bag move to empty slot failed");
+  p.MoveItem(MirGridType.Inventory,-1,6);Check(!p.Packets.OfType<ServerPackets.MoveItem>().Last().Success&&p.Info.Inventory[6]==spare,"invalid bag index changed items");
+  p.MoveItem(MirGridType.Inventory,8,6);p.Info.Inventory[8]=null;Check(p.Info.Inventory[6]==ring,"bag order restoration failed");
+  Console.WriteLine("PASS real inventory MoveItem: occupied swap, empty slot, invalid index and persistent unique item/bonus.");
   var quote=MerchantTrades.Quote(p,ring.UniqueID,"repair");var expectedGold=ring.RepairPrice();Check(quote.Gold==expectedGold,"quote differs from engine cost");var oldMax=ring.MaxDura;var oldCurrent=ring.CurrentDura;
   p.Account.Gold=expectedGold-1;Reject(()=>MerchantTrades.Commit(p,quote));Check(ring.CurrentDura==oldCurrent&&ring.MaxDura==oldMax,"insufficient gold changed durability");
   p.Account.Gold=10000;ring.CurrentDura--;Reject(()=>MerchantTrades.Commit(p,quote));ring.CurrentDura++;

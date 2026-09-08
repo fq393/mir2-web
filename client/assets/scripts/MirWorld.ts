@@ -73,6 +73,7 @@ export class MirWorld extends Component {
     private camera:Point={x:0,y:0};private weapon!:Sprite;private hair!:Sprite;private ownLabel!:Label;
     private ownHealth!:{node:Node;fill:Sprite};private displayedMaxHP=0;private displayedMaxMP=0;
     private ghost!:Sprite;private ownAction='stand';private actionTime=0;private selected=0;
+    private handWeight=0;private maxHandWeight=0;private wearWeight=0;private maxWearWeight=0;private bagWeights:Label|null=null;private bagStatus:Label|null=null;private bagHighlights=new Map<number,Graphics>();private selectedBag=-1;private selectedBagAt=0;private lastBagTouch=-Infinity;private bagMovePending=false;
     private authoritativeMaxHP=0;private authoritativeMaxMP=0;private experience=0;private maxExperience=0;private bagWeight=0;private maxBagWeight=0;private magics:any[]=[];private expBar!:Sprite;private weightBar!:Sprite;
     private job=0;private hpBase!:Sprite;private hp=0;private mp=0;private gold=0;private level=1;private inventory:any[]=[];private equipment:any[]=[];
     private stats!:Label;private targetText!:Label;private logText!:Label;private menu!:Node;
@@ -134,7 +135,7 @@ export class MirWorld extends Component {
             this.connection=new CrystalConnection(text=>{this.statusText=text;},event=>this.serverEvent(event));
             this.connection.connect();this.updateView();
             // Read-only diagnostics for repeatable browser acceptance.
-            (globalThis as any).__MIRQA={state:()=>({mapId:this.mapId,layout:CLASSIC,panels:this.menu?.active?this.panelRects:[],menuKind:this.menuKind,audio:this.sound.snapshot(),ready:this.ready,point:{...this.point},visual:{...this.visual},facing:this.facing,moving:!!this.step,queued:this.path.length,status:this.statusText,serverReady:this.serverReady,ownId:this.ownId,peers:Array.from(this.peers.entries()).map(([id,p])=>({id,point:p.point})),frameCount:this.frames.size,tileCount:this.terrain.tiles.size,origin:{x:this.manifest.map.originX,y:this.manifest.map.originY},spawn:this.manifest.map.spawn,map:{width:this.grid.width,height:this.grid.height},blocked:Array.from(this.grid.blocked),experience:this.experience,maxExperience:this.maxExperience,bagWeight:this.bagWeight,maxBagWeight:this.maxBagWeight,magics:this.magics,hp:this.hp,mp:this.mp,maxHP:this.displayedMaxHP,maxMP:this.displayedMaxMP,ownHealthVisible:this.ownHealth?.node.active,hpDisplay:this.hpText?.string,mpDisplay:this.mpText?.string,gold:this.gold,selected:this.selected,inventory:this.inventory,equipment:this.equipment,groundItems:Array.from(this.loot.entries()).map(([id,v])=>({id,point:v.point,name:v.name})),entities:Array.from(this.peers.entries()).map(([id,p])=>({id,name:p.name,kind:p.kind,hp:p.hp,healthVisible:p.healthBar?.node.active??false,healthUntil:p.healthUntil,dead:p.dead,point:p.point})),logs:this.logs}),screenFor:(x:number,y:number)=>worldToScreen({x,y},this.camera)};
+            (globalThis as any).__MIRQA={state:()=>({mapId:this.mapId,layout:CLASSIC,panels:this.menu?.active?this.panelRects:[],menuKind:this.menuKind,audio:this.sound.snapshot(),ready:this.ready,point:{...this.point},visual:{...this.visual},facing:this.facing,moving:!!this.step,queued:this.path.length,status:this.statusText,serverReady:this.serverReady,ownId:this.ownId,peers:Array.from(this.peers.entries()).map(([id,p])=>({id,point:p.point})),frameCount:this.frames.size,tileCount:this.terrain.tiles.size,origin:{x:this.manifest.map.originX,y:this.manifest.map.originY},spawn:this.manifest.map.spawn,map:{width:this.grid.width,height:this.grid.height},blocked:Array.from(this.grid.blocked),experience:this.experience,maxExperience:this.maxExperience,bagWeight:this.bagWeight,maxBagWeight:this.maxBagWeight,handWeight:this.handWeight,maxHandWeight:this.maxHandWeight,wearWeight:this.wearWeight,maxWearWeight:this.maxWearWeight,selectedBag:this.selectedBag,bagMovePending:this.bagMovePending,magics:this.magics,hp:this.hp,mp:this.mp,maxHP:this.displayedMaxHP,maxMP:this.displayedMaxMP,ownHealthVisible:this.ownHealth?.node.active,hpDisplay:this.hpText?.string,mpDisplay:this.mpText?.string,gold:this.gold,selected:this.selected,inventory:this.inventory,equipment:this.equipment,groundItems:Array.from(this.loot.entries()).map(([id,v])=>({id,point:v.point,name:v.name})),entities:Array.from(this.peers.entries()).map(([id,p])=>({id,name:p.name,kind:p.kind,hp:p.hp,healthVisible:p.healthBar?.node.active??false,healthUntil:p.healthUntil,dead:p.dead,point:p.point})),logs:this.logs}),screenFor:(x:number,y:number)=>worldToScreen({x,y},this.camera)};
         } catch(error) {
             console.error('Mir2 load failed',error);this.hint.string=`资源加载失败：${String(error)}`;this.statusText='加载失败';
         }
@@ -311,8 +312,8 @@ export class MirWorld extends Component {
         if(event.type==='tradeResult'&&event.request===this.tradeRequest){this.tradeQuote=null;if(event.success)this.tradeItem=null;this.notice(event.message);if(this.menu.active&&this.menuKind==='merchant')this.showMerchant();return;}
 
         if(event.type==='packet'){this.packet(event.packet,event.data);return;}
-        if(event.type==='disconnected'){this.tradeRequest++;this.tradeItem=null;this.tradeQuote=null;this.chatInput?.setActive(false);this.logs=[];if(this.logText)this.logText.string='';if(this.menu)this.menu.active=false;this.party?.reset();this.clearLoot();this.pendingUses.clear();this.fireTargets.clear();this.serverReady=false;this.clearMovement();this.peers.forEach(p=>{p.node.destroy();p.label?.node.destroy();p.healthBar?.node.destroy();});this.peers.clear();return;}
-        if(event.type==='vitals'){const d=this.normalize(event.data);if(d.objectid!==this.ownId)return;this.authoritativeMaxHP=d.maxhp;this.authoritativeMaxMP=d.maxmp;this.bagWeight=d.bagweight;this.maxBagWeight=d.maxbagweight;return;}
+        if(event.type==='disconnected'){this.selectedBag=-1;this.bagMovePending=false;this.tradeRequest++;this.tradeItem=null;this.tradeQuote=null;this.chatInput?.setActive(false);this.logs=[];if(this.logText)this.logText.string='';if(this.menu)this.menu.active=false;this.party?.reset();this.clearLoot();this.pendingUses.clear();this.fireTargets.clear();this.serverReady=false;this.clearMovement();this.peers.forEach(p=>{p.node.destroy();p.label?.node.destroy();p.healthBar?.node.destroy();});this.peers.clear();return;}
+        if(event.type==='vitals'){const d=this.normalize(event.data);if(d.objectid!==this.ownId)return;this.authoritativeMaxHP=d.maxhp;this.authoritativeMaxMP=d.maxmp;this.bagWeight=d.bagweight;this.maxBagWeight=d.maxbagweight;this.handWeight=d.handweight;this.maxHandWeight=d.maxhandweight;this.wearWeight=d.wearweight;this.maxWearWeight=d.maxwearweight;return;}
         if(event.type==='transport')this.statusText='正在进入游戏';
         if(event.type==='ready') {this.chatInput?.setActive(true);this.gender=event.gender??0;this.characterName=event.name??'旅人';if(this.ownLabel)this.ownLabel.string=this.characterName;
             if(event.map&&event.map!==this.mapId&&!this.changeMap(event.map))return;
@@ -466,9 +467,11 @@ export class MirWorld extends Component {
         }
         this.displayedMaxHP=maxHP;this.displayedMaxMP=maxMP;
         this.hpText.string=`${this.hp}/${maxHP||'…'}`;this.mpText.string=`${this.mp}/${maxMP||'…'}`;
+        if(this.bagWeights?.isValid)this.bagWeights.string=`背包 ${this.bagWeight}/${this.maxBagWeight} · 穿戴 ${this.wearWeight}/${this.maxWearWeight} · 手持 ${this.handWeight}/${this.maxHandWeight}`;
         this.fillProgress(this.expBar,this.experience,this.maxExperience);this.fillProgress(this.weightBar,this.bagWeight,this.maxBagWeight);
     }
     private showInventory(page=this.inventoryPage):void {
+        if(!this.menu.active||page!=='bag')this.selectedBag=-1;
         this.inventoryPage=page;
         if(!this.serverReady){this.notice('正在连接服务器，请稍候');return;}
         this.menuKind='inventory';this.menu.children.slice().forEach(c=>c.destroy());this.panelRects=[];this.menu.active=true;
@@ -488,19 +491,45 @@ export class MirWorld extends Component {
         this.nativeLabel(character,`等级 ${this.level}   金币 ${this.gold}`,37,277,12,185,C.gold);
         const action=this.nativeLabel(character,this.hp<=0?'回城复活':`经验 ${this.experience}/${this.maxExperience}`,37,300,11,195,C.paper);if(this.hp<=0)this.nativeClick(action.node,()=>this.connection?.send({type:'revive'}));
     }
+    private bagCell(slot:number):void {
+        if(this.bagMovePending)return;
+        const item=this.inventory[slot],now=Date.now();
+        if(this.selectedBag===slot){
+            this.selectedBag=-1;
+            if(now-this.selectedBagAt<500&&item){const info=item.info??this.itemInfo.get(item.itemindex),target=equipmentTarget(info?.type,this.equipment);if(info?.type===13||info?.type===20)this.useInventoryItem(item);else if(target>=0)this.connection?.send({type:'equip',uniqueId:String(item.uniqueid),slot:target});}
+        }else if(this.selectedBag>=6){
+            const from=this.selectedBag;this.selectedBag=-1;
+            if(this.inventory[from])this.bagMovePending=!!this.connection?.send({type:'moveItem',from,to:slot});
+        }else if(item){this.selectedBag=slot;this.selectedBagAt=now;}
+        for(const [index,g] of this.bagHighlights){if(!g.isValid)continue;g.clear();if(index===this.selectedBag){g.rect(0,-32,36,32);g.stroke();}}
+        if(this.bagStatus?.isValid)this.bagStatus.string=this.bagMovePending?'等待服务器确认…':this.selectedBag>=6?'已选 '+this.itemName(this.inventory[this.selectedBag])+' · 点击目标格':'单击移动 · 双击使用或穿戴';
+    }
     private renderBag(x:number):void {
         const bag=this.nativeWindow(this.menu,'ui:ClassicPrguse:3',x,0);
         this.closeNative(bag,318,4,()=>{if(this.menuKind==='shop'){this.shopBagOpen=false;this.showShop();}else this.menu.active=false;});this.nativeLabel(bag,String(this.gold),63,252,12,230,C.gold);
+        this.bagWeights=this.nativeLabel(bag,`背包 ${this.bagWeight}/${this.maxBagWeight} · 穿戴 ${this.wearWeight}/${this.maxWearWeight} · 手持 ${this.handWeight}/${this.maxHandWeight}`,63,216,10,250,C.paper);
+        this.bagHighlights.clear();
+        if(this.menuKind==='inventory')this.bagStatus=this.nativeLabel(bag,this.bagMovePending?'等待服务器确认…':'单击移动 · 双击使用或穿戴',63,234,10,250,C.gold);
         for(let slot=6;slot<Math.min(46,this.inventory.length);slot++){
-            const item=this.inventory[slot];if(!item)continue;
+            const item=this.inventory[slot];
             const x=9+(slot-6)%8*37,y=9+Math.floor((slot-6)/8)*33;
+            if(this.menuKind==='inventory'){
+                if(item)this.nativeItem(bag,item,x,y,()=>{});
+                const hit=this.makeNode('背包格 '+slot,bag);hit.setPosition(x,-y);hit.getComponent(UITransform)!.setAnchorPoint(0,1);hit.getComponent(UITransform)!.setContentSize(36,32);
+                const g=hit.addComponent(Graphics);g.strokeColor=C.gold;g.lineWidth=1;this.bagHighlights.set(slot,g);if(this.selectedBag===slot){g.rect(0,-32,36,32);g.stroke();}
+                hit.on(Node.EventType.TOUCH_END,(event:EventTouch)=>{event.propagationStopped=true;this.lastBagTouch=Date.now();this.bagCell(slot);});
+                hit.on(Node.EventType.MOUSE_UP,(event:EventMouse)=>{event.propagationStopped=true;if(event.getButton()===0&&Date.now()-this.lastBagTouch>700)this.bagCell(slot);});
+                if(item)hit.on(Node.EventType.MOUSE_ENTER,()=>this.targetText.string=this.itemHint(item));continue;
+            }
+            if(!item)continue;
             this.nativeItem(bag,item,x,y,()=>{if(this.menuKind==='merchant'){this.requestTrade(item);return;}const info=item.info??this.itemInfo.get(item.itemindex);const target=equipmentTarget(info?.type,this.equipment);if(info?.type===13||info?.type===20)this.useInventoryItem(item);else if(target>=0)this.connection?.send({type:'equip',uniqueId:String(item.uniqueid),slot:target});},(item.info??this.itemInfo.get(item.itemindex))?.type===20);
         }
     }
+    private itemHint(item:any):string {const info=item.info??this.itemInfo.get(item.itemindex);return `${this.itemName(item)}${info?.type===20?' · 双击学习':''}${info?.type===15?' · 品质 '+Math.floor((item.currentdura??0)/1000):''}${info?.type===13?' · 持续恢复 '+((info.hp??info.stats?.values?.hp)?'HP '+(info.hp??info.stats.values.hp):'MP '+(info.mp??info.stats?.values?.mp??0)):''}${info?.type===15?'':` · ${info?.price??25} 金币`}${itemStatLines(item,info).length?' · '+itemStatLines(item,info).join(' · '):''}`;}
     private nativeItem(parent:Node,item:any,x:number,y:number,action:()=>void,double=false):void {
         const info=item.info??this.itemInfo.get(item.itemindex),key=`ui:Items:${info?.image}`;if(!this.frames.has(key))return;
         const f=this.frames.get(key)!;const icon=this.nativeImage(parent,key,x+(36-f.meta.w)/2,y+(32-f.meta.h)/2);if(double)this.nativeDoubleClick(icon.node,action);else this.nativeClick(icon.node,action);
-        icon.node.on(Node.EventType.MOUSE_ENTER,()=>this.targetText.string=`${this.itemName(item)}${info?.type===20?' · 双击学习':''}${info?.type===15?' · 品质 '+Math.floor((item.currentdura??0)/1000):''}${info?.type===13?' · 持续恢复 '+((info.hp??info.stats?.values?.hp)?'HP '+(info.hp??info.stats.values.hp):'MP '+(info.mp??info.stats?.values?.mp??0)):''}${info?.type===15?'':` · ${info?.price??25} 金币`}${itemStatLines(item,info).length?' · '+itemStatLines(item,info).join(' · '):''}`);
+        icon.node.on(Node.EventType.MOUSE_ENTER,()=>this.targetText.string=this.itemHint(item));
         if(item.count>1)this.nativeLabel(parent,String(item.count),x+21,y+26,9,25,C.gold);
     }
     private showNPC(page:string[]):void {
@@ -640,6 +669,12 @@ export class MirWorld extends Component {
             else if(!d.success)this.notice((item?.info??this.itemInfo.get(item?.itemindex))?.type===20?'技能书未使用：请检查职业、等级或是否已经学会。':'物品未使用：服务器拒绝此次操作');
         }
         if(name==='NPCResponse')this.showNPC(d.page??[]);
+        if(name==='MoveItem'&&d.grid===1){
+            this.bagMovePending=false;this.selectedBag=-1;
+            if(d.success&&Number.isInteger(d.from)&&Number.isInteger(d.to)&&d.from>=0&&d.to>=0&&d.from<this.inventory.length&&d.to<this.inventory.length){const item=this.inventory[d.from];this.inventory[d.from]=this.inventory[d.to];this.inventory[d.to]=item;}
+            else if(!d.success)this.notice('物品移动未成功，背包保持原状。');
+            this.refreshBelt();if(this.menu.active&&this.menuKind==='inventory')this.showInventory();
+        }
         if(name==='SellItem'){
             if(d.success){const i=this.inventory.findIndex(v=>v&&String(v.uniqueid)===String(d.uniqueid));if(i>=0){if(this.inventory[i].count<=d.count)this.inventory[i]=null;else this.inventory[i].count-=d.count;}this.refreshBelt();}
             else this.notice('出售未成功，物品仍在背包中。');

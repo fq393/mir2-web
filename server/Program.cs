@@ -308,7 +308,9 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey) : IDisposab
                     if(member.Length<Globals.MinCharacterNameLength||member.Length>Globals.MaxCharacterNameLength||member.Any(char.IsControl)){await Send(new{type="error",message="请输入有效的角色名。"},ct);continue;}
                 }
                 if(command=="attackMode"&&(Num("mode")<0||Num("mode")>5)){await Send(new{type="error",message="无效的攻击模式。"},ct);continue;}
+                if(command=="moveItem"&&(Num("from")<6||Num("from")>45||Num("to")<6||Num("to")>45)){await Send(new{type="error",message="背包格超出范围。"},ct);continue;}
                 Packet? action=command switch {
+                    "moveItem"=>new C.MoveItem {Grid=MirGridType.Inventory,From=Num("from"),To=Num("to")},
                     "attackMode"=>new C.ChangeAMode {Mode=(AttackMode)Num("mode")},
                     "groupSwitch"=>new C.SwitchGroup {AllowGroup=r.GetProperty("allow").GetBoolean()},
                     "groupAdd"=>new C.AddMember {Name=r.GetProperty("name").GetString()??""},
