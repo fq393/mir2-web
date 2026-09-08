@@ -574,7 +574,6 @@ export class MirWorld extends Component {
             hit.getComponent(UITransform)!.setAnchorPoint(0,1);hit.getComponent(UITransform)!.setContentSize(w,h);this.nativeClick(hit,()=>this.equipmentCell(slot));if(item)this.bindItemTooltip(hit,item);
         }
         this.nativeField(character,`等级 ${this.level}`,37,270,52,16,12,C.gold);
-        this.nativeField(character,`金币 ${this.gold}`,91,270,119,16,12,C.gold,Label.HorizontalAlign.RIGHT);
         const action=this.nativeLabel(character,this.hp<=0?'回城复活':`经验 ${this.experience}/${this.maxExperience}`,37,300,11,195,C.paper);if(this.hp<=0)this.nativeClick(action.node,()=>this.connection?.send({type:'revive'}));
     }
     private changeCharacterPage(direction:number):void {
@@ -660,7 +659,10 @@ export class MirWorld extends Component {
     }
     private renderBag(x:number):void {
         const bag=this.nativeWindow(this.menu,'ui:ClassicPrguse:3',x,0);
-        this.closeNative(bag,309,202,()=>{if(this.menuKind==='shop'){this.shopBagOpen=false;this.showShop();}else this.showInventory('bag');if(this.targetText)this.targetText.string='';});this.bagGold=this.nativeField(bag,String(this.gold),65,182,136,18,12,Color.WHITE);
+        this.closeNative(bag,309,202,()=>{if(this.menuKind==='shop'){this.shopBagOpen=false;this.showShop();}else this.showInventory('bag');if(this.targetText)this.targetText.string='';});this.nativeField(bag,'金币',65,182,32,18,12,C.gold);this.bagGold=this.nativeField(bag,String(this.gold),101,182,100,18,12,Color.WHITE);
+        // User-requested Chinese text over the baked USE glyphs; preserve the original frame.
+        const useText=this.makeNode('包裹使用中文',bag);useText.setPosition(256,-184);const cover=useText.addComponent(Graphics);cover.fillColor=new Color(10,20,53,255);cover.rect(0,-15,40,15);cover.fill();
+        this.nativeField(bag,'使用',256,183,40,18,12,Color.YELLOW,Label.HorizontalAlign.CENTER);
         this.bagWeights=null;this.bagStatus=null;this.bagHighlights.clear();this.bagIcons.clear();
         for(let slot=6;slot<Math.min(46,this.inventory.length);slot++){
             const item=this.inventory[slot];
