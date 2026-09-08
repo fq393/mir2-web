@@ -27,17 +27,36 @@ export function itemDescription(item:any,info:any,name:string):string[] {
   const hp=info.hp??info.stats?.values?.hp,mp=info.mp??info.stats?.values?.mp;
   if(hp>0)lines.push(`恢复生命 ${hp}`);if(mp>0)lines.push(`恢复魔法 ${mp}`);
  }else lines.push(...itemStatLines(item,info));
- const jobs=info.requiredclass;
- if(jobs!==undefined&&jobs!==31&&jobs!==7){const names=[[1,'战士'],[2,'法师'],[4,'道士']] as const;
-  lines.push(`所需职业 ${jobs>0&&(jobs&~7)===0?names.filter(([mask])=>jobs&mask).map(([,title])=>title).join('、'):'待核对'}`);
- }
- if(info.requiredgender===1||info.requiredgender===2)lines.push(`所需性别 ${info.requiredgender===1?'男':'女'}`);
- if(info.requiredamount>0){const titles=['所需等级','所需防御上限','所需魔御上限','所需攻击上限','所需魔法上限','所需道术上限','等级上限','所需防御下限','所需魔御下限','所需攻击下限','所需魔法下限','所需道术下限'];
-  lines.push(`${titles[info.requiredtype]??'要求类型待同步'} ${info.requiredamount}`);
- }
+ lines.push(...itemRequirements(info).map(row=>row.text));
  return lines;
 }
 /** Clamp in the original 800x600 coordinate system, including tall descriptions. */
 export function itemHintPosition(x:number,y:number,width:number,height:number):{x:number;y:number}{
  return {x:Math.max(0,Math.min(x+16,800-width)),y:Math.max(0,Math.min(y+16,600-height))};
+}
+
+export type ItemViewer={level?:number;job?:number;gender?:number};
+export type ItemRequirement={text:string;met?:boolean};
+/** Unknown is distinct from pass: do not infer final combat stats from equipment. */
+export function itemRequirements(info:any,viewer:ItemViewer={}):ItemRequirement[]{
+ if(!info)return [];const rows:ItemRequirement[]=[];const jobs=info.requiredclass;
+ if(jobs!==undefined&&jobs!==31&&jobs!==7){const names=[[1,'战士'],[2,'法师'],[4,'道士']] as const;
+  const known=Number.isInteger(jobs)&&jobs>0&&(jobs&~7)===0;
+  rows.push({text:`所需职业 ${known?names.filter(([mask])=>jobs&mask).map(([,title])=>title).join('、'):'待核对'}`,met:known&&[0,1,2].includes(viewer.job!)?!!(jobs&(1<<viewer.job!)):undefined});
+ }
+ if(info.requiredgender===1||info.requiredgender===2)rows.push({text:`所需性别 ${info.requiredgender===1?'男':'女'}`,met:[0,1].includes(viewer.gender!)?!!(info.requiredgender&(1<<viewer.gender!)):undefined});
+ if(info.requiredamount>0){const titles=['所需等级','所需防御上限','所需魔御上限','所需攻击上限','所需魔法上限','所需道术上限','等级上限','所需防御下限','所需魔御下限','所需攻击下限','所需魔法下限','所需道术下限'];
+  const met=Number.isFinite(viewer.level)?(info.requiredtype===0?viewer.level!>=info.requiredamount:info.requiredtype===6?viewer.level!<=info.requiredamount:undefined):undefined;
+  rows.push({text:`${titles[info.requiredtype]??'要求类型待同步'} ${info.requiredamount}`,met});
+ }
+ return rows;
+}
+/** Original bag has three description rows. Keep the full floating view if they do not fit. */
+export function compactBagDescription(item:any,info:any,name:string,measure:(text:string)=>number,width=258):string[]|null {
+ if(!info)return null;
+ const requirements=itemRequirements(info).map(r=>r.text),details=itemDescription(item,info,name).slice(1);
+ const basics=details.filter(t=>/^(重量|持久|品质|纯度|数量) /.test(t));
+ const stats=details.filter(t=>!basics.includes(t)&&!requirements.includes(t));
+ const rows=[[name,...basics].join(' '),stats.join(' '),requirements.join(' ')];
+ return rows.every(row=>measure(row)<=width)?rows:null;
 }

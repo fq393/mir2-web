@@ -4,7 +4,7 @@ import {PartyUI} from './platform/PartyUI';
 import {AccountUI} from './platform/AccountUI';
 import {ChatInput} from './platform/ChatInput';
 import {ATTACK_MODES} from './core/social';
-import {itemDescription,itemHintPosition} from './core/itemStats';
+import {itemDescription,itemHintPosition,itemRequirements,compactBagDescription} from './core/itemStats';
 import {CLASSIC,worldToScreen,screenToCell,blocksWorld,PanelRect,JEWELLERY_SLOTS} from './core/classicLayout';
 import {gainItem,consumeItem,equipmentTarget} from './core/inventory';
 import {healthWidth,showHealth} from './core/health';
@@ -28,7 +28,7 @@ type Peer = {node:Node;body:Sprite;point:Point;visual:Point;from:Point;direction
 
 @ccclass('MirWorld')
 export class MirWorld extends Component {
-    private itemTooltip?:Node;private itemTooltipOwner?:Node;private mousePoint={x:0,y:0};
+    private itemTooltip?:Node;private itemTooltipOwner?:Node;private itemTooltipDock?:Node;private mousePoint={x:0,y:0};
     private party?:PartyUI;
     private gender=0;private hairShape=0;private missingActors=new Set<string>();
     private characterName="旅人";
@@ -538,8 +538,10 @@ export class MirWorld extends Component {
         const bag=this.nativeWindow(this.menu,'ui:ClassicPrguse:3',x,0);
         this.closeNative(bag,318,4,()=>{if(this.menuKind==='shop'){this.shopBagOpen=false;this.showShop();}else this.menu.active=false;if(this.targetText)this.targetText.string='';});this.bagGold=this.nativeField(bag,`金币 ${this.gold}`,63,183,138,18,12,C.gold,Label.HorizontalAlign.RIGHT);
         this.bagWeights=this.nativeLabel(bag,`背包 ${this.bagWeight}/${this.maxBagWeight} · 穿戴 ${this.wearWeight}/${this.maxWearWeight} · 手持 ${this.handWeight}/${this.maxHandWeight}`,63,223,11,241,C.paper);
+        this.bagWeights.node.name='背包默认说明';
         this.bagHighlights.clear();
         if(this.menuKind==='inventory')this.bagStatus=this.nativeLabel(bag,this.bagMovePending?'等待服务器确认…':'单击移动 · 双击使用或穿戴',63,246,11,241,C.gold);
+        if(this.bagStatus?.isValid)this.bagStatus.node.name='背包默认说明';
         for(let slot=6;slot<Math.min(46,this.inventory.length);slot++){
             const item=this.inventory[slot];
             const x=9+(slot-6)%8*37,y=9+Math.floor((slot-6)/8)*33;
@@ -549,37 +551,57 @@ export class MirWorld extends Component {
                 const g=hit.addComponent(Graphics);g.strokeColor=C.gold;g.lineWidth=1;this.bagHighlights.set(slot,g);if(this.selectedBag===slot){g.rect(0,-32,36,32);g.stroke();}
                 hit.on(Node.EventType.TOUCH_END,(event:EventTouch)=>{event.propagationStopped=true;this.lastBagTouch=Date.now();this.bagCell(slot);});
                 hit.on(Node.EventType.MOUSE_UP,(event:EventMouse)=>{event.propagationStopped=true;if(event.getButton()===0&&Date.now()-this.lastBagTouch>700)this.bagCell(slot);});
-                if(item)this.bindItemTooltip(hit,item);continue;
+                if(item)this.bindItemTooltip(hit,item,bag);continue;
             }
             if(!item)continue;
-            this.nativeItem(bag,item,x,y,()=>{if(this.menuKind==='merchant'){this.requestTrade(item);return;}const info=item.info??this.itemInfo.get(item.itemindex);const target=equipmentTarget(info?.type,this.equipment);if(info?.type===13||info?.type===20)this.useInventoryItem(item);else if(target>=0)this.connection?.send({type:'equip',uniqueId:String(item.uniqueid),slot:target});},this.menuKind!=='merchant'&&(item.info??this.itemInfo.get(item.itemindex))?.type===20);
+            this.nativeItem(bag,item,x,y,()=>{if(this.menuKind==='merchant'){this.requestTrade(item);return;}const info=item.info??this.itemInfo.get(item.itemindex);const target=equipmentTarget(info?.type,this.equipment);if(info?.type===13||info?.type===20)this.useInventoryItem(item);else if(target>=0)this.connection?.send({type:'equip',uniqueId:String(item.uniqueid),slot:target});},this.menuKind!=='merchant'&&(item.info??this.itemInfo.get(item.itemindex))?.type===20,bag);
         }
     }
     private itemHint(item:any):string {return this.itemName(item);}
-    private clearItemTooltip():void {if(this.itemTooltip?.isValid)this.itemTooltip.destroy();this.itemTooltip=undefined;this.itemTooltipOwner=undefined;}
+    private clearItemTooltip():void {
+        if(this.itemTooltip?.isValid)this.itemTooltip.destroy();
+        if(this.itemTooltipDock?.isValid)for(const child of this.itemTooltipDock.children)if(child.name==='背包默认说明')child.active=true;
+        this.itemTooltip=undefined;this.itemTooltipOwner=undefined;this.itemTooltipDock=undefined;
+    }
     private positionItemTooltip():void {
-        if(!this.itemTooltip?.isValid)return;const size=this.itemTooltip.getComponent(UITransform)!.contentSize;
+        if(!this.itemTooltip?.isValid||this.itemTooltipDock)return;const size=this.itemTooltip.getComponent(UITransform)!.contentSize;
         const p=itemHintPosition(this.mousePoint.x,this.mousePoint.y,size.width,size.height);this.itemTooltip.setPosition(p.x,-p.y);
     }
-    private bindItemTooltip(owner:Node,item:any):void {
+    private bindItemTooltip(owner:Node,item:any,bag?:Node):void {
         owner.on(Node.EventType.MOUSE_ENTER,(event:EventMouse)=>{
             this.clearItemTooltip();const p=event.getUILocation();this.mousePoint={x:p.x,y:600-p.y};
-            const lines=itemDescription(item,item.info??this.itemInfo.get(item.itemindex),this.itemName(item));
+            const info=item.info??this.itemInfo.get(item.itemindex),name=this.itemName(item);
+            const requirements=itemRequirements(info,{level:this.level,job:this.job,gender:this.gender});
+            const lines=itemDescription(item,info,name);
+            // Measure with the same system font as nativeField; never shrink the font to squeeze long items.
+            const context=typeof document==='undefined'?null:document.createElement('canvas').getContext('2d');
+            if(context)context.font='12px "NSimSun","SimSun","Songti SC",serif';
+            const measure=(text:string)=>context?context.measureText(text).width:Array.from(text).length*12;
+            const compact=bag?compactBagDescription(item,info,name,measure):null;
+            if(bag&&compact){
+                this.itemTooltipDock=bag;for(const child of bag.children)if(child.name==='背包默认说明')child.active=false;
+                const panel=this.makeNode('物品说明',bag);this.itemTooltip=panel;this.itemTooltipOwner=owner;panel.setPosition(64,-213);
+                const nameWidth=Math.min(258,measure(name+' '));this.nativeField(panel,name,0,0,nameWidth,14,12,Color.YELLOW);
+                this.nativeField(panel,compact[0].slice(name.length+1),nameWidth,0,258-nameWidth,14,12,Color.WHITE);
+                this.nativeField(panel,compact[1],0,14,258,14,12,Color.WHITE);
+                this.nativeField(panel,compact[2],0,28,258,14,12,requirements.some(row=>row.met===false)?Color.RED:Color.WHITE);
+                return;
+            }
             const width=Math.min(380,Math.max(112,...lines.map(line=>Array.from(line).reduce((n,c)=>n+(c.charCodeAt(0)>255?12:7),0)+16))),height=lines.length*18+12;
             const panel=this.makeNode('物品说明',this.nativeLayer);this.itemTooltip=panel;this.itemTooltipOwner=owner;
             panel.getComponent(UITransform)!.setAnchorPoint(0,1);panel.getComponent(UITransform)!.setContentSize(width,height);
             const g=panel.addComponent(Graphics);g.fillColor=new Color(0,0,0,215);g.rect(0,-height,width,height);g.fill();
-            lines.forEach((line,i)=>this.nativeField(panel,line,8,6+i*18,width-16,18,12,i===0?C.gold:Color.WHITE));
+            lines.forEach((line,i)=>this.nativeField(panel,line,8,6+i*18,width-16,18,12,i===0?C.gold:requirements.some(row=>row.text===line&&row.met===false)?Color.RED:Color.WHITE));
             this.positionItemTooltip();
         });
         owner.on(Node.EventType.MOUSE_LEAVE,()=>{if(this.itemTooltipOwner===owner)this.clearItemTooltip();});
         owner.on(Node.EventType.TOUCH_START,()=>this.clearItemTooltip());
         owner.on(Node.EventType.MOUSE_DOWN,()=>this.clearItemTooltip());
     }
-    private nativeItem(parent:Node,item:any,x:number,y:number,action:()=>void,double=false):void {
+    private nativeItem(parent:Node,item:any,x:number,y:number,action:()=>void,double=false,dock?:Node):void {
         const info=item.info??this.itemInfo.get(item.itemindex),key=`ui:Items:${info?.image}`;if(!this.frames.has(key))return;
         const f=this.frames.get(key)!;const icon=this.nativeImage(parent,key,x+(36-f.meta.w)/2,y+(32-f.meta.h)/2);if(double)this.nativeDoubleClick(icon.node,action);else this.nativeClick(icon.node,action);
-        this.bindItemTooltip(icon.node,item);
+        this.bindItemTooltip(icon.node,item,dock);
         if(item.count>1)this.nativeLabel(parent,String(item.count),x+21,y+26,9,25,C.gold);
     }
     private showNPC(page:string[]):void {
@@ -716,7 +738,7 @@ export class MirWorld extends Component {
         this.particleEffects.push({node,sprite,keys,age:0,life:hit?.5:.6,from:{...from},to:{...to}});
     }
     private packet(name:string,raw:any):void {
-        if(['NewItemInfo','DuraChanged','ItemRepaired','ItemUpgraded','ItemUsed','DeleteItem','DeleteItems','GainedItem','EquipItem','RemoveItem','MoveItem','SellItem'].includes(name))this.clearItemTooltip();
+        if(['NewItemInfo','LevelChanged','DuraChanged','ItemRepaired','ItemUpgraded','ItemUsed','DeleteItem','DeleteItems','GainedItem','EquipItem','RemoveItem','MoveItem','SellItem'].includes(name))this.clearItemTooltip();
         const d=this.normalize(raw),id=d.objectid,p=this.peers.get(id);if(name==='BaseStatsInfo'){this.baseStats=d.stats?.stats??[];return;}
         if(name==='ColourChanged'){this.ownLabel.color=this.nameColor(d.namecolour);return;}
         if(name==='ObjectColourChanged'){if(p?.label)p.label.color=this.nameColor(d.namecolour);return;}

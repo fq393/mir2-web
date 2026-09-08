@@ -310,3 +310,9 @@ test('server durability updates dismiss stale hover details and preserve the ins
  w.packet('DuraChanged',{UniqueID:'123',CurrentDura:7756});
  assert.equal(destroyed,1);assert.equal(w.itemTooltip,undefined);assert.equal(w.inventory[0].currentdura,7756);assert.equal(w.inventory[0].maxdura,10000);
 });
+test('leaving a docked description restores the native bag footer and releases references',()=>{
+ const w=world(),weight={name:'背包默认说明',active:false},other={name:'slot',active:true};let destroyed=0;
+ w.itemTooltipDock={isValid:true,children:[weight,other]};w.itemTooltip={isValid:true,destroy(){destroyed++;}};
+ w.itemTooltipOwner={isValid:true};w.clearItemTooltip();
+ assert.equal(weight.active,true);assert.equal(other.active,true);assert.equal(destroyed,1);assert.equal(w.itemTooltipDock,undefined);assert.equal(w.itemTooltipOwner,undefined);
+});

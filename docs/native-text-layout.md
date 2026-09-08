@@ -17,7 +17,7 @@
 
 原资源索引与哈希见`tools/client-176-inputs.json`。参考固定Delphi源码`FState.pas`的`DItemBagDirectPaint`、`DMenuDlgDirectPaint`与`DStMag1DirectPaint`；版本为`f829679d24acb3a097d396d737ab067db2c88ca2`。该源码背包金币保留过(64,185)与(71,212)两套坐标，说明不能把另一套客户端坐标机械套用到本地336×270帧。本次按实际原图的可写区域检查。
 
-完整装备多行悬浮说明、极端长度属性、跨系统字体差异仍属于HUD-03的未完成范围。当前单行摘要不会代替完整物品详情验收。
+后续P02已接多行说明，并将可容纳物品放回原背包三行下栏；详见[item-descriptions](item-descriptions.md)。极端长度属性的原版排版、全部物品参数及跨系统字体差异仍属于HUD-03。
 
 另修正角色快照漏传技能书职业要求的问题：背包中的书曾显示`undefined`，现在传递引擎原有RequiredClass；不改变使用限制。
 
