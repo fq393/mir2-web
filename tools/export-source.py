@@ -9,7 +9,7 @@ selected=[]
 for value in sorted(set(paths)):
  p=Path(value)
  if not value or not (root/p).is_file():continue
- if p.parts[0] not in {'client','server','tools','docs','README.md','package.json','package-lock.json','.gitignore','启动传奇.command'}:continue
+ if p.parts[0] not in {'client','server','tools','docs','tasks','README.md','package.json','package-lock.json','.gitignore','启动传奇.command'}:continue
  if value.startswith(('client/assets/resources/','docs/qa/','server/engine/generated/')):continue
  if p.suffix not in allowed and value!='.gitignore':continue
  if (root/p).stat().st_size>2_000_000:raise SystemExit('Unexpected large source: '+value)

@@ -1,3 +1,4 @@
+import {playerLayers,equippedShape,actorFrame} from './core/appearance';
 import {MiniMap} from './platform/MiniMap';
 import {PartyUI} from './platform/PartyUI';
 import {AccountUI} from './platform/AccountUI';
@@ -23,12 +24,12 @@ const C = {gold:new Color(202,171,110),paper:new Color(220,218,197),dark:new Col
 type TileRef = Ref & {drawX?:number;drawY?:number;floor?:boolean;render?:boolean;blend?:boolean};
 type CachedFrame = {sprite:SpriteFrame;meta:Frame};
 type RenderTile = {node:Node;x:number;y:number;w:number;h:number;sort:number;kind:string};
-type Peer = {node:Node;body:Sprite;point:Point;visual:Point;from:Point;direction:number;elapsed:number;name?:string;kind?:string;image?:number;hp?:number;healthUntil?:number;nameHeight?:number;healthBar?:{node:Node;fill:Sprite};dead?:boolean;harvested?:boolean;action?:string;actionTime?:number;label?:Label;weapon?:Sprite;hair?:Sprite;armour?:number;weaponShape?:number;gender?:number};
+type Peer = {node:Node;body:Sprite;point:Point;visual:Point;from:Point;direction:number;elapsed:number;name?:string;kind?:string;image?:number;hp?:number;healthUntil?:number;nameHeight?:number;healthBar?:{node:Node;fill:Sprite};dead?:boolean;harvested?:boolean;action?:string;actionTime?:number;label?:Label;weapon?:Sprite;hair?:Sprite;armour?:number;weaponShape?:number;hairShape?:number;gender?:number};
 
 @ccclass('MirWorld')
 export class MirWorld extends Component {
     private party?:PartyUI;
-    private gender=0;
+    private gender=0;private hairShape=0;private missingActors=new Set<string>();
     private characterName="旅人";
     private accounts?:AccountUI;
     private chatInput?:ChatInput;private miniMap?:MiniMap;
@@ -135,7 +136,7 @@ export class MirWorld extends Component {
             this.connection=new CrystalConnection(text=>{this.statusText=text;},event=>this.serverEvent(event));
             this.connection.connect();this.updateView();
             // Read-only diagnostics for repeatable browser acceptance.
-            (globalThis as any).__MIRQA={state:()=>({mapId:this.mapId,layout:CLASSIC,panels:this.menu?.active?this.panelRects:[],menuKind:this.menuKind,audio:this.sound.snapshot(),ready:this.ready,point:{...this.point},visual:{...this.visual},facing:this.facing,moving:!!this.step,queued:this.path.length,status:this.statusText,serverReady:this.serverReady,ownId:this.ownId,peers:Array.from(this.peers.entries()).map(([id,p])=>({id,point:p.point})),frameCount:this.frames.size,tileCount:this.terrain.tiles.size,origin:{x:this.manifest.map.originX,y:this.manifest.map.originY},spawn:this.manifest.map.spawn,map:{width:this.grid.width,height:this.grid.height},blocked:Array.from(this.grid.blocked),experience:this.experience,maxExperience:this.maxExperience,bagWeight:this.bagWeight,maxBagWeight:this.maxBagWeight,handWeight:this.handWeight,maxHandWeight:this.maxHandWeight,wearWeight:this.wearWeight,maxWearWeight:this.maxWearWeight,selectedBag:this.selectedBag,bagMovePending:this.bagMovePending,magics:this.magics,hp:this.hp,mp:this.mp,maxHP:this.displayedMaxHP,maxMP:this.displayedMaxMP,ownHealthVisible:this.ownHealth?.node.active,hpDisplay:this.hpText?.string,mpDisplay:this.mpText?.string,gold:this.gold,selected:this.selected,inventory:this.inventory,equipment:this.equipment,groundItems:Array.from(this.loot.entries()).map(([id,v])=>({id,point:v.point,name:v.name})),entities:Array.from(this.peers.entries()).map(([id,p])=>({id,name:p.name,kind:p.kind,hp:p.hp,healthVisible:p.healthBar?.node.active??false,healthUntil:p.healthUntil,dead:p.dead,point:p.point})),logs:this.logs}),screenFor:(x:number,y:number)=>worldToScreen({x,y},this.camera)};
+            (globalThis as any).__MIRQA={state:()=>({mapId:this.mapId,appearance:{gender:this.gender,hair:this.hairShape},missingActors:Array.from(this.missingActors),layout:CLASSIC,panels:this.menu?.active?this.panelRects:[],menuKind:this.menuKind,audio:this.sound.snapshot(),ready:this.ready,point:{...this.point},visual:{...this.visual},facing:this.facing,moving:!!this.step,queued:this.path.length,status:this.statusText,serverReady:this.serverReady,ownId:this.ownId,peers:Array.from(this.peers.entries()).map(([id,p])=>({id,point:p.point})),frameCount:this.frames.size,tileCount:this.terrain.tiles.size,origin:{x:this.manifest.map.originX,y:this.manifest.map.originY},spawn:this.manifest.map.spawn,map:{width:this.grid.width,height:this.grid.height},blocked:Array.from(this.grid.blocked),experience:this.experience,maxExperience:this.maxExperience,bagWeight:this.bagWeight,maxBagWeight:this.maxBagWeight,handWeight:this.handWeight,maxHandWeight:this.maxHandWeight,wearWeight:this.wearWeight,maxWearWeight:this.maxWearWeight,selectedBag:this.selectedBag,bagMovePending:this.bagMovePending,magics:this.magics,hp:this.hp,mp:this.mp,maxHP:this.displayedMaxHP,maxMP:this.displayedMaxMP,ownHealthVisible:this.ownHealth?.node.active,hpDisplay:this.hpText?.string,mpDisplay:this.mpText?.string,gold:this.gold,selected:this.selected,inventory:this.inventory,equipment:this.equipment,groundItems:Array.from(this.loot.entries()).map(([id,v])=>({id,point:v.point,name:v.name})),entities:Array.from(this.peers.entries()).map(([id,p])=>({id,name:p.name,kind:p.kind,gender:p.gender,hair:p.hairShape,armour:p.armour,weapon:p.weaponShape,hp:p.hp,healthVisible:p.healthBar?.node.active??false,healthUntil:p.healthUntil,dead:p.dead,point:p.point})),logs:this.logs}),screenFor:(x:number,y:number)=>worldToScreen({x,y},this.camera)};
         } catch(error) {
             console.error('Mir2 load failed',error);this.hint.string=`资源加载失败：${String(error)}`;this.statusText='加载失败';
         }
@@ -251,13 +252,12 @@ export class MirWorld extends Component {
         this.particleEffects=this.particleEffects.filter(e=>{e.age+=dt;if(e.age>=e.life){e.node.destroy();return false;}const t=e.age/e.life;e.node.setPosition((e.from.x+(e.to.x-e.from.x)*t)*48+24,-(e.from.y+(e.to.y-e.from.y)*t)*32+28);const frame=this.frames.get(e.keys[Math.min(e.keys.length-1,Math.floor(t*e.keys.length))]);if(frame){e.sprite.spriteFrame=frame.sprite;e.sprite.node.setPosition(frame.meta.offsetX,-frame.meta.offsetY);}return true;});
         this.terrain?.animate(this.worldClock);this.updateView();
     }
-    private drawActor(sprite:Sprite,actor:string,action:string,direction:number,clock:number):void {
-        const def=this.manifest.actors?.[actor]??this.manifest.player;
-        const anim=def[action]??def.stand,frames=anim?.[direction%anim.length];if(!frames?.length){sprite.node.active=false;return;}
-        const duration=def.actionFrameMs?.[action]??(action==='stand'?500:100);
-        const rawIndex=Math.floor(clock*1000/duration),index=['stand','walk'].includes(action)?rawIndex%frames.length:Math.min(frames.length-1,rawIndex);
-        const frame=this.frames.get(frames[index]);
-        sprite.node.active=!!frame;if(frame){sprite.spriteFrame=frame.sprite;sprite.node.setPosition(frame.meta.offsetX,-frame.meta.offsetY);}
+    private drawActor(sprite:Sprite,actor:string|null,action:string,direction:number,clock:number):void {
+        if(actor&&!this.manifest.actors?.[actor]&&this.missingActors.size<256)this.missingActors.add(actor);
+        const key=actorFrame(this.manifest.actors,actor,action,direction,clock),frame=key?this.frames.get(key):undefined;
+        sprite.node.active=!!frame;
+        if(frame){sprite.spriteFrame=frame.sprite;sprite.node.setPosition(frame.meta.offsetX,-frame.meta.offsetY);}
+        else sprite.spriteFrame=null;
     }
     private updateView():void {
         if(!this.ready)return;
@@ -268,9 +268,10 @@ export class MirWorld extends Component {
         this.feet.setPosition(this.visual.x*48,-this.visual.y*32);
         const action=this.hp<=0?'die':this.actionTime>0?this.ownAction:this.step?'walk':'stand';
         const armour=this.equipment[1],weapon=this.equipment[0];
-        this.drawActor(this.body,(armour?'armour1':'armour0')+(this.gender?'f':''),action,this.facing,this.animationClock);
-        this.drawActor(this.hair,'hair0'+(this.gender?'f':''),action,this.facing,this.animationClock);
-        this.drawActor(this.weapon,'weapon1'+(this.gender?'f':''),action,this.facing,this.animationClock);this.weapon.node.active=!!weapon||action==='harvest';
+        const layers=playerLayers(this.gender,this.hairShape,equippedShape(armour,armour?.info??this.itemInfo.get(armour?.itemindex),0),equippedShape(weapon,weapon?.info??this.itemInfo.get(weapon?.itemindex),-1));
+        this.drawActor(this.body,layers.body,action,this.facing,this.animationClock);
+        this.drawActor(this.hair,layers.hair,action,this.facing,this.animationClock);
+        this.drawActor(this.weapon,layers.weapon,action,this.facing,this.animationClock);
         this.weapon.node.setSiblingIndex([0,5,6,7].includes(this.facing)?0:2);
         this.ownLabel.node.setPosition(Math.round(this.visual.x*48+24-80),Math.round(-this.visual.y*32+70));
         this.drawHealthBar(this.ownHealth,this.visual.x*48+24,-this.visual.y*32+60,100*this.hp/Math.max(1,this.displayedMaxHP),this.serverReady&&this.hp>0&&this.displayedMaxHP>0);
@@ -280,9 +281,10 @@ export class MirWorld extends Component {
         this.peers.forEach((p,id)=>{
             p.node.setPosition(p.visual.x*48,-p.visual.y*32);
             const action=p.dead?(p.harvested&&p.image===4?'skeleton':'die'):(p.actionTime??0)>0?p.action!:(p.elapsed<0.6?'walk':'stand');
-            const actor=p.kind==='monster'?`monster${p.image}`:p.kind==='npc'?`npc${p.image}`:(p.armour?'armour1':'armour0')+(p.gender?'f':'');
+            const layers=playerLayers(p.gender??0,p.hairShape??0,p.armour??0,p.weaponShape??-1);
+            const actor=p.kind==='monster'?`monster${p.image}`:p.kind==='npc'?`npc${p.image}`:layers.body;
             this.drawActor(p.body,actor,action,p.direction,p.elapsed);
-            if(p.weapon&&p.hair){this.drawActor(p.weapon,'weapon1'+(p.gender?'f':''),action,p.direction,p.elapsed);p.weapon.node.active=!!p.weaponShape||action==='harvest';this.drawActor(p.hair,'hair0'+(p.gender?'f':''),action,p.direction,p.elapsed);p.weapon.node.setSiblingIndex([0,5,6,7].includes(p.direction)?0:2);}
+            if(p.weapon&&p.hair){this.drawActor(p.weapon,layers.weapon,action,p.direction,p.elapsed);this.drawActor(p.hair,layers.hair,action,p.direction,p.elapsed);p.weapon.node.setSiblingIndex([0,5,6,7].includes(p.direction)?0:2);}
             p.nameHeight??=p.kind==='npc'?Math.max(70,p.body.node.position.y+12):70;
             if(p.label){p.label.node.setPosition(Math.round(p.visual.x*48+24-80),Math.round(-p.visual.y*32+p.nameHeight));p.label.string=p.name??'旅人';p.label.node.active=!p.dead&&(p.kind!=='monster'||id===this.hovered||id===this.selected);}
             if(p.kind==='player'||p.kind==='monster'){
@@ -329,7 +331,7 @@ export class MirWorld extends Component {
         if(event.type==='disconnected'){this.skillRequest++;this.skillPending=false;this.selectedBag=-1;this.bagMovePending=false;this.tradeRequest++;this.tradeItem=null;this.tradeQuote=null;this.chatInput?.setActive(false);this.logs=[];if(this.logText)this.logText.string='';if(this.menu)this.menu.active=false;if(this.targetText)this.targetText.string='';this.party?.reset();this.clearLoot();this.pendingUses.clear();this.fireTargets.clear();this.serverReady=false;this.clearMovement();this.peers.forEach(p=>{p.node.destroy();p.label?.node.destroy();p.healthBar?.node.destroy();});this.peers.clear();return;}
         if(event.type==='vitals'){const d=this.normalize(event.data);if(d.objectid!==this.ownId)return;this.authoritativeMaxHP=d.maxhp;this.authoritativeMaxMP=d.maxmp;this.bagWeight=d.bagweight;this.maxBagWeight=d.maxbagweight;this.handWeight=d.handweight;this.maxHandWeight=d.maxhandweight;this.wearWeight=d.wearweight;this.maxWearWeight=d.maxwearweight;return;}
         if(event.type==='transport')this.statusText='正在进入游戏';
-        if(event.type==='ready') {this.chatInput?.setActive(true);this.gender=event.gender??0;this.characterName=event.name??'旅人';if(this.ownLabel)this.ownLabel.string=this.characterName;
+        if(event.type==='ready') {this.chatInput?.setActive(true);this.gender=event.gender??0;this.hairShape=event.hair??0;this.missingActors.clear();this.characterName=event.name??'旅人';if(this.ownLabel)this.ownLabel.string=this.characterName;
             if(event.map&&event.map!==this.mapId&&!this.changeMap(event.map))return;
             this.authoritativeMaxHP=0;this.authoritativeMaxMP=0;this.experience=event.experience??0;this.maxExperience=event.maxExperience??0;this.magics=this.normalize(event.magics??[]);this.job=event.class??0;this.hp=event.hp??0;this.mp=event.mp??0;this.gold=event.gold??0;this.level=event.level??1;this.inventory=this.normalize(event.inventory??[]);this.equipment=this.normalize(event.equipment??[]);
             this.pendingUses.clear();this.refreshBelt();this.serverReady=true;this.ownId=event.objectId;this.statusText='已进入游戏';
@@ -684,7 +686,7 @@ export class MirWorld extends Component {
         const names:Record<string,string>={BichonTrader:'比奇商人',BichonDeer:'鹿',BichonScarecrow:'稻草人'};
         if(kind==='player'&&!p.weapon){p.weapon=this.sprite(p.node,'Weapon');p.hair=this.sprite(p.node,'Hair');}
         if(d.namecolour&&p.label)p.label.color=this.nameColor(d.namecolour);
-        Object.assign(p,{kind,name:names[d.name]??d.name??kind,image:d.image??0,armour:d.armour??0,weaponShape:d.weapon??0,gender:d.gender??0,dead:d.dead??false,harvested:d.skeleton??false});
+        Object.assign(p,{kind,name:names[d.name]??d.name??kind,image:d.image??0,armour:d.armour??0,weaponShape:d.weapon??-1,hairShape:d.hair??0,gender:d.gender??0,dead:d.dead??false,harvested:d.skeleton??false});
     }
     private spellEffect(from:Point,to:Point,hit=false):void {
         const def=this.manifest.spellFireBall;let keys:string[]=hit?def?.hit:def?.projectile?.[(directionTo(from,to)*2)%16];
@@ -702,7 +704,8 @@ export class MirWorld extends Component {
         if(name==='ObjectHarvest'&&p){p.action='harvest';p.actionTime=.6;p.elapsed=0;p.direction=d.direction;if(d.location){p.point={...d.location};p.from={...d.location};p.visual={...d.location};}return;}
         if(name==='ObjectMonster'){this.spawnEntity(d,'monster');return;}
         if(name==='ObjectNPC'){this.spawnEntity(d,'npc');return;}
-        if(name==='ObjectPlayer'){this.spawnEntity(d,'player');return;}
+        if(name==='ObjectPlayer'){if(id===this.ownId){this.hairShape=d.hair??this.hairShape;this.gender=d.gender??this.gender;}else this.spawnEntity(d,'player');return;}
+        if(name==='PlayerUpdate'&&p?.kind==='player'){p.armour=d.armour;p.weaponShape=d.weapon;return;}
         if(['ObjectWalk','ObjectRun','ObjectTurn'].includes(name)&&p){if(d.location){p.from={...p.visual};p.point=d.location;p.elapsed=0;}p.direction=d.direction??p.direction;}
         if(name==='ObjectRemove'){const loot=this.loot.get(id);loot?.node.destroy();loot?.label.node.destroy();this.loot.delete(id);if(this.pickupTarget===id)this.pickupTarget=0;p?.node.destroy();p?.label?.node.destroy();p?.healthBar?.node.destroy();this.peers.delete(id);}
         if(name==='ObjectHealth'&&p){p.hp=d.percent;p.healthUntil=Date.now()+Math.max(0,d.expire??0)*1000;}
@@ -751,6 +754,7 @@ export class MirWorld extends Component {
             else this.notice('出售未成功，物品仍在背包中。');
             if(this.menuKind==='merchant'&&this.menu.active)this.showMerchant();
         }
+        if(name==='DuraChanged'){for(const bag of [this.inventory,this.equipment]){const item=bag.find(v=>v&&String(v.uniqueid)===String(d.uniqueid));if(item)item.currentdura=d.currentdura;}return;}
         if(name==='ItemRepaired'){
             for(const bag of [this.inventory,this.equipment]){const item=bag.find(v=>v&&String(v.uniqueid)===String(d.uniqueid));if(item){item.currentdura=d.currentdura;item.maxdura=d.maxdura;}}
             if(this.menuKind==='merchant'&&this.menu.active)this.showMerchant();
