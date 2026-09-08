@@ -196,6 +196,11 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey) : IDisposab
                     authBusy=false;characters.Add(created.CharInfo);
                     if(guest){DemoSeed.Character(Envir.Main.CharacterList.First(c=>c.Index==created.CharInfo.Index));await Write(new C.StartGame{CharacterIndex=created.CharInfo.Index},ct);}
                     else await Send(new{type="auth",stage="characters",message="角色创建成功。",selectedIndex=created.CharInfo.Index,characterLimit=classicCharacterLimit,characters=JsonSerializer.SerializeToElement(characters,packetJson)},ct);break;
+                case S.DeleteCharacter rejectedDelete:
+                    authBusy=false;await Send(new{type="auth",stage="characters",message=rejectedDelete.Result==0?"当前暂不允许删除人物。":"该人物已不存在，请重新登录刷新列表。",characterLimit=classicCharacterLimit,characters=JsonSerializer.SerializeToElement(characters,packetJson)},ct);break;
+                case S.DeleteCharacterSuccess deleted:
+                    authBusy=false;characters.RemoveAll(c=>c.Index==deleted.CharacterIndex);
+                    await Send(new{type="auth",stage="characters",deletedIndex=deleted.CharacterIndex,characterLimit=classicCharacterLimit,characters=JsonSerializer.SerializeToElement(characters,packetJson)},ct);break;
                 case S.StartGame started:
                     await Send(new {type="protocol",packet="StartGame",result=started.Result},ct);
                     if(started.Result != 4){authBusy=false;await Send(new{type="auth",stage="characters",message=started.Result switch{0=>"当前暂不允许进入游戏。",1=>"登录状态已失效，请退出后重新登录。",2=>"该角色已不存在，请重新登录刷新列表。",3=>"没有可用出生地图，请检查本地地图配置。",_=>"暂时无法进入游戏，请稍后重试。"},characterLimit=classicCharacterLimit,characters=JsonSerializer.SerializeToElement(characters,packetJson)},ct);}break;
@@ -249,7 +254,7 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey) : IDisposab
             using var doc=JsonDocument.Parse(buffer.AsMemory(0,result.Count));
             var command=doc.RootElement.GetProperty("type").GetString();
             if(command=="ping") {await Write(new C.KeepAlive {Time=DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()},ct);continue;}
-            if(command is "login" or "register" or "guest" or "changePassword" or "createCharacter" or "startCharacter"){
+            if(command is "login" or "register" or "guest" or "changePassword" or "createCharacter" or "startCharacter" or "deleteCharacter"){
                 var r=doc.RootElement;
                 if(!protocolReady||objectId!=0||authBusy){await Send(new{type="error",message="请等待当前账户操作完成。"},ct);continue;}
                 if(command is "login" or "register" or "guest" or "changePassword"){
@@ -279,7 +284,7 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey) : IDisposab
                     if(characters.Count>=classicCharacterLimit){await Send(new{type="error",message="人物位置已满。"},ct);continue;}
                     authBusy=true;await Write(new C.NewCharacter{Name=name,Class=(MirClass)role,Gender=(MirGender)gender},ct);
                 }else{
-                    int index=r.GetProperty("index").GetInt32();if(!characters.Any(c=>c.Index==index)){await Send(new{type="error",message="角色不属于当前账户。"},ct);continue;}authBusy=true;await Write(new C.StartGame{CharacterIndex=index},ct);
+                    int index=r.GetProperty("index").GetInt32();if(!authenticated||guest||!characters.Any(c=>c.Index==index)){await Send(new{type="error",message="角色不属于当前账户。"},ct);continue;}authBusy=true;if(command=="deleteCharacter")await Write(new C.DeleteCharacter{CharacterIndex=index},ct);else await Write(new C.StartGame{CharacterIndex=index},ct);
                 }
                 continue;
             }

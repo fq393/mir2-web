@@ -1,9 +1,11 @@
+import {NativeConfirm} from './NativeConfirm';
 import {AuthPresentation} from './AuthPresentation';
 import {characterListState,CLASSIC_CHARACTER_SLOTS} from '../core/characters';
 /** Original Prguse windows plus native browser text fields. Credentials stay in form memory. */
 export class AccountUI {
  private root:HTMLDivElement;private canvas:HTMLDivElement;private message:HTMLDivElement;private observer:ResizeObserver;
  private exit:HTMLButtonElement;private waitingForConnection=true;
+ private confirm:NativeConfirm|null=null;private pending=false;private disabledBefore=new Map<HTMLButtonElement,boolean>();
  private musicButton!:HTMLButtonElement;private guestButton!:HTMLButtonElement;private presentation=new AuthPresentation();private stage='login';
  private characters:any[]=[];private characterLimit=CLASSIC_CHARACTER_SLOTS;private selected=0;private role=0;private gender=0;
  get active():boolean{return !this.root.hidden;}
@@ -21,12 +23,18 @@ export class AccountUI {
  private button(parent:HTMLElement,label:string,x:number,y:number,w:number,h:number,run:()=>void):HTMLButtonElement{const b=document.createElement('button');b.type='button';b.setAttribute('aria-label',label);b.title=label;b.style.cssText=`position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${h}px;border:0;background:transparent;color:transparent;cursor:pointer;`;b.textContent=label;b.onclick=run;parent.append(b);return b;}
  private input(parent:HTMLElement,label:string,x:number,y:number,w:number,type='text'):HTMLInputElement{const i=document.createElement('input');i.type=type;i.setAttribute('aria-label',label);i.autocomplete=type==='password'?'current-password':'off';i.maxLength=type==='password'?15:80;i.style.cssText=`position:absolute;left:${x}px;top:${y}px;width:${w}px;height:17px;padding:0 2px;background:#080403;border:0;color:white;outline:0;font:12px SimSun,"Songti SC",serif;`;parent.append(i);return i;}
  private window(id:number,w:number,h:number):HTMLDivElement{this.canvas.replaceChildren();this.presentation.background(this.canvas,['login','register','password'].includes(this.stage));const p=document.createElement('div');p.style.cssText=`position:absolute;left:${(800-w)/2}px;top:${(600-h)/2}px;width:${w}px;height:${h}px;`;this.canvas.append(p);this.image(p,id,0,0);return p;}
- event(e:any):void{if(e.type==='error'){this.message.textContent=e.message??'操作未成功';if(!this.waitingForConnection)this.canvas.querySelectorAll('button').forEach(b=>b.disabled=false);return;}if(e.type==='ready'){this.presentation.clear();this.presentation.setScene('world');this.musicButton.hidden=true;this.guestButton.hidden=true;this.stage='world';this.exit.hidden=false;this.root.hidden=true;this.canvas.replaceChildren();document.getElementById("GameCanvas")?.focus();return;}if(e.type==='disconnected'){this.characters=[];this.selected=0;this.waitingForConnection=true;this.show('login','正在重新连接服务器…');this.lockConnectionForm();return;}if(e.type==='auth'){this.waitingForConnection=false;this.characters=e.characters??this.characters;if(Number.isInteger(e.characterLimit)&&e.characterLimit>0)this.characterLimit=Math.min(CLASSIC_CHARACTER_SLOTS,e.characterLimit);if(e.selectedIndex)this.selected=e.selectedIndex;this.selected=characterListState(this.characters,this.selected).selected;if(e.stage==='characters'&&this.stage==='opening')return;
+ event(e:any):void{if(e.type==='error'){this.message.textContent=e.message??'操作未成功';if(!this.waitingForConnection)this.unlockSubmission();return;}if(e.type==='ready'){this.confirm?.destroy();this.confirm=null;this.unlockSubmission();this.presentation.clear();this.presentation.setScene('world');this.musicButton.hidden=true;this.guestButton.hidden=true;this.stage='world';this.exit.hidden=false;this.root.hidden=true;this.canvas.replaceChildren();document.getElementById("GameCanvas")?.focus();return;}if(e.type==='disconnected'){this.characters=[];this.selected=0;this.waitingForConnection=true;this.show('login','正在重新连接服务器…');this.lockConnectionForm();return;}if(e.type==='auth'){this.waitingForConnection=false;this.characters=e.characters??this.characters;if(Number.isInteger(e.characterLimit)&&e.characterLimit>0)this.characterLimit=Math.min(CLASSIC_CHARACTER_SLOTS,e.characterLimit);if(e.selectedIndex)this.selected=e.selectedIndex;this.selected=characterListState(this.characters,this.selected).selected;if(e.stage==='characters'&&this.stage==='opening')return;
   if(e.stage==='characters'&&this.stage==='login'){this.stage='opening';this.guestButton.hidden=true;this.message.textContent='';void this.presentation.openDoor(this.canvas,()=>this.show('characters',e.message??''));return;}
   this.show(e.stage,e.message??'');}}
- private submit(value:any):void{if(this.send(value)){this.message.textContent='正在等待服务器确认…';this.canvas.querySelectorAll('button').forEach(b=>b.disabled=true);}else this.message.textContent='连接尚未就绪，请稍后再试。';}
+ private unlockSubmission():void{this.pending=false;for(const [button,disabled] of this.disabledBefore)if(button.isConnected)button.disabled=disabled;this.disabledBefore.clear();}
+ private submit(value:any):void{if(this.pending||this.waitingForConnection)return;if(this.send(value)){this.pending=true;this.message.textContent='正在等待服务器确认…';for(const button of [...Array.from(this.canvas.querySelectorAll('button')),this.guestButton]){this.disabledBefore.set(button,button.disabled);button.disabled=true;}}else this.message.textContent='连接尚未就绪，请稍后再试。';}
+ private deleteSelected():void{
+  if(this.pending||this.confirm)return;
+  const character=characterListState(this.characters,this.selected).characters.find(c=>c.index===this.selected);if(!character)return;
+  this.confirm=new NativeConfirm(this.canvas,`"${character.name}" 是否确认删除此游戏角色？`,accepted=>{this.confirm=null;if(accepted)this.submit({type:'deleteCharacter',index:character.index});});
+ }
  show(stage:string,message=''):void{
-  this.presentation.clear();this.stage=stage;this.presentation.setScene(['characters','create'].includes(stage)?'select':'login');
+  this.confirm?.destroy();this.confirm=null;this.unlockSubmission();this.presentation.clear();this.stage=stage;this.presentation.setScene(['characters','create'].includes(stage)?'select':'login');
   this.root.hidden=false;this.exit.hidden=true;this.musicButton.hidden=false;this.guestButton.hidden=stage!=='login';this.guestButton.disabled=this.waitingForConnection;this.message.textContent=message;
   if(stage==='login'){
    const p=this.window(60,296,254),account=this.input(p,'账号',98,85,137),password=this.input(p,'密码',98,117,137,'password');account.maxLength=15;
@@ -49,6 +57,7 @@ export class AccountUI {
    this.button(p,'退出当前账号',383,548,60,30,()=>this.logout());
    this.image(p,68,385,456);const enter=this.button(p,'进入游戏',385,456,44,21,()=>{if(!this.selected)return;this.submit({type:'startCharacter',index:this.selected});});enter.disabled=!this.selected;
    this.image(p,69,348,486);const create=this.button(p,'创建角色',348,486,120,21,()=>this.show('create'));create.disabled=this.characters.length>=this.characterLimit;
+   this.image(p,70,347,506);const remove=this.button(p,'删除人物',347,506,120,21,()=>this.deleteSelected());remove.disabled=!this.selected;
   }else if(stage==='create'){
    const scene=this.window(65,800,600),preview=this.presentation.portrait(scene,this.role,this.gender);
    const p=document.createElement('div');p.style.cssText='position:absolute;left:415px;top:15px;width:300px;height:417px;';scene.append(p);this.image(p,73,0,0);
@@ -58,5 +67,5 @@ export class AccountUI {
    this.button(p,'确认创建',104,361,76,33,()=>this.submit({type:'createCharacter',name:name.value.trim(),class:this.role,gender:this.gender}));this.button(p,'返回角色列表',248,31,16,23,()=>this.show('characters'));
   }
  }
- destroy():void{this.presentation.destroy();this.observer.disconnect();this.root.remove();this.exit.remove();this.musicButton.remove();this.guestButton.remove();}
+ destroy():void{this.confirm?.destroy();this.confirm=null;this.unlockSubmission();this.presentation.destroy();this.observer.disconnect();this.root.remove();this.exit.remove();this.musicButton.remove();this.guestButton.remove();}
 }
