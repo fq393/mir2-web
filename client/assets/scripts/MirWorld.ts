@@ -17,7 +17,7 @@ const C = {gold:new Color(202,171,110),paper:new Color(220,218,197),dark:new Col
 type TileRef = Ref & {drawX?:number;drawY?:number;floor?:boolean;render?:boolean;blend?:boolean};
 type CachedFrame = {sprite:SpriteFrame;meta:Frame};
 type RenderTile = {node:Node;x:number;y:number;w:number;h:number;sort:number;kind:string};
-type Peer = {node:Node;body:Sprite;point:Point;visual:Point;from:Point;direction:number;elapsed:number;name?:string;kind?:string;image?:number;hp?:number;healthUntil?:number;healthBar?:{node:Node;fill:Sprite};dead?:boolean;action?:string;actionTime?:number;label?:Label;weapon?:Sprite;hair?:Sprite;armour?:number;weaponShape?:number};
+type Peer = {node:Node;body:Sprite;point:Point;visual:Point;from:Point;direction:number;elapsed:number;name?:string;kind?:string;image?:number;hp?:number;healthUntil?:number;nameHeight?:number;healthBar?:{node:Node;fill:Sprite};dead?:boolean;action?:string;actionTime?:number;label?:Label;weapon?:Sprite;hair?:Sprite;armour?:number;weaponShape?:number};
 
 @ccclass('MirWorld')
 export class MirWorld extends Component {
@@ -231,7 +231,7 @@ export class MirWorld extends Component {
         this.drawActor(this.hair,'hair0',action,this.facing,this.animationClock);
         this.drawActor(this.weapon,'weapon1',action,this.facing,this.animationClock);this.weapon.node.active=!!weapon;
         this.weapon.node.setSiblingIndex([0,5,6,7].includes(this.facing)?0:2);
-        this.ownLabel.node.setPosition(this.visual.x*48+24-80,-this.visual.y*32+70);
+        this.ownLabel.node.setPosition(Math.round(this.visual.x*48+24-80),Math.round(-this.visual.y*32+70));
         this.drawHealthBar(this.ownHealth,this.visual.x*48+24,-this.visual.y*32+60,100*this.hp/Math.max(1,this.displayedMaxHP),this.serverReady&&this.hp>0&&this.displayedMaxHP>0);
         this.ghost.node.active=false;this.ghost.spriteFrame=this.body.spriteFrame;this.ghost.node.setPosition(this.visual.x*48+this.body.node.position.x,-this.visual.y*32+this.body.node.position.y);
         const sorted=Array.from(this.terrain.tiles.values()).filter(t=>!t.floor).map(t=>({node:t.node,sort:t.sort}));
@@ -242,10 +242,11 @@ export class MirWorld extends Component {
             const actor=p.kind==='monster'?`monster${p.image}`:p.kind==='npc'?`npc${p.image}`:p.armour?'armour1':'armour0';
             this.drawActor(p.body,actor,action,p.direction,p.elapsed);
             if(p.weapon&&p.hair){this.drawActor(p.weapon,'weapon1',action,p.direction,p.elapsed);p.weapon.node.active=!!p.weaponShape;this.drawActor(p.hair,'hair0',action,p.direction,p.elapsed);p.weapon.node.setSiblingIndex([0,5,6,7].includes(p.direction)?0:2);}
-            if(p.label){p.label.node.setPosition(p.visual.x*48+24-80,-p.visual.y*32+p.body.node.position.y+12);p.label.string=p.name??'旅人';p.label.node.active=!p.dead&&(p.kind!=='monster'||id===this.hovered||id===this.selected);}
+            p.nameHeight??=p.kind==='npc'?Math.max(70,p.body.node.position.y+12):70;
+            if(p.label){p.label.node.setPosition(Math.round(p.visual.x*48+24-80),Math.round(-p.visual.y*32+p.nameHeight));p.label.string=p.name??'旅人';p.label.node.active=!p.dead&&(p.kind!=='monster'||id===this.hovered||id===this.selected);}
             if(p.kind==='player'||p.kind==='monster'){
                 p.healthBar??=this.makeHealthBar();
-                this.drawHealthBar(p.healthBar,p.visual.x*48+24,-p.visual.y*32+p.body.node.position.y+2,p.hp,showHealth(p.kind,p.dead,p.hp,p.healthUntil,Date.now()));
+                this.drawHealthBar(p.healthBar,p.visual.x*48+24,-p.visual.y*32+60,p.hp,showHealth(p.kind,p.dead,p.hp,p.healthUntil,Date.now()));
             }
             sorted.push({node:p.node,sort:actorOrder(p.point.y,id)});
         });
@@ -538,7 +539,7 @@ export class MirWorld extends Component {
         if(name==='LevelChanged'){this.level=d.level;this.experience=d.experience;this.maxExperience=d.maxexperience;this.notice(`等级提升至 ${this.level} 级`);}
         if(name==='NewMagic'&&!d.hero){const at=this.magics.findIndex(m=>m.spell===d.magic.spell);if(at<0)this.magics.push(d.magic);else this.magics[at]=d.magic;}
         if(name==='MagicLeveled'&&d.objectid===this.ownId){const magic=this.magics.find(m=>m.spell===d.spell);if(magic)Object.assign(magic,{level:d.level,experience:d.experience});}
-        if(name==='RemoveMagic')this.magics.splice(d.placeid,1);
+        if(name==='RemoveMagic'&&d.placeid>=0&&d.placeid<this.magics.length)this.magics.splice(d.placeid,1);
         if(['NewMagic','MagicLeveled','RemoveMagic'].includes(name)&&this.menuKind==='skills'&&this.menu.active)this.showSkills();
         if(name==='GainedGold')this.gold+=d.gold;
         if(name==='LoseGold'){this.gold-=d.gold;if(this.menuKind==='shop'&&this.menu.active)this.showShop();}
