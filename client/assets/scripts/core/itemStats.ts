@@ -57,6 +57,8 @@ export function compactBagDescription(item:any,info:any,name:string,measure:(tex
  const requirements=itemRequirements(info).map(r=>r.text),details=itemDescription(item,info,name).slice(1);
  const basics=details.filter(t=>/^(重量|持久|品质|纯度|数量) /.test(t));
  const stats=details.filter(t=>!basics.includes(t)&&!requirements.includes(t));
- const rows=[[name,...basics].join(' '),stats.join(' '),requirements.join(' ')];
+ const trim=(t:string)=>t.replace(/（附加 [^）]*）/g,'').replace(/^(重量|持久|品质|纯度|数量) /,'$1').replace(/所需等级 /g,'需要等级').replace(/所需攻击上限 /g,'需要攻击力').replace(/所需魔法上限 /g,'所需魔法值').replace(/所需道术上限 /g,'所需道术').replace(/^攻击 /,'攻击力').replace(/–/g,'-');
+ const rows=[[name,...basics.map(trim)].join(' '),stats.map(trim).join(' '),requirements.map(trim).join(' ')];
+ if(info.type===20&&[1,2,4].includes(info.requiredclass)){rows[1]=({1:'武士秘籍',2:'法师秘籍',4:'道士秘籍'} as Record<number,string>)[info.requiredclass];rows[2]=requirements.filter(t=>!t.startsWith('所需职业 ')).map(trim).join(' ');}
  return rows.every(row=>measure(row)<=width)?rows:null;
 }

@@ -316,3 +316,23 @@ test('leaving a docked description restores the native bag footer and releases r
  w.itemTooltipOwner={isValid:true};w.clearItemTooltip();
  assert.equal(weight.active,true);assert.equal(other.active,true);assert.equal(destroyed,1);assert.equal(w.itemTooltipDock,undefined);assert.equal(w.itemTooltipOwner,undefined);
 });
+test('inventory and character windows toggle independently and survive item refresh',()=>{
+ const w=world();w.serverReady=true;w.targetText={string:''};w.menu={active:false,children:[]};let bag=0,character=0;w.renderBag=()=>bag++;w.renderCharacter=()=>character++;
+ w.showInventory('bag');assert.equal(w.bagOpen,true);assert.equal(w.characterOpen,false);
+ w.showInventory('character');assert.equal(w.bagOpen,true);assert.equal(w.characterOpen,true);assert.equal(w.panelRects.length,0);
+ w.showInventory();assert.equal(w.bagOpen,true);assert.equal(w.characterOpen,true);
+ w.showInventory('bag');assert.equal(w.menu.active,true);assert.equal(w.characterOpen,true);assert.equal(w.bagOpen,false);
+ w.showInventory('character');assert.equal(w.menu.active,false);assert.ok(bag>0&&character>0);
+});
+test('carried inventory item targets equipment without optimistic removal',()=>{
+ const w=world(),sent=[];w.inventory[6]={uniqueid:'weapon',info:{type:1}};w.selectedBag=6;w.connection.send=v=>{sent.push(v);return true;};w.equipmentCell(0);
+ assert.equal(sent[0].type,'equip');assert.equal(sent[0].slot,0);assert.equal(w.inventory[6].uniqueid,'weapon');assert.equal(w.selectedBag,-1);
+});
+test('occupied bag swap continues carrying the displaced item after successful acknowledgement only',()=>{
+ const w=world();w.inventory[6]={uniqueid:'a'};w.inventory[7]={uniqueid:'b'};w.bagSwapSource=6;w.packet('MoveItem',{Grid:1,From:6,To:7,Success:true});
+ assert.equal(w.inventory[7].uniqueid,'a');assert.equal(w.inventory[6].uniqueid,'b');assert.equal(w.selectedBag,6);assert.equal(w.bagSwapSource,-1);
+});
+test('failed carry move send leaves both items and clears pending swap intent',()=>{
+ const w=world();w.inventory[6]={uniqueid:'a'};w.inventory[7]={uniqueid:'b'};w.selectedBag=6;w.connection.send=()=>false;w.bagCell(7);
+ assert.equal(w.inventory[6].uniqueid,'a');assert.equal(w.inventory[7].uniqueid,'b');assert.equal(w.bagMovePending,false);assert.equal(w.bagSwapSource,-1);
+});

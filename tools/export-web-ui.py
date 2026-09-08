@@ -8,7 +8,7 @@ p=json.loads((ROOT/'tools/client-176-inputs.json').read_text());source=next(v fo
 for pin in source['files']:
  data=(folder/pin['name']).read_bytes();assert hashlib.sha256(data).hexdigest()==pin['sha256']
 out=ROOT/'client/assets/resources/mir/webui';out.mkdir(exist_ok=True);frames={}
-for i,(im,meta) in classic.read_library(folder/source['file'],[50,52,60,61,62,63,64,65,68,69,70,73,74,75,76,77,78,120,122,123,124,125,360,363,364,365,366,367,368]).items():
+for i,(im,meta) in classic.read_library(folder/source['file'],[50,52,60,61,62,63,64,65,68,69,70,73,74,75,76,77,78,120,122,123,124,125,360,361,362,363,364,365,366,367,368]).items():
  im.save(out/f'{i}.png');frames[str(i)]=meta
 (out/'frames.json').write_text(json.dumps(frames));print(frames)
 

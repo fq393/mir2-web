@@ -36,9 +36,12 @@ test('missing actor data and combat requirements remain unknown, never a fake pa
  for(const requiredtype of [1,2,3,4,5,7,8,9,10,11,99])assert.equal(itemRequirements({requiredtype,requiredamount:20},{level:50})[0].met,undefined);
 });
 test('compact native bag rows preserve name, durability, stats and requirements',()=>{
- assert.deepEqual(compactBagDescription({currentdura:10000,maxdura:10000},{weight:7,type:1,stats:{values:{mindc:2,maxdc:5}},requiredtype:0,requiredamount:1},'木剑',t=>t.length*12),['木剑 重量 7 持久 10/10','攻击 2–5','所需等级 1']);
+ assert.deepEqual(compactBagDescription({currentdura:10000,maxdura:10000},{weight:7,type:1,stats:{values:{mindc:2,maxdc:5}},requiredtype:0,requiredamount:1},'木剑',t=>t.length*12),['木剑 重量7 持久10/10','攻击力2-5','需要等级1']);
 });
 test('long original names or bonuses keep the complete view without shrinking or truncation',()=>{
  assert.equal(compactBagDescription({}, {weight:5},'很长的原物品名称'.repeat(8),t=>t.length*12),null);
  assert.equal(compactBagDescription({},null,'未知物品',t=>t.length*12),null);
+});
+test('native skill book description separates class manual and required level',()=>{
+ assert.deepEqual(compactBagDescription({}, {type:20,weight:1,requiredclass:2,requiredtype:0,requiredamount:7},'火球术',t=>t.length*12),['火球术 重量1','法师秘籍','需要等级7']);
 });

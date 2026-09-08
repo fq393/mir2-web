@@ -47,3 +47,5 @@
 - 本地截图：docs/qa/p02-native-bag-requirements.png、docs/qa/p02-native-bag-fit.png（最终构建名称已按旧代码clYellow校为黄色）。
 
 最终构建重新登录复核：名称#ffff00、资料#ffffff、拒绝要求#ff0000，书本ID3保留；两种比例截图已刷新，Escape后说明与窗口均关闭。
+
+后续窗口复核：按lzxsz/MIR2固定客户端进一步修正包裹网格、金币、(70,215)说明位置与职业秘籍文案，并移除常驻负重/操作拼串；见[native-window-flow](native-window-flow.md)。此前截图和布局结论是历史阶段记录，不代表当前全UI已经还原。

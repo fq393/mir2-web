@@ -266,7 +266,7 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey) : IDisposab
                         password=Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(bridgeKey+accountId)))[..14];
                     }else{
                         guest=false;accountId=r.GetProperty("account").GetString()??"";password=r.GetProperty("password").GetString()??"";
-                        if(accountId.StartsWith("webslot",StringComparison.OrdinalIgnoreCase)||accountId.Length<Globals.MinAccountIDLength||accountId.Length>Globals.MaxAccountIDLength||password.Length<Globals.MinPasswordLength||password.Length>Globals.MaxPasswordLength){password="";await Send(new{type="auth",stage="login",message="账号须为3至15字符，密码须为5至15字符；体验账号前缀不可注册。"},ct);continue;}
+                        if(accountId.StartsWith("webslot",StringComparison.OrdinalIgnoreCase)||accountId.Length<Globals.MinAccountIDLength||accountId.Length>Globals.MaxAccountIDLength||password.Length<Globals.MinPasswordLength||password.Length>Globals.MaxPasswordLength){password="";await Send(new{type="auth",stage="login",message=accountId.StartsWith("webslot",StringComparison.OrdinalIgnoreCase)?"此账号不可用于普通登录，请使用注册的账号。":"账号长度应为3至15字符，密码长度应为5至15字符。"},ct);continue;}
                     }
                     DateTime birth=default;
                     if(command=="register"&&(!r.TryGetProperty("birthDate",out var birthValue)||!DateTime.TryParseExact(birthValue.GetString(),"yyyy-MM-dd",System.Globalization.CultureInfo.InvariantCulture,System.Globalization.DateTimeStyles.None,out birth))){password="";await Send(new{type="error",message="生日格式不正确。"},ct);continue;}
