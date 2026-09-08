@@ -565,16 +565,15 @@ export class MirWorld extends Component {
         this.nativeImage(character,`ui:ClassicPrguse:${this.gender===1?377:376}`,40,53);
         const doll=this.makeNode('Original paperdoll equipment',character);doll.setPosition(33,-97);
         for(const slot of [1,0]){const item=this.equipment[slot];if(!item)continue;const info=item.info??this.itemInfo.get(item.itemindex),image=info?.image;if(this.frames.has(`ui:Stateitem:${image}`))this.equipmentIcons.set(slot,this.nativeImage(doll,`ui:Stateitem:${image}`,0,0,true).node);}
-        for(const {slot,x,y} of JEWELLERY_SLOTS){const item=this.equipment[slot];if(item){const icon=this.nativeItem(character,item,x,y,()=>this.equipmentCell(slot));if(icon)this.equipmentIcons.set(slot,icon.node);}const hit=this.makeNode('装备格 '+slot,character);hit.setPosition(x,-y);hit.getComponent(UITransform)!.setAnchorPoint(0,1);hit.getComponent(UITransform)!.setContentSize(36,32);this.nativeClick(hit,()=>this.equipmentCell(slot));if(item)this.bindItemTooltip(hit,item);}
+        for(const {slot,x,y} of JEWELLERY_SLOTS){const item=this.equipment[slot];if(item){const icon=this.nativeItem(character,item,x,y,()=>this.equipmentCell(slot));if(icon)this.equipmentIcons.set(slot,icon.node);}const hit=this.makeNode('装备格 '+slot,character);hit.setPosition(x,-y);hit.getComponent(UITransform)!.setAnchorPoint(0,1);hit.getComponent(UITransform)!.setContentSize(36,32);this.nativeClick(hit,()=>this.equipmentCell(slot));if(item)this.bindItemTooltip(hit,item,character,'character');}
         // Weapon/armour are already drawn by Stateitem; their original paperdoll
         // hit regions must not be replaced with inventory icons in bracelet slots.
         for(const [slot,x,y,w,h] of [[0,47,80,47,87],[1,96,122,53,112]]){
             const item=this.equipment[slot];
             const hit=this.makeNode('装备格 '+slot,character);hit.setPosition(x,-y);
-            hit.getComponent(UITransform)!.setAnchorPoint(0,1);hit.getComponent(UITransform)!.setContentSize(w,h);this.nativeClick(hit,()=>this.equipmentCell(slot));if(item)this.bindItemTooltip(hit,item);
+            hit.getComponent(UITransform)!.setAnchorPoint(0,1);hit.getComponent(UITransform)!.setContentSize(w,h);this.nativeClick(hit,()=>this.equipmentCell(slot));if(item)this.bindItemTooltip(hit,item,character,'character');
         }
-        this.nativeField(character,`等级 ${this.level}`,37,270,52,16,12,C.gold);
-        const action=this.nativeLabel(character,this.hp<=0?'回城复活':`经验 ${this.experience}/${this.maxExperience}`,37,300,11,195,C.paper);if(this.hp<=0)this.nativeClick(action.node,()=>this.connection?.send({type:'revive'}));
+        if(this.hp<=0){const action=this.nativeLabel(character,'回城复活',37,300,11,195,C.paper);this.nativeClick(action.node,()=>this.connection?.send({type:'revive'}));}
     }
     private changeCharacterPage(direction:number):void {
         const now=Date.now();if(now-this.characterNavAt<250)return;this.characterNavAt=now;
@@ -689,7 +688,7 @@ export class MirWorld extends Component {
         if(!this.itemTooltip?.isValid||this.itemTooltipDock)return;const size=this.itemTooltip.getComponent(UITransform)!.contentSize;
         const p=itemHintPosition(this.mousePoint.x,this.mousePoint.y,size.width,size.height);this.itemTooltip.setPosition(p.x,-p.y);
     }
-    private bindItemTooltip(owner:Node,item:any,bag?:Node):void {
+    private bindItemTooltip(owner:Node,item:any,bag?:Node,dockKind:'bag'|'character'='bag'):void {
         owner.on(Node.EventType.MOUSE_ENTER,(event:EventMouse)=>{
             if(this.selectedBag>=6||this.selectedEquipment>=0)return;this.clearItemTooltip();const p=event.getUILocation();this.mousePoint={x:p.x,y:600-p.y};
             const info=item.info??this.itemInfo.get(item.itemindex),name=this.itemName(item);
@@ -699,14 +698,16 @@ export class MirWorld extends Component {
             const context=typeof document==='undefined'?null:document.createElement('canvas').getContext('2d');
             if(context)context.font='12px "NSimSun","SimSun","Songti SC",serif';
             const measure=(text:string)=>context?context.measureText(text).width:Array.from(text).length*12;
-            const compact=bag?compactBagDescription(item,info,name,measure,252):null;
+            const dockWidth=dockKind==='character'?186:252;
+            const compact=bag?compactBagDescription(item,info,name,measure,dockWidth):null;
             if(bag&&compact){
                 this.itemTooltipDock=bag;for(const child of bag.children)if(child.name==='背包默认说明')child.active=false;
-                const panel=this.makeNode('物品说明',bag);this.itemTooltip=panel;this.itemTooltipOwner=owner;panel.setPosition(70,-215);
-                const nameWidth=Math.min(258,measure(name+' '));this.nativeField(panel,name,0,0,nameWidth,14,12,Color.YELLOW);
-                this.nativeField(panel,compact[0].slice(name.length+1),nameWidth,0,258-nameWidth,14,12,Color.WHITE);
-                this.nativeField(panel,compact[1],0,14,258,14,12,Color.WHITE);
-                this.nativeField(panel,compact[2],0,28,258,14,12,requirements.some(row=>row.met===false)?Color.RED:Color.WHITE);
+                const panel=this.makeNode('物品说明',bag);this.itemTooltip=panel;this.itemTooltipOwner=owner;panel.setPosition(dockKind==='character'?37:70,dockKind==='character'?-272:-215);
+                const lineWidth=dockKind==='character'?186:258;
+                const nameWidth=Math.min(lineWidth,measure(name+' '));this.nativeField(panel,name,0,0,nameWidth,14,12,Color.YELLOW);
+                this.nativeField(panel,compact[0].slice(name.length+1),nameWidth,0,lineWidth-nameWidth,14,12,Color.WHITE);
+                this.nativeField(panel,compact[1],0,14,lineWidth,14,12,Color.WHITE);
+                this.nativeField(panel,compact[2],0,28,lineWidth,14,12,requirements.some(row=>row.met===false)?Color.RED:Color.WHITE);
                 return;
             }
             const width=Math.min(380,Math.max(112,...lines.map(line=>Array.from(line).reduce((n,c)=>n+(c.charCodeAt(0)>255?12:7),0)+16))),height=lines.length*18+12;
