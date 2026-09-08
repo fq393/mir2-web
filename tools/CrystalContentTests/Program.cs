@@ -14,6 +14,12 @@ try {
     Settings.Load();ChineseText.Apply();Packet.IsServer=true;
     var envir=Envir.Main;
     JewellerySeed.Apply(envir,root,new MapInfo{Index=1,FileName="0105"});
+    var descriptionItem=envir.CreateFreshItem(envir.ItemInfoList.First());
+    using(var json=System.Text.Json.JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(DemoSeed.Items(new[]{descriptionItem})))) {
+        var metadata=json.RootElement[0].GetProperty("Info");
+        Check(metadata.GetProperty("RequiredType").GetInt32()==(int)descriptionItem.Info.RequiredType,"snapshot lost requirement type");
+        Check(metadata.GetProperty("RequiredGender").GetInt32()==(int)descriptionItem.Info.RequiredGender,"snapshot lost requirement gender");
+    }
     // A real connection on an ephemeral loopback port is enough for upstream's
     // item-definition queue. No live accounts, maps, fixed ports or save files.
     var listener=new TcpListener(IPAddress.Loopback,0);listener.Start();

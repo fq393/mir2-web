@@ -300,7 +300,13 @@ test('small map is hidden underneath native windows and restored when closed',()
 
 test('book hints show sourced class and learning level in Chinese',()=>{
  const w=world();for(const [requiredclass,name] of [[1,'战士'],[2,'法师'],[4,'道士']]){
-  const hint=w.itemHint({info:{name:'技能书',type:20,requiredclass,requiredamount:7,price:500}});
-  assert.ok(hint.includes(name+' 7级'));assert.ok(hint.includes('双击学习'));assert.ok(hint.includes('500 金币'));
+  const hint=itemStats.itemDescription({}, {name:'技能书',type:20,requiredclass,requiredtype:0,requiredamount:7}, '技能书');
+  assert.ok(hint.includes('所需职业 '+name));assert.ok(hint.includes('所需等级 7'));
  }
+});
+test('server durability updates dismiss stale hover details and preserve the instance',()=>{
+ const w=world();let destroyed=0;w.itemTooltip={isValid:true,destroy(){destroyed++;}};w.itemTooltipOwner={isValid:true};
+ w.inventory=[{uniqueid:'123',currentdura:10000,maxdura:10000}];w.equipment=[];
+ w.packet('DuraChanged',{UniqueID:'123',CurrentDura:7756});
+ assert.equal(destroyed,1);assert.equal(w.itemTooltip,undefined);assert.equal(w.inventory[0].currentdura,7756);assert.equal(w.inventory[0].maxdura,10000);
 });
