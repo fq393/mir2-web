@@ -1,36 +1,37 @@
 import {AuthPresentation} from './AuthPresentation';
-import {characterListState} from '../core/characters';
+import {characterListState,CLASSIC_CHARACTER_SLOTS} from '../core/characters';
 /** Original Prguse windows plus native browser text fields. Credentials stay in form memory. */
 export class AccountUI {
  private root:HTMLDivElement;private canvas:HTMLDivElement;private message:HTMLDivElement;private observer:ResizeObserver;
  private exit:HTMLButtonElement;private waitingForConnection=true;
- private presentation=new AuthPresentation();private stage='login';
- private characters:any[]=[];private characterLimit=4;private selected=0;private role=0;private gender=0;
+ private musicButton!:HTMLButtonElement;private guestButton!:HTMLButtonElement;private presentation=new AuthPresentation();private stage='login';
+ private characters:any[]=[];private characterLimit=CLASSIC_CHARACTER_SLOTS;private selected=0;private role=0;private gender=0;
  get active():boolean{return !this.root.hidden;}
  constructor(private send:(value:any)=>boolean,private logout:()=>void){
   const host=document.getElementById('GameDiv')!;this.exit=document.createElement('button');this.exit.textContent='退出登录';this.exit.style.cssText='position:fixed;left:8px;top:8px;z-index:16;color:#e9dba7;background:#171714;border:1px solid #585442';this.exit.onclick=logout;this.exit.hidden=true;document.body.append(this.exit);this.root=document.createElement('div');this.root.style.cssText='position:absolute;inset:0;z-index:20;background:#090a08;overflow:hidden;color:#e9dba7;font:13px SimSun,"Songti SC",serif;';host.append(this.root);
   this.canvas=document.createElement('div');this.canvas.style.cssText='position:absolute;width:800px;height:600px;transform-origin:top left;';this.root.append(this.canvas);
   this.root.addEventListener('pointerdown',()=>this.presentation.unlock());this.root.addEventListener('keydown',()=>this.presentation.unlock());
-  const music=document.createElement('button');music.type='button';music.textContent='音乐：开启';music.setAttribute('aria-label','切换背景音乐');music.style.cssText='position:absolute;right:12px;top:12px;z-index:1;color:#e9dba7;background:#171714;border:1px solid #585442;';music.onclick=()=>music.textContent=this.presentation.toggle()?'音乐：开启':'音乐：静音';this.root.append(music);
+  const music=this.musicButton=document.createElement('button');music.type='button';music.textContent='音乐：开启';music.setAttribute('aria-label','切换背景音乐');music.style.cssText='position:fixed;right:96px;top:8px;z-index:16;color:#e9dba7;background:#171714;border:1px solid #585442;';music.onclick=()=>music.textContent=this.presentation.toggle()?'音乐：开启':'音乐：静音';document.body.append(music);
+  this.guestButton=document.createElement('button');this.guestButton.textContent='本地体验';this.guestButton.setAttribute('aria-label','本地体验角色');this.guestButton.style.cssText='position:fixed;left:8px;top:8px;z-index:16;color:#e9dba7;background:#171714;border:1px solid #585442';this.guestButton.onclick=()=>this.submit({type:'guest'});document.body.append(this.guestButton);
   this.message=document.createElement('div');this.message.setAttribute('role','status');this.message.style.cssText='position:absolute;left:10%;bottom:3%;width:80%;text-align:center;color:white;';this.root.append(this.message);
   this.observer=new ResizeObserver(()=>this.canvas.style.transform=`scale(${host.clientWidth/800})`);this.observer.observe(host);this.show('login','正在连接服务器…');this.lockConnectionForm();
  }
- private lockConnectionForm():void{this.canvas.querySelectorAll('button,input').forEach(el=>(el as HTMLInputElement).disabled=true);}
+ private lockConnectionForm():void{this.guestButton.disabled=true;this.canvas.querySelectorAll('button,input').forEach(el=>(el as HTMLInputElement).disabled=true);}
  private image(parent:HTMLElement,id:number,x:number,y:number):HTMLImageElement{const i=document.createElement('img');i.src=`webui/${id}.png`;i.draggable=false;i.style.cssText=`position:absolute;left:${x}px;top:${y}px;`;parent.append(i);return i;}
  private button(parent:HTMLElement,label:string,x:number,y:number,w:number,h:number,run:()=>void):HTMLButtonElement{const b=document.createElement('button');b.type='button';b.setAttribute('aria-label',label);b.title=label;b.style.cssText=`position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${h}px;border:0;background:transparent;color:transparent;cursor:pointer;`;b.textContent=label;b.onclick=run;parent.append(b);return b;}
  private input(parent:HTMLElement,label:string,x:number,y:number,w:number,type='text'):HTMLInputElement{const i=document.createElement('input');i.type=type;i.setAttribute('aria-label',label);i.autocomplete=type==='password'?'current-password':'off';i.maxLength=type==='password'?15:80;i.style.cssText=`position:absolute;left:${x}px;top:${y}px;width:${w}px;height:17px;padding:0 2px;background:#080403;border:0;color:white;outline:0;font:12px SimSun,"Songti SC",serif;`;parent.append(i);return i;}
  private window(id:number,w:number,h:number):HTMLDivElement{this.canvas.replaceChildren();this.presentation.background(this.canvas,['login','register','password'].includes(this.stage));const p=document.createElement('div');p.style.cssText=`position:absolute;left:${(800-w)/2}px;top:${(600-h)/2}px;width:${w}px;height:${h}px;`;this.canvas.append(p);this.image(p,id,0,0);return p;}
- event(e:any):void{if(e.type==='error'){this.message.textContent=e.message??'操作未成功';if(!this.waitingForConnection)this.canvas.querySelectorAll('button').forEach(b=>b.disabled=false);return;}if(e.type==='ready'){this.presentation.clear();this.presentation.setScene('world');this.stage='world';this.exit.hidden=false;this.root.hidden=true;this.canvas.replaceChildren();document.getElementById("GameCanvas")?.focus();return;}if(e.type==='disconnected'){this.characters=[];this.selected=0;this.waitingForConnection=true;this.show('login','正在重新连接服务器…');this.lockConnectionForm();return;}if(e.type==='auth'){this.waitingForConnection=false;this.characters=e.characters??this.characters;if(Number.isInteger(e.characterLimit)&&e.characterLimit>0)this.characterLimit=e.characterLimit;if(e.selectedIndex)this.selected=e.selectedIndex;this.selected=characterListState(this.characters,this.selected).selected;if(e.stage==='characters'&&this.stage==='opening')return;
-  if(e.stage==='characters'&&this.stage==='login'){this.stage='opening';this.message.textContent='';void this.presentation.openDoor(this.canvas,()=>this.show('characters',e.message??''));return;}
+ event(e:any):void{if(e.type==='error'){this.message.textContent=e.message??'操作未成功';if(!this.waitingForConnection)this.canvas.querySelectorAll('button').forEach(b=>b.disabled=false);return;}if(e.type==='ready'){this.presentation.clear();this.presentation.setScene('world');this.musicButton.hidden=true;this.guestButton.hidden=true;this.stage='world';this.exit.hidden=false;this.root.hidden=true;this.canvas.replaceChildren();document.getElementById("GameCanvas")?.focus();return;}if(e.type==='disconnected'){this.characters=[];this.selected=0;this.waitingForConnection=true;this.show('login','正在重新连接服务器…');this.lockConnectionForm();return;}if(e.type==='auth'){this.waitingForConnection=false;this.characters=e.characters??this.characters;if(Number.isInteger(e.characterLimit)&&e.characterLimit>0)this.characterLimit=Math.min(CLASSIC_CHARACTER_SLOTS,e.characterLimit);if(e.selectedIndex)this.selected=e.selectedIndex;this.selected=characterListState(this.characters,this.selected).selected;if(e.stage==='characters'&&this.stage==='opening')return;
+  if(e.stage==='characters'&&this.stage==='login'){this.stage='opening';this.guestButton.hidden=true;this.message.textContent='';void this.presentation.openDoor(this.canvas,()=>this.show('characters',e.message??''));return;}
   this.show(e.stage,e.message??'');}}
  private submit(value:any):void{if(this.send(value)){this.message.textContent='正在等待服务器确认…';this.canvas.querySelectorAll('button').forEach(b=>b.disabled=true);}else this.message.textContent='连接尚未就绪，请稍后再试。';}
  show(stage:string,message=''):void{
   this.presentation.clear();this.stage=stage;this.presentation.setScene(['characters','create'].includes(stage)?'select':'login');
-  this.root.hidden=false;this.exit.hidden=true;this.message.textContent=message;
+  this.root.hidden=false;this.exit.hidden=true;this.musicButton.hidden=false;this.guestButton.hidden=stage!=='login';this.guestButton.disabled=this.waitingForConnection;this.message.textContent=message;
   if(stage==='login'){
    const p=this.window(60,296,254),account=this.input(p,'账号',98,85,137),password=this.input(p,'密码',98,117,137,'password');account.maxLength=15;
    const login=()=>{this.submit({type:'login',account:account.value.trim(),password:password.value});password.value='';};this.button(p,'登录',171,165,76,33,login);password.onkeydown=e=>{if(e.key==='Enter'&&!e.isComposing)login();};
-   this.button(p,'注册账号',24,207,87,32,()=>this.show('register'));this.button(p,'修改密码',111,207,100,32,()=>this.show('password'));const guest=this.button(p,'本地体验角色',65,270,170,25,()=>this.submit({type:'guest'}));guest.style.color='#e9dba7';
+   this.button(p,'注册账号',24,207,87,32,()=>this.show('register'));this.button(p,'修改密码',111,207,100,32,()=>this.show('password'));
   }else if(stage==='password'){
    const p=this.window(50,420,299),account=this.input(p,'修改密码账号',240,118,133),old=this.input(p,'当前密码',240,150,133,'password'),next=this.input(p,'新密码',240,179,133,'password'),repeat=this.input(p,'重复新密码',240,210,133,'password');account.maxLength=15;
    this.button(p,'确认修改密码',181,251,76,33,()=>{if(next.value!==repeat.value){this.message.textContent='两次新密码不一致。';return;}this.submit({type:'changePassword',account:account.value.trim(),password:old.value,newPassword:next.value});old.value='';next.value='';repeat.value='';});this.button(p,'取消修改密码',275,251,96,33,()=>this.show('login'));
@@ -40,16 +41,14 @@ export class AccountUI {
    this.button(p,'提交注册',160,417,76,33,()=>{if(pw.value!==confirm.value){this.message.textContent='两次密码不一致。';return;}if(!birth.value||!email.value||!q.value||!a.value||!user.value){this.message.textContent='请填写称呼、生日、密保和邮箱。';return;}this.submit({type:'register',account:account.value.trim(),password:pw.value,userName:user.value,birthDate:birth.value,question:q.value,answer:a.value,email:email.value});pw.value='';confirm.value='';});this.button(p,'返回登录',448,419,96,33,()=>this.show('login'));
   }else if(stage==='characters'){
    const p=this.window(65,800,600),state=characterListState(this.characters,this.selected);this.selected=state.selected;
-   const note=document.createElement('div');note.style.cssText='position:absolute;left:160px;top:35px;width:480px;text-align:center;color:#e9dba7;font:16px SimSun,"Songti SC",serif;';note.textContent=state.characters.length?`选择人物 · ${state.characters.length} 位角色`:'尚未创建人物，请点击下方「创建角色」。';p.append(note);
-   state.characters.slice(state.page*2,state.page*2+2).forEach((c,i)=>{
+   state.characters.forEach((c,i)=>{
     this.presentation.portrait(p,c.role,c.gender,i,this.selected===c.index);
     const b=this.button(p,`选择角色 ${c.name}`,i?681:133,455,76,30,()=>{this.selected=c.index;this.show('characters');});b.setAttribute('aria-pressed',String(this.selected===c.index));if(this.selected===c.index)b.style.outline='1px solid #c3a157';
     for(const [value,y] of [[c.name,493],[c.level?String(c.level):'初入玛法',522],[(c.gender?'女':'男')+(['战士','法师','道士'][c.role]??'未支持'),552]] as const){const text=document.createElement('div');text.textContent=value;text.style.cssText=`position:absolute;left:${117+i*554}px;top:${y}px;width:110px;height:20px;color:#e9dba7;font:12px SimSun,"Songti SC",serif;`;p.append(text);}
    });
-   if(state.pages>1){for(const [label,delta,x] of [['上一页',-1,300],['下一页',1,440]] as const){const b=this.button(p,label,x,392,60,32,()=>{this.selected=state.characters[(state.page+delta)*2].index;this.show('characters');});b.style.color='#e9dba7';b.disabled=state.page+delta<0||state.page+delta>=state.pages;b.style.opacity=b.disabled?'.4':'1';}}
    this.button(p,'退出当前账号',383,548,60,30,()=>this.logout());
    this.image(p,68,385,456);const enter=this.button(p,'进入游戏',385,456,44,21,()=>{if(!this.selected)return;this.submit({type:'startCharacter',index:this.selected});});enter.disabled=!this.selected;
-   this.image(p,69,348,486);const create=this.button(p,'创建角色',348,486,120,21,()=>this.show('create'));create.disabled=this.characters.length>=this.characterLimit;if(create.disabled)this.message.textContent='当前账号角色数量已达上限。';
+   this.image(p,69,348,486);const create=this.button(p,'创建角色',348,486,120,21,()=>this.show('create'));create.disabled=this.characters.length>=this.characterLimit;
   }else if(stage==='create'){
    const scene=this.window(65,800,600),preview=this.presentation.portrait(scene,this.role,this.gender);
    const p=document.createElement('div');p.style.cssText='position:absolute;left:415px;top:15px;width:300px;height:417px;';scene.append(p);this.image(p,73,0,0);
@@ -59,5 +58,5 @@ export class AccountUI {
    this.button(p,'确认创建',104,361,76,33,()=>this.submit({type:'createCharacter',name:name.value.trim(),class:this.role,gender:this.gender}));this.button(p,'返回角色列表',248,31,16,23,()=>this.show('characters'));
   }
  }
- destroy():void{this.presentation.destroy();this.observer.disconnect();this.root.remove();this.exit.remove();}
+ destroy():void{this.presentation.destroy();this.observer.disconnect();this.root.remove();this.exit.remove();this.musicButton.remove();this.guestButton.remove();}
 }
