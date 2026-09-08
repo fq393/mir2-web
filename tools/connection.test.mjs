@@ -289,7 +289,7 @@ test('F1-F8 dispatch the binding and modal keys select without casting',()=>{
  w.menu.active=true;w.menuKind='skillKeys';w.bindingSpell=31;w.showSkillKeys=()=>{};
  w.onKeyDown({keyCode:119});assert.equal(w.bindingKey,8);assert.equal(keys.length,3);
  w.skillPending=true;w.onKeyDown({keyCode:112});assert.equal(w.bindingKey,8);
- w.onKeyDown({keyCode:27});assert.equal(w.menu.active,false);
+ let returned=false;w.showSkills=()=>returned=true;w.onKeyDown({keyCode:27});assert.equal(returned,true);
 });
 test('small map is hidden underneath native windows and restored when closed',()=>{
  const w=world(),states=[];w.serverReady=true;w.miniMap={update:(dt,map,p,peers,active)=>states.push(active)};
@@ -364,4 +364,23 @@ test('disconnect cancels carried equipment and pending action',()=>{
 test('missing equipment reply resynchronizes instead of retrying the transaction',()=>{
  const w=world();w.notice=()=>{};w.serverReady=true;w.equipmentPending=true;w.equipmentPendingAt=Date.now()-6000;w.equipment[0]={uniqueid:'sword'};w.syncCarriedItem();
  assert.equal(w.reconnected,true);assert.equal(w.serverReady,false);assert.equal(w.equipmentPending,false);assert.equal(w.equipment[0].uniqueid,'sword');
+});
+
+test('character pages cycle four original pages without closing bag or keeping worn carry',()=>{
+ const w=world();let refresh=0;w.showInventory=()=>refresh++;w.bagOpen=true;w.characterOpen=true;w.selectedEquipment=0;
+ w.changeCharacterPage(-1);assert.equal(w.characterPage,3);assert.equal(w.selectedEquipment,-1);assert.equal(w.bagOpen,true);
+ w.changeCharacterPage(1);assert.equal(w.characterPage,3);w.characterNavAt=-Infinity;w.changeCharacterPage(1);assert.equal(w.characterPage,0);assert.equal(refresh,2);
+});
+test('skills entrance and binding return preserve the bag and native character window',()=>{
+ const w=world();w.showInventory=()=>{};w.menu.active=true;w.menuKind='inventory';w.bagOpen=true;w.showSkills();assert.equal(w.characterPage,3);assert.equal(w.characterOpen,true);assert.equal(w.bagOpen,true);
+ w.menuKind='skillKeys';w.skillReturnBag=true;w.showSkills();assert.equal(w.menuKind,'inventory');assert.equal(w.bagOpen,true);
+});
+test('final character stats accept only own snapshot and are cleared on disconnect',()=>{
+ const w=world();w.ownId=1;w.serverEvent({type:'vitals',data:{ObjectId:2,Attributes:{MaxDC:999}}});assert.equal(w.attributes,null);
+ w.serverEvent({type:'vitals',data:{ObjectId:1,Attributes:{MinDC:1,MaxDC:9}}});assert.equal(w.attributes.maxdc,9);w.serverEvent({type:'disconnected'});assert.equal(w.attributes,null);
+});
+
+test('new character session clears previous role page and final stats',()=>{
+ const w=world();w.characterPage=3;w.skillPage=2;w.skillReturnBag=true;w.attributes={maxdc:999};w.serverEvent({type:'ready',objectId:1,x:2,y:2});
+ assert.equal(w.characterPage,0);assert.equal(w.skillPage,0);assert.equal(w.skillReturnBag,false);assert.equal(w.attributes,null);
 });

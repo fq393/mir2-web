@@ -45,3 +45,10 @@ test('long original names or bonuses keep the complete view without shrinking or
 test('native skill book description separates class manual and required level',()=>{
  assert.deepEqual(compactBagDescription({}, {type:20,weight:1,requiredclass:2,requiredtype:0,requiredamount:7},'火球术',t=>t.length*12),['火球术 重量1','法师秘籍','需要等级7']);
 });
+
+test('combat requirements use final authoritative maxima and preserve unknown',()=>{
+ const info={requiredtype:3,requiredamount:9};
+ assert.equal(itemRequirements(info,{attributes:{maxdc:8}})[0].met,false);
+ assert.equal(itemRequirements(info,{attributes:{maxdc:9}})[0].met,true);
+ assert.equal(itemRequirements(info,{})[0].met,undefined);
+});

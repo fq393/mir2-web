@@ -119,3 +119,5 @@ npm test
 人物删除流程：原选角按钮与确认框、取消/断线保护、服务端归属检查、删除后角色位复用，详见[人物生命周期验收](docs/character-lifecycle.md)。删除恢复管理仍待做。
 
 后续开发按[执行计划](tasks/plan.md)和[逐项清单](tasks/todo.md)推进；[模块总表](docs/TASKS.md)覆盖74项。新发现先记录证据和前置依赖，已有模块中的缺失分支不重复建项。
+
+完整性推进方式见[主动查缺与验收矩阵](docs/completeness-audit.md)，人物窗口本批依据与剩余范围见[人物四页](docs/character-pages.md)。

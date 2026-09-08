@@ -35,7 +35,7 @@ export function itemHintPosition(x:number,y:number,width:number,height:number):{
  return {x:Math.max(0,Math.min(x+16,800-width)),y:Math.max(0,Math.min(y+16,600-height))};
 }
 
-export type ItemViewer={level?:number;job?:number;gender?:number};
+export type ItemViewer={level?:number;job?:number;gender?:number;attributes?:Record<string,number>|null};
 export type ItemRequirement={text:string;met?:boolean};
 /** Unknown is distinct from pass: do not infer final combat stats from equipment. */
 export function itemRequirements(info:any,viewer:ItemViewer={}):ItemRequirement[]{
@@ -46,7 +46,8 @@ export function itemRequirements(info:any,viewer:ItemViewer={}):ItemRequirement[
  }
  if(info.requiredgender===1||info.requiredgender===2)rows.push({text:`所需性别 ${info.requiredgender===1?'男':'女'}`,met:[0,1].includes(viewer.gender!)?!!(info.requiredgender&(1<<viewer.gender!)):undefined});
  if(info.requiredamount>0){const titles=['所需等级','所需防御上限','所需魔御上限','所需攻击上限','所需魔法上限','所需道术上限','等级上限','所需防御下限','所需魔御下限','所需攻击下限','所需魔法下限','所需道术下限'];
-  const met=Number.isFinite(viewer.level)?(info.requiredtype===0?viewer.level!>=info.requiredamount:info.requiredtype===6?viewer.level!<=info.requiredamount:undefined):undefined;
+  const key:Record<number,string>={1:'maxac',2:'maxmac',3:'maxdc',4:'maxmc',5:'maxsc',7:'minac',8:'minmac',9:'mindc',10:'minmc',11:'minsc'};const actual=info.requiredtype===0||info.requiredtype===6?viewer.level:viewer.attributes?.[key[info.requiredtype]];
+  const met=Number.isFinite(actual)?(info.requiredtype===6?actual!<=info.requiredamount:actual!>=info.requiredamount):undefined;
   rows.push({text:`${titles[info.requiredtype]??'要求类型待同步'} ${info.requiredamount}`,met});
  }
  return rows;
