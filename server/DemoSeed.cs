@@ -60,6 +60,7 @@ static class DemoSeed
         }
         if(!envir.MagicInfoList.Any(m=>m.Spell==Spell.FireBall)) envir.MagicInfoList.Add(new MagicInfo {Name="FireBall",Spell=Spell.FireBall,BaseCost=1,Level1=1,Level2=2,Level3=3,Need1=100,Need2=100,Need3=100,PowerBase=12,PowerBonus=2,MPowerBase=12,MPowerBonus=2,Range=9});
         WildlifeSeed.Apply(envir,root,map);
+        MerchantSeed.Apply(envir,root,map);
         var guide=envir.NPCInfoList.FirstOrDefault(n=>n.FileName=="BichonGuide");
         if(guide==null) { guide=new NPCInfo {Index=++envir.NPCIndex,FileName="BichonGuide",Name="比奇向导",Image=0,Colour=Color.White,Rate=100};envir.NPCInfoList.Add(guide); }
         guide.MapIndex=map.Index;

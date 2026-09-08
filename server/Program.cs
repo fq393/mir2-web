@@ -91,6 +91,7 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey) : IDisposab
     int slot = -1;
     string accountId = "", password = "", characterName = "";
     bool protocolReady,guest,authBusy,authenticated;
+    MerchantQuote? tradeQuote;string tradeToken="";
     readonly List<SelectInfo> characters=new();
     uint objectId;
     WorldVitals? lastVitals;
@@ -281,6 +282,22 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey) : IDisposab
                 int Num(string k,int fallback=0)=>r.TryGetProperty(k,out var v)?v.GetInt32():fallback;
                 ulong Id(string k)=>r.GetProperty(k).ValueKind==JsonValueKind.String?ulong.Parse(r.GetProperty(k).GetString()!):r.GetProperty(k).GetUInt64();
                 if(command is "attack" or "cast" or "harvest" && (Num("direction")<0 || Num("direction")>7)) throw new InvalidDataException("direction must be 0..7");
+                if(command is "tradeQuote" or "tradeCommit"){
+                    var request=r.TryGetProperty("request",out var req)?req.GetInt32():0;
+                    try{
+                        if(command=="tradeQuote"){
+                            tradeQuote=null;tradeToken="";var uid=Id("uniqueId");var mode=r.GetProperty("mode").GetString()??"";
+                            var quote=await WorldRequests.Run(e=>MerchantTrades.Quote(e.Players.FirstOrDefault(p=>p.ObjectID==objectId),uid,mode),ct);
+                            tradeQuote=quote;tradeToken=Guid.NewGuid().ToString("N");await Send(new{type="tradeQuote",request,token=tradeToken,quote},ct);
+                        }else{
+                            var quote=tradeQuote;var token=tradeToken;tradeQuote=null;tradeToken="";
+                            if(quote==null||r.GetProperty("token").GetString()!=token)throw new InvalidOperationException("报价已失效，请重新选择物品。");
+                            await WorldRequests.Run(e=>{MerchantTrades.Commit(e.Players.FirstOrDefault(p=>p.ObjectID==objectId),quote);return true;},ct);
+                            await Send(new{type="tradeResult",success=true,request,message="商店业务已处理。"},ct);
+                        }
+                    }catch(InvalidOperationException ex){await Send(new{type="tradeResult",success=false,request,message=ex.Message},ct);}
+                    continue;
+                }
                 if(command=="chat"){
                     var message=r.GetProperty("message").GetString()??"";
                     if(message.Length==0||message.Length>Globals.MaxChatLength||message.Any(c=>char.IsControl(c))){await Send(new{type="error",message="聊天内容须为1至80个字符且不含控制字符。"},ct);continue;}

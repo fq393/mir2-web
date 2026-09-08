@@ -93,6 +93,7 @@ try {
     leveller.WinExp(2400);Check(leveller.Level==7&&leveller.Experience==0,"multi-level experience carry");
     Console.WriteLine("PASS real Crystal WinExp: below threshold, exact level up, multi-level carry.");
     WildlifeTests.Run(root,envir,connection);
+    MerchantTests.Run(root,envir,connection);
     var observed=new RecordingPlayer {Stats=new Stats {[Stat.HP]=120,[Stat.MP]=45,[Stat.BagWeight]=50},Info=new CharacterInfo(),Account=new AccountInfo(),CurrentBagWeight=9};
     envir.Players.Add(observed);Mir2.WebHost.WorldSnapshots.Publish(envir);
     var snapshot=Mir2.WebHost.WorldSnapshots.Read(observed.ObjectID);

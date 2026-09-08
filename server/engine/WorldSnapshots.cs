@@ -8,6 +8,7 @@ public static class WorldSnapshots {
  static long next;
  public static WorldVitals Read(uint id)=>latest.TryGetValue(id,out var value)?value:null;
  public static void Publish(Envir envir){
+  WorldRequests.Drain(envir);
   if(envir.Time<next)return;next=envir.Time+100;
   var online=new HashSet<uint>();
   foreach(var p in envir.Players){

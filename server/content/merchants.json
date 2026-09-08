@@ -1,0 +1,51 @@
+{
+  "status": "candidate merchant scripts, not authenticated official 1.76 economy",
+  "sources": [
+    {
+      "path": "raw-assets/reference-server176/MerChant.txt",
+      "sha256": "4dc310f4594b717ed9dcf7b82eee589a04fb7ebcc2b8e17cb77c64299db41f9a"
+    },
+    {
+      "path": "raw-assets/reference-server176/肉店.txt",
+      "sha256": "0df8a713920e682fb1538d86faa3602f0d90dcf3160897e55f95068d172df9e6"
+    },
+    {
+      "path": "raw-assets/reference-server176/戒指店.txt",
+      "sha256": "79e396311bcb8e552bc95eda6a98cc6449504f937c4599e45ab3cff118b3a6f8"
+    },
+    {
+      "path": "raw-assets/reference-server176/手镯店.txt",
+      "sha256": "710b339d5762ac2a8338af3263bcd9982907a2ce91ae0c51ff97ab9cc5fe17f9"
+    },
+    {
+      "path": "raw-assets/reference-server176/项链店.txt",
+      "sha256": "1a6be6f9847df9909f8befb2dd6886fce22fbaa26e340c01ba78c618dcf15423"
+    }
+  ],
+  "butchers": [
+    {
+      "name": "比奇城屠夫",
+      "file": "BichonButcherCity",
+      "x": 313,
+      "y": 271,
+      "image": 4,
+      "sourceLine": 26
+    },
+    {
+      "name": "边界村屠夫",
+      "file": "BichonButcherBorder",
+      "x": 293,
+      "y": 603,
+      "image": 11,
+      "sourceLine": 54
+    },
+    {
+      "name": "新人村屠夫",
+      "file": "BichonButcherGinkgo",
+      "x": 649,
+      "y": 591,
+      "image": 11,
+      "sourceLine": 50
+    }
+  ]
+}

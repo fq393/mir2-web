@@ -76,6 +76,7 @@ export class MirWorld extends Component {
     private authoritativeMaxHP=0;private authoritativeMaxMP=0;private experience=0;private maxExperience=0;private bagWeight=0;private maxBagWeight=0;private magics:any[]=[];private expBar!:Sprite;private weightBar!:Sprite;
     private job=0;private hpBase!:Sprite;private hp=0;private mp=0;private gold=0;private level=1;private inventory:any[]=[];private equipment:any[]=[];
     private stats!:Label;private targetText!:Label;private logText!:Label;private menu!:Node;
+    private tradeMode="sell";private tradeItem:any=null;private tradeQuote:any=null;private tradeRequest=0;
     private logs:string[]=[];private npcPage:string[]=[];private menuKind='';private npcId=0;private goods:any[]=[];private lastAttack=0;
     private collisionCell='';private particleEffects:{node:Node;sprite:Sprite;keys:string[];age:number;life:number;from:Point;to:Point}[]=[];
 
@@ -306,8 +307,11 @@ export class MirWorld extends Component {
         this.notice(`进入${target.map.name??'比奇省'}`);this.updateView();return true;
     }
     private serverEvent(event:any):void {this.accounts?.event(event);
+        if(event.type==='tradeQuote'&&event.request===this.tradeRequest&&this.menu.active&&this.menuKind==='merchant'){this.tradeQuote={token:event.token,quote:this.normalize(event.quote)};this.showMerchant();return;}
+        if(event.type==='tradeResult'&&event.request===this.tradeRequest){this.tradeQuote=null;if(event.success)this.tradeItem=null;this.notice(event.message);if(this.menu.active&&this.menuKind==='merchant')this.showMerchant();return;}
+
         if(event.type==='packet'){this.packet(event.packet,event.data);return;}
-        if(event.type==='disconnected'){this.chatInput?.setActive(false);this.logs=[];if(this.logText)this.logText.string='';if(this.menu)this.menu.active=false;this.party?.reset();this.clearLoot();this.pendingUses.clear();this.fireTargets.clear();this.serverReady=false;this.clearMovement();this.peers.forEach(p=>{p.node.destroy();p.label?.node.destroy();p.healthBar?.node.destroy();});this.peers.clear();return;}
+        if(event.type==='disconnected'){this.tradeRequest++;this.tradeItem=null;this.tradeQuote=null;this.chatInput?.setActive(false);this.logs=[];if(this.logText)this.logText.string='';if(this.menu)this.menu.active=false;this.party?.reset();this.clearLoot();this.pendingUses.clear();this.fireTargets.clear();this.serverReady=false;this.clearMovement();this.peers.forEach(p=>{p.node.destroy();p.label?.node.destroy();p.healthBar?.node.destroy();});this.peers.clear();return;}
         if(event.type==='vitals'){const d=this.normalize(event.data);if(d.objectid!==this.ownId)return;this.authoritativeMaxHP=d.maxhp;this.authoritativeMaxMP=d.maxmp;this.bagWeight=d.bagweight;this.maxBagWeight=d.maxbagweight;return;}
         if(event.type==='transport')this.statusText='正在进入游戏';
         if(event.type==='ready') {this.chatInput?.setActive(true);this.gender=event.gender??0;this.characterName=event.name??'旅人';if(this.ownLabel)this.ownLabel.string=this.characterName;
@@ -490,7 +494,7 @@ export class MirWorld extends Component {
         for(let slot=6;slot<Math.min(46,this.inventory.length);slot++){
             const item=this.inventory[slot];if(!item)continue;
             const x=9+(slot-6)%8*37,y=9+Math.floor((slot-6)/8)*33;
-            this.nativeItem(bag,item,x,y,()=>{const info=item.info??this.itemInfo.get(item.itemindex);const target=equipmentTarget(info?.type,this.equipment);if(info?.type===13||info?.type===20)this.useInventoryItem(item);else if(target>=0)this.connection?.send({type:'equip',uniqueId:String(item.uniqueid),slot:target});},(item.info??this.itemInfo.get(item.itemindex))?.type===20);
+            this.nativeItem(bag,item,x,y,()=>{if(this.menuKind==='merchant'){this.requestTrade(item);return;}const info=item.info??this.itemInfo.get(item.itemindex);const target=equipmentTarget(info?.type,this.equipment);if(info?.type===13||info?.type===20)this.useInventoryItem(item);else if(target>=0)this.connection?.send({type:'equip',uniqueId:String(item.uniqueid),slot:target});},(item.info??this.itemInfo.get(item.itemindex))?.type===20);
         }
     }
     private nativeItem(parent:Node,item:any,x:number,y:number,action:()=>void,double=false):void {
@@ -505,9 +509,25 @@ export class MirWorld extends Component {
     }
     private renderNPCDialog():void {
         const page=this.npcPage;
-        const dialog=this.nativeWindow(this.menu,'ui:ClassicPrguse:384',0,0);this.nativeLabel(dialog,this.peers.get(this.npcId)?.name??'',30,16,14,360,C.gold);this.closeNative(dialog,399,1);let y=48;
-        page.forEach(line=>{const links=Array.from(line.matchAll(/<([^/<>]+)\/([^<>]+)>/g));const plain=line.replace(/<[^<>]+>/g,'').replace(/\\/g,'').trim();if(plain){this.nativeLabel(dialog,plain,22,y,13,396);y+=27;}
-            links.forEach(match=>{const label=this.nativeLabel(dialog,match[1],22,y,13,396,new Color(245,224,140));this.nativeClick(label.node,()=>{if(/exit/i.test(match[2])){this.menu.active=false;return;}this.connection?.send({type:'npc',id:this.npcId,key:`[@${match[2].replace(/^@/,'').toUpperCase()}]`});});y+=28;});});
+        const dialog=this.nativeWindow(this.menu,'ui:ClassicPrguse:384',0,0);this.nativeLabel(dialog,this.peers.get(this.npcId)?.name??'',30,16,14,360,C.gold);this.closeNative(dialog,399,1);let y=43;
+        page.forEach(line=>{const links=Array.from(line.matchAll(/<([^/<>]+)\/([^<>]+)>/g));const plain=line.replace(/<[^<>]+>/g,'').replace(/\\/g,'').trim();if(plain){this.nativeLabel(dialog,plain,22,y,13,396);y+=18;}
+            links.forEach(match=>{const label=this.nativeLabel(dialog,match[1],22,y,13,396,new Color(245,224,140));this.nativeClick(label.node,()=>{if(/exit/i.test(match[2])){this.menu.active=false;return;}this.connection?.send({type:'npc',id:this.npcId,key:`[@${match[2].replace(/^@/,'').toUpperCase()}]`});});y+=18;});});
+    }
+    private requestTrade(item:any):void {
+        this.tradeItem=item;this.tradeQuote=null;this.tradeRequest++;
+        this.connection?.send({type:'tradeQuote',request:this.tradeRequest,uniqueId:String(item.uniqueid),mode:this.tradeMode});this.showMerchant();
+    }
+    private showMerchant(mode?:string):void {
+        if(mode){this.tradeMode=mode;this.tradeItem=null;this.tradeQuote=null;this.tradeRequest++;}
+        this.menuKind='merchant';this.menu.children.slice().forEach(c=>c.destroy());this.panelRects=[];this.menu.active=true;
+        this.renderNPCDialog();this.renderBag(464);
+        // Old FState: DSellDlg at (328,163), slot (27,67), confirmation (85,150).
+        const dialog=this.nativeWindow(this.menu,'ui:ClassicPrguse:392',328,163),name=this.tradeMode==='sell'?'出售':this.tradeMode==='special'?'特修':'修理';
+        this.nativeLabel(dialog,`${name}：${this.tradeQuote?this.tradeQuote.quote.gold:'—'}`,8,6,11,110,Color.WHITE);this.closeNative(dialog,115,0);
+        if(this.tradeItem){this.nativeItem(dialog,this.tradeItem,39,77,()=>{});this.nativeLabel(dialog,this.itemName(this.tradeItem),5,37,10,123,Color.WHITE);}
+        const button=this.nativeImage(dialog,'ui:ClassicPrguse:393',85,150);
+        if(this.tradeQuote){this.nativeClick(button.node,()=>{const token=this.tradeQuote?.token;if(!token)return;this.tradeQuote=null;this.connection?.send({type:'tradeCommit',request:this.tradeRequest,token});this.showMerchant();});}
+        else button.color=new Color(130,130,130,255);
     }
     private shopPrice(item:any):number {
         const info=this.itemInfo.get(item.itemindex);if(!info)return 0;let p=info.price;
@@ -595,7 +615,7 @@ export class MirWorld extends Component {
         if(name==='MagicLeveled'&&d.objectid===this.ownId){const magic=this.magics.find(m=>m.spell===d.spell);if(magic)Object.assign(magic,{level:d.level,experience:d.experience});}
         if(name==='RemoveMagic'&&d.placeid>=0&&d.placeid<this.magics.length)this.magics.splice(d.placeid,1);
         if(['NewMagic','MagicLeveled','RemoveMagic'].includes(name)&&this.menuKind==='skills'&&this.menu.active)this.showSkills();
-        if(name==='GainedGold')this.gold+=d.gold;
+        if(name==='GainedGold'){this.gold+=d.gold;if(this.menuKind==='merchant'&&this.menu.active)this.showMerchant();}
         if(name==='LoseGold'){this.gold-=d.gold;if(this.menuKind==='shop'&&this.menu.active)this.showShop();}
         if(name==='DamageIndicator'&&d.damage!==0){this.notice(`${id===this.ownId?'你':p?.name??'目标'} ${d.damage<0?'受到':'恢复'} ${Math.abs(d.damage)} 点${d.damage<0?'伤害':'生命'}`);if(p&&d.damage<0&&(this.fireTargets.get(id)??0)>Date.now()){this.spellEffect(p.point,p.point,true);this.sound.play('M31-2');this.fireTargets.delete(id);}}
         if(name==='ObjectDied'&&p){if(p.kind==='monster')this.sound.play(`${String(p.image).padStart(3,'0')}-3`);this.fireTargets.delete(id);p.dead=true;p.from={...p.point};p.visual={...p.point};p.elapsed=0;p.actionTime=0;this.notice(`${p.name} 已倒下`);}
@@ -620,6 +640,18 @@ export class MirWorld extends Component {
             else if(!d.success)this.notice((item?.info??this.itemInfo.get(item?.itemindex))?.type===20?'技能书未使用：请检查职业、等级或是否已经学会。':'物品未使用：服务器拒绝此次操作');
         }
         if(name==='NPCResponse')this.showNPC(d.page??[]);
+        if(name==='SellItem'){
+            if(d.success){const i=this.inventory.findIndex(v=>v&&String(v.uniqueid)===String(d.uniqueid));if(i>=0){if(this.inventory[i].count<=d.count)this.inventory[i]=null;else this.inventory[i].count-=d.count;}this.refreshBelt();}
+            else this.notice('出售未成功，物品仍在背包中。');
+            if(this.menuKind==='merchant'&&this.menu.active)this.showMerchant();
+        }
+        if(name==='ItemRepaired'){
+            for(const bag of [this.inventory,this.equipment]){const item=bag.find(v=>v&&String(v.uniqueid)===String(d.uniqueid));if(item){item.currentdura=d.currentdura;item.maxdura=d.maxdura;}}
+            if(this.menuKind==='merchant'&&this.menu.active)this.showMerchant();
+        }
+        if(name==='NPCSell')this.showMerchant('sell');
+        if(name==='NPCRepair')this.showMerchant('repair');
+        if(name==='NPCSRepair')this.showMerchant('special');
         if(name==='NPCGoods'){this.shopBagOpen=true;this.goods=d.list??[];this.shopRate=d.rate??1;this.selectedGood=null;this.shopTop=0;this.showShop();}
         if(name==='Chat'&&d.message)this.notice(d.message,d.type??0);
         if(name==='ObjectChat'&&d.text)this.notice(d.text,d.type??0);

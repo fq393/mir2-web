@@ -4,7 +4,7 @@
   <PackageReference Include="log4net" Version="3.3.0" />
   <ProjectReference Include="../../vendor/Crystal/Shared/Shared.csproj" />
   <Compile Include="../../vendor/Crystal/Server/**/*.cs" Exclude="../../vendor/Crystal/Server/obj/**;../../vendor/Crystal/Server/bin/**;../../vendor/Crystal/Server/MirEnvir/Envir.cs" />
-  <Compile Include="generated/Envir.cs" /><Compile Include="WorldSnapshots.cs" />
+  <Compile Include="generated/Envir.cs" /><Compile Include="WorldSnapshots.cs" /><Compile Include="WorldRequests.cs" /><Compile Include="MerchantTrades.cs" />
  </ItemGroup>
  <Target Name="PrepareSnapshotHook" BeforeTargets="BeforeCompile"><Exec Command="python3 &quot;$(MSBuildThisFileDirectory)../../tools/prepare-engine.py&quot;" /></Target>
 </Project>

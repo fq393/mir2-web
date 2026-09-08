@@ -10,5 +10,5 @@
     }
   ],
   "animationSource": "pangliang/MirServer-Delphi@f829679d24acb3a097d396d737ab067db2c88ca2 Actor.pas GetNpcOffset / MA35 / TNpcActor.CalcActorFrame",
-  "merchantSource": "mrzhqiang/mirserver-1.76@39e17246a32247a2c43c4cc481e97e88c692fa53 Mir200/Envir/MerChant.txt lines 39-41"
+  "merchantSource": "mrzhqiang/mirserver-1.76@39e17246a32247a2c43c4cc481e97e88c692fa53 Mir200/Envir/MerChant.txt lines 26, 39-41, 50, 54"
 }

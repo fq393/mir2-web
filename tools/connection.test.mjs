@@ -219,3 +219,17 @@ test('harvest has no optimistic reward and obeys death, range, movement and send
  w.peers.get(8).point.x=5;w.harvestAt({x:400,y:200});assert.equal(sent.length,1);w.peers.get(8).point.x=3;
  w.harvestAt({x:400,y:200});assert.equal(sent.at(-1).type,'harvest');assert.equal(w.inventory.filter(Boolean).length,0);assert.equal(w.peers.get(8).harvested,undefined);
 });
+
+test('merchant sale and repair apply only authoritative replies to the matching instance',()=>{
+ const w=world();w.refreshBelt=()=>{};w.notice=()=>{};w.inventory=[{uniqueid:'91',count:2,currentdura:500,maxdura:1000,addedstats:{values:{maxdc:3}}},{uniqueid:'92',count:1}];
+ w.packet('SellItem',{UniqueID:'91',Count:1,Success:false});assert.equal(w.inventory[0].count,2);
+ w.packet('SellItem',{UniqueID:'91',Count:1,Success:true});assert.equal(w.inventory[0].count,1);assert.equal(w.inventory[1].uniqueid,'92');
+ w.packet('ItemRepaired',{UniqueID:'91',CurrentDura:984,MaxDura:984});assert.equal(w.inventory[0].currentdura,984);assert.equal(w.inventory[0].addedstats.values.maxdc,3);
+ w.packet('SellItem',{UniqueID:'91',Count:1,Success:true});assert.equal(w.inventory[0],null);assert.equal(w.inventory[1].uniqueid,'92');
+});
+test('late merchant quotes cannot replace a new item or reopen a closed window',()=>{
+ const w=world();w.tradeRequest=8;w.menuKind='merchant';w.menu.active=true;let shown=0;w.showMerchant=()=>shown++;
+ w.serverEvent({type:'tradeQuote',request:7,token:'old',quote:{Gold:1}});assert.equal(w.tradeQuote,null);assert.equal(shown,0);
+ w.menu.active=false;w.serverEvent({type:'tradeQuote',request:8,token:'closed',quote:{Gold:2}});assert.equal(shown,0);
+ w.menu.active=true;w.serverEvent({type:'tradeQuote',request:8,token:'current',quote:{Gold:3}});assert.equal(w.tradeQuote.quote.gold,3);assert.equal(shown,1);
+});

@@ -30,7 +30,8 @@ static class JewellerySeed
             npc.MapIndex=map.Index;npc.Location=new Point(row.GetProperty("x").GetInt32(),row.GetProperty("y").GetInt32());
             npc.Colour=Color.Lime;npc.Rate=100;
             var goods=string.Join("\n",row.GetProperty("goods").EnumerateArray().Select(n=>n.GetString()+" 1"));
-            File.WriteAllText(Path.Combine(Settings.NPCPath,file+".txt"),"[@MAIN]\n#SAY\n欢迎，我可以帮你什么吗？\\\n<购买/@BUY>\\\n<关闭/@EXIT>\n\n[@BUY]\n#SAY\n请选择物品。\n\n[TRADE]\n"+goods+"\n");
+            var type=envir.ItemInfoList.Single(i=>i.Name==row.GetProperty("goods")[0].GetString()).Type;
+            File.WriteAllText(Path.Combine(Settings.NPCPath,file+".txt"),"[@MAIN]\n#SAY\n欢迎，我可以帮你什么吗？\\\n<购买/@BUY>\\\n<出售/@SELL>\\\n<修理/@REPAIR>\\\n<特殊修理/@SREPAIR>\\\n<关闭/@EXIT>\n\n[@BUY]\n#SAY\n请选择物品。\n\n[@SELL]\n#SAY\n请选择背包中的物品。\n\n[@REPAIR]\n#SAY\n请选择需要修理的装备。\n\n[@SREPAIR]\n#SAY\n请选择需要特殊修理的装备。\n\n[TYPES]\n"+(int)type+"\n\n[TRADE]\n"+goods+"\n");
         }
     }
 }
