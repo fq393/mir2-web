@@ -1,0 +1,199 @@
+{
+  "sources": [
+    {
+      "path": "raw-assets/reference-server176/StdItems.DB",
+      "sha256": "10bf3e9fe4676475b9828a7e1d450dada0c76a724b0a20477f5b77f937a9fb8f"
+    },
+    {
+      "path": "vendor/MirServer-Delphi/MirServer/Mud2/DB/StdItems.DB",
+      "sha256": "b074960349a8bcb8f0e742e36df26d323f60f9707752e3e0856c30012e8e0f36"
+    },
+    {
+      "path": "raw-assets/reference-server176/MerChant.txt",
+      "sha256": "4dc310f4594b717ed9dcf7b82eee589a04fb7ebcc2b8e17cb77c64299db41f9a"
+    }
+  ],
+  "statGuide": "https://mir.17173.com/item/item4.htm",
+  "status": "Cross-checked candidate data; neither server repository is an authenticated official 1.76 release.",
+  "excluded": {
+    "钢手镯": "Price 1818 vs 2000",
+    "大手镯": "Price 4545 vs 5000",
+    "皮制手套": "No matching entry in the checked historical guide"
+  },
+  "merchants": [
+    {
+      "name": "比奇戒指店老板",
+      "file": "BichonJewellery4",
+      "image": 4,
+      "x": 18,
+      "y": 6,
+      "goods": [
+        "牛角戒指",
+        "六角戒指",
+        "玻璃戒指"
+      ]
+    },
+    {
+      "name": "比奇手镯店老板",
+      "file": "BichonJewellery5",
+      "image": 5,
+      "x": 12,
+      "y": 12,
+      "goods": [
+        "小手镯",
+        "银手镯",
+        "铁手镯"
+      ]
+    },
+    {
+      "name": "比奇项链店老板",
+      "file": "BichonJewellery6",
+      "image": 6,
+      "x": 6,
+      "y": 18,
+      "goods": [
+        "金项链",
+        "传统项链",
+        "黑檀项链",
+        "黄色水晶项链",
+        "黑色水晶项链"
+      ]
+    }
+  ],
+  "items": [
+    {
+      "name": "牛角戒指",
+      "type": "Ring",
+      "image": 140,
+      "weight": 1,
+      "durability": 6000,
+      "level": 9,
+      "price": 1000,
+      "stats": {
+        "MaxMAC": 1,
+        "MaxDC": 1
+      }
+    },
+    {
+      "name": "六角戒指",
+      "type": "Ring",
+      "image": 144,
+      "weight": 1,
+      "durability": 6000,
+      "level": 7,
+      "price": 800,
+      "stats": {
+        "MaxMC": 1
+      }
+    },
+    {
+      "name": "玻璃戒指",
+      "type": "Ring",
+      "image": 143,
+      "weight": 1,
+      "durability": 3000,
+      "level": 7,
+      "price": 800,
+      "stats": {
+        "MaxSC": 1
+      }
+    },
+    {
+      "name": "小手镯",
+      "type": "Bracelet",
+      "image": 192,
+      "weight": 1,
+      "durability": 5000,
+      "level": 5,
+      "price": 1000,
+      "stats": {
+        "MaxMAC": 1
+      }
+    },
+    {
+      "name": "银手镯",
+      "type": "Bracelet",
+      "image": 202,
+      "weight": 2,
+      "durability": 7000,
+      "level": 7,
+      "price": 1500,
+      "stats": {
+        "Agility": 1
+      }
+    },
+    {
+      "name": "铁手镯",
+      "type": "Bracelet",
+      "image": 180,
+      "weight": 1,
+      "durability": 4000,
+      "level": 3,
+      "price": 800,
+      "stats": {
+        "Accuracy": 1
+      }
+    },
+    {
+      "name": "金项链",
+      "type": "Necklace",
+      "image": 222,
+      "weight": 1,
+      "durability": 8000,
+      "level": 2,
+      "price": 500,
+      "stats": {
+        "MaxDC": 1,
+        "Agility": 1
+      }
+    },
+    {
+      "name": "传统项链",
+      "type": "Necklace",
+      "image": 237,
+      "weight": 1,
+      "durability": 8000,
+      "level": 3,
+      "price": 1000,
+      "stats": {
+        "Accuracy": 1
+      }
+    },
+    {
+      "name": "黑檀项链",
+      "type": "Necklace",
+      "image": 220,
+      "weight": 1,
+      "durability": 8000,
+      "level": 13,
+      "price": 1200,
+      "stats": {
+        "MinMC": 1
+      }
+    },
+    {
+      "name": "黄色水晶项链",
+      "type": "Necklace",
+      "image": 221,
+      "weight": 1,
+      "durability": 8000,
+      "level": 13,
+      "price": 1200,
+      "stats": {
+        "MinSC": 1
+      }
+    },
+    {
+      "name": "黑色水晶项链",
+      "type": "Necklace",
+      "image": 225,
+      "weight": 1,
+      "durability": 8000,
+      "level": 13,
+      "price": 1500,
+      "stats": {
+        "MinDC": 1
+      }
+    }
+  ]
+}

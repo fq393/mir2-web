@@ -1,0 +1,11 @@
+{
+  "name": "mir2-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tools/*.test.mjs",
+    "build": "bash tools/build-web.sh",
+    "start": "bash tools/start.sh"
+  },
+  "devDependencies": {"typescript":"5.9.3"}
+}

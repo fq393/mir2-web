@@ -1,0 +1,9 @@
+{
+  "repository": "https://github.com/Suprcode/Crystal",
+  "commit": "0e315fe327192afe52c3d7357ddd1f5b7e26c5b8",
+  "sourcePatches": [],
+  "dotnetSdk": "8.0.414",
+  "dotnetInstallerSource": "https://raw.githubusercontent.com/dotnet/install-scripts/main/src/dotnet-install.sh",
+  "localOnly": true,
+  "sdkOsxArm64TarGzSha512": "8e8a452eaa2e28195eb1bb33e0d9bff31e223e47d0fa4761ba339a47a6736f001013dc121695b580883845921e3c1151d5fd4693ebcaefc07f0d6500a0c01e36"
+}

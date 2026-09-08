@@ -1,0 +1,355 @@
+{
+  "upstream": "0e315fe327192afe52c3d7357ddd1f5b7e26c5b8",
+  "sources": [
+    {
+      "file": "004-1.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/004-1.wav",
+      "bytes": 82674,
+      "sha256": "20e7132207d222c3dcff5293a63745056e2bc045b2afd354ac5b71b7e4ed5bf0",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/1810-2.wav",
+      "originalFilename": "1810-2.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "004-2.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/004-2.wav",
+      "bytes": 93578,
+      "sha256": "b5d65a8bf4d66c5336c259daad84ef637844e291654074319d0daeee0b73b0dd",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/1810-4.wav",
+      "originalFilename": "1810-4.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "004-3.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/004-3.wav",
+      "bytes": 185724,
+      "sha256": "af612cb45732cbcefb84e556d43eda42b71921cb43158a4025f5c439b5807c28",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/1810-5.wav",
+      "originalFilename": "1810-5.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "005-1.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/005-1.wav",
+      "bytes": 90118,
+      "sha256": "966e4163fc0000cf769b63c0f3379f1e9863645f43c1ccadeee8066b73e6ae9a",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/470-2.wav",
+      "originalFilename": "470-2.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "005-2.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/005-2.wav",
+      "bytes": 36726,
+      "sha256": "23dcd6d10bfba3935fb3fec8e7551b8ac9ee832cd40b1921b0399c829893a376",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/470-4.wav",
+      "originalFilename": "470-4.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "005-3.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/005-3.wav",
+      "bytes": 198168,
+      "sha256": "cf1faf157b49d1e014e9b3a56367234fdcfd54088f93f04bb653cb27a67b9ff7",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/470-5.wav",
+      "originalFilename": "470-5.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "1.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/1.wav",
+      "bytes": 35328,
+      "sha256": "f815cb0983eb1e809e692b40c25eb584cbd7ab4a3c293f5f540b8ff0a37de0b5",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/1.wav",
+      "originalFilename": "1.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "10.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/10.wav",
+      "bytes": 50136,
+      "sha256": "72668941e0f1b40a2be9f50ab77e177b1625502120729a8b7bc5460558bde75f",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/10.wav",
+      "originalFilename": "10.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "103.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/103.wav",
+      "bytes": 26546,
+      "sha256": "7a55d27dea18f70eb4ff4f324b682efab4996406efae3e94467d3c39cccc674a",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/103.wav",
+      "originalFilename": "103.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "106.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/106.wav",
+      "bytes": 65364,
+      "sha256": "0580dc2a0d6b0f8e229e677c9101284ebee438cd5e00f823019aaeb4c6dd6f9b",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/106.wav",
+      "originalFilename": "106.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "111.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/111.wav",
+      "bytes": 32716,
+      "sha256": "8e14ba02d53b36b6c0912f1359ed7cd8db545fd8c82b126c069e2a52f0a181d3",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/111.wav",
+      "originalFilename": "111.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "112.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/112.wav",
+      "bytes": 48482,
+      "sha256": "8059711dc979922eacc81d236fa83b1c203659f5cca7a703ae1d414387bda98f",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/112.wav",
+      "originalFilename": "112.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "13.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/13.wav",
+      "bytes": 47026,
+      "sha256": "bd265f705e547b53402dd31d49e8cca13622e2c1b19bc5df36a4097e71766cb7",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/13.wav",
+      "originalFilename": "13.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "138.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/138.wav",
+      "bytes": 32684,
+      "sha256": "6352611afb6f702a4440f176e09ccf7a2f9239b91a3046aa2f92b4bded9a0e98",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/138.wav",
+      "originalFilename": "138.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "14.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/14.wav",
+      "bytes": 50246,
+      "sha256": "2ec504a6e003fd63d2395ac7b0f12ac01ebc05027fe7e21fddacb5c308876de0",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/14.wav",
+      "originalFilename": "14.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "144.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/144.wav",
+      "bytes": 74218,
+      "sha256": "96da14d611a2255362cd61ab7fae011513dcb49214edf1515dd6176ca1edaca1",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/144.wav",
+      "originalFilename": "144.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "17.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/17.wav",
+      "bytes": 41188,
+      "sha256": "58de5c62630291af07685849c1605910262b31c156e24898b225ec67a63c6065",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/17.wav",
+      "originalFilename": "17.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "18.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/18.wav",
+      "bytes": 46832,
+      "sha256": "83025c923ea662b4cec53fb00cbb11d5154eb364568327766db174296e2bdfc7",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/18.wav",
+      "originalFilename": "18.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "2.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/2.wav",
+      "bytes": 38696,
+      "sha256": "f550479d0fc6bb33385ffc5f538d10d8cc06b58d08b49353e2c6c8360c62b431",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/2.wav",
+      "originalFilename": "2.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "21.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/21.wav",
+      "bytes": 58632,
+      "sha256": "970a25cac500d7217254cc0b21f140771661037fc8127f3c98ef944b01450990",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/21.wav",
+      "originalFilename": "21.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "25.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/25.wav",
+      "bytes": 35312,
+      "sha256": "3fa2f729b647307a6966288508ca1ec537311ccd9484651bbebfc74cab39f1e7",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/25.wav",
+      "originalFilename": "25.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "26.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/26.wav",
+      "bytes": 38680,
+      "sha256": "b5eee6002d1ecc8a77adedb8eafba2766caf7afb15b72b349821a39ede395754",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/26.wav",
+      "originalFilename": "26.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "29.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/29.wav",
+      "bytes": 65062,
+      "sha256": "4e2e4547f8366b3637797665114e92258776829c781112672372f805df13918f",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/29.wav",
+      "originalFilename": "29.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "30.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/30.wav",
+      "bytes": 73672,
+      "sha256": "27dffa8f6c64dfc2e4fe3eaadc7dad309d6037d9099e5f99ae0b20929b731453",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/30.wav",
+      "originalFilename": "30.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "5.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/5.wav",
+      "bytes": 31844,
+      "sha256": "967c85be253dc9b7f816433c1b15868a679776604c20bb1731aee9b4f8972baa",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/5.wav",
+      "originalFilename": "5.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "50.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/50.wav",
+      "bytes": 41004,
+      "sha256": "ba9e0bd753dd8c92ca1fc3727e3151a904d05266819242f923d3ff96ff3cbe6c",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/50.wav",
+      "originalFilename": "50.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "51.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/51.wav",
+      "bytes": 43986,
+      "sha256": "d58438c692edd49d9a6ff1ba843beb3c22e5191d792a9ca1d0de543425631ca5",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/51.wav",
+      "originalFilename": "51.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "6.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/6.wav",
+      "bytes": 33600,
+      "sha256": "bb787cc8c05f0de654b9fc6cbe330a0b4877d9cb27d05bd4da277884934e5704",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/6.wav",
+      "originalFilename": "6.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "60.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/60.wav",
+      "bytes": 71200,
+      "sha256": "2efa4e2ae9101364f96d404a2f487c0010efd026648ac30d0d6c9fc464437c94",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/60.wav",
+      "originalFilename": "60.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "61.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/61.wav",
+      "bytes": 47674,
+      "sha256": "c48c3836edddac4688310f6906ed08388dd8bcce628c8d439a1e69101acc3942",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/61.wav",
+      "originalFilename": "61.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "9.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/9.wav",
+      "bytes": 51398,
+      "sha256": "9f262d471192c0b287c8be9c08729d01ae2d6510844651d2c901391797eb4c4f",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/9.wav",
+      "originalFilename": "9.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "M31-0.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/M31-0.wav",
+      "bytes": 364024,
+      "sha256": "98c28fc920a35fe3c134607811760e4c49200239c2e3b9ccae36b42ee083aa3e",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/M1-1.wav",
+      "originalFilename": "M1-1.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "M31-1.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/M31-1.wav",
+      "bytes": 364028,
+      "sha256": "fcc49a68343db3e910a3a35f12cea227cbea058e199d048236a8d99831005a15",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/M1-2.wav",
+      "originalFilename": "M1-2.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "M31-2.wav",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Sound/M31-2.wav",
+      "bytes": 128908,
+      "sha256": "8732fd9131e228712071aabfed542618b9d1d6f269d748ec9857ecbfa4e59b05",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/M1-3.wav",
+      "originalFilename": "M1-3.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "108.wav",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/108.wav",
+      "bytes": 92008,
+      "sha256": "74884df99eb099fc6fc0443d5621dbd56def9354d9cc2e7a2b6078dcec6a0581",
+      "archiveSha256": "41372080474b00796c1d931946f162993f8b5d5b3078c2d2aab3800e065500b9",
+      "originalFilename": "108.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "22.wav",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/22.wav",
+      "bytes": 58824,
+      "sha256": "2149ef04f70556b7e87c9e2f7a7fac91ba83c1aed6113c000badcaeb6566f539",
+      "archiveSha256": "41372080474b00796c1d931946f162993f8b5d5b3078c2d2aab3800e065500b9",
+      "originalFilename": "22.wav",
+      "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    }
+  ],
+  "missing": [
+    {
+      "file": "22.wav",
+      "status": 404,
+      "meaning": "cave right foot; leave silent rather than substitute an unrelated effect"
+    }
+  ],
+  "originalSoundList": {
+    "local": "raw-assets/client-176/传奇私服1.76客户/Wav/sound.lst",
+    "sha256": "9b74427b29334aadaa150e81c0c2f69e30f3dcad8aadb441986ba61111982802",
+    "fireball": {
+      "M31-0.wav": 10010,
+      "M31-1.wav": 10011,
+      "M31-2.wav": 10012
+    },
+    "deer": {
+      "004-1.wav": 1812,
+      "004-2.wav": 1814,
+      "004-3.wav": 1815
+    },
+    "scarecrow": {
+      "005-1.wav": 472,
+      "005-2.wav": 474,
+      "005-3.wav": 475
+    }
+  }
+}

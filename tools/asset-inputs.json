@@ -1,0 +1,910 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "path": "Map/0.map",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Map/0.map",
+      "sha256": "ed4783215ffa989658f79892c2dd6720753fb111e1102cb14da8e6182d88d7f6",
+      "bytes": 12740008,
+      "byteRange": null,
+      "httpStatus": 200,
+      "contentRange": null
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Tiles.Lib",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Tiles.Lib",
+      "sha256": "54f033c5b1281e00b67414dd26d5492e207e99dd823d72e2e55b167e560b989a",
+      "bytes": 5018241,
+      "byteRange": "0-5018240",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-5018240/450359772"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/SmTiles.Lib",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/SmTiles.Lib",
+      "sha256": "1a6389e666cf0579ed5721dc6f29e2d46d806d17350ff1bfcae857e5dffcc113",
+      "bytes": 659983,
+      "byteRange": null,
+      "httpStatus": 200,
+      "contentRange": null
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects.Lib",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects.Lib",
+      "sha256": "1f72c19425ef402a842d3d64e9d199153d7ff610766d41bb91145d74e4411b64",
+      "bytes": 44972450,
+      "byteRange": null,
+      "httpStatus": 200,
+      "contentRange": null
+    },
+    {
+      "path": "Data/CArmour/00.Lib",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/CArmour/00.Lib",
+      "sha256": "456e9564285f381e09b3887995593970c948ddbede8c1800d51224772d73ced7",
+      "bytes": 3335095,
+      "byteRange": null,
+      "httpStatus": 200,
+      "contentRange": null
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Tiles.Lib",
+      "localFile": "Data_Map_WemadeMir2_Tiles.Lib.range-5128593-5300465",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Tiles.Lib",
+      "sha256": "1cd8929759bbf4631f7787c6d231139680444497b533f3a7ca7f844052e0caec",
+      "bytes": 171873,
+      "byteRange": "5128593-5300465",
+      "httpStatus": 206,
+      "contentRange": "bytes 5128593-5300465/450359772"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Tiles.Lib",
+      "localFile": "Data_Map_WemadeMir2_Tiles.Lib.range-7263907-7468834",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Tiles.Lib",
+      "sha256": "b343d7d06341ff7598d5c8e432fd3d5dd5a2f7fa6203a890b891eee80ea9e4ad",
+      "bytes": 204928,
+      "byteRange": "7263907-7468834",
+      "httpStatus": 206,
+      "contentRange": "bytes 7263907-7468834/450359772"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Tiles.Lib",
+      "localFile": "Data_Map_WemadeMir2_Tiles.Lib.range-7560734-7751141",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Tiles.Lib",
+      "sha256": "9e8f544ffc2726b77eacd6d3552ee49fc4a11f08d5151d3a8423282fe18173d4",
+      "bytes": 190408,
+      "byteRange": "7560734-7751141",
+      "httpStatus": 206,
+      "contentRange": "bytes 7560734-7751141/450359772"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Tiles.Lib",
+      "localFile": "Data_Map_WemadeMir2_Tiles.Lib.range-8556469-8699144",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Tiles.Lib",
+      "sha256": "f9f0613ce9c542d5913fa173fffed651ac2843da5bc2f1d43aba29755d402b6c",
+      "bytes": 142676,
+      "byteRange": "8556469-8699144",
+      "httpStatus": 206,
+      "contentRange": "bytes 8556469-8699144/450359772"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Tiles.Lib",
+      "localFile": "Data_Map_WemadeMir2_Tiles.Lib.range-9092364-9237457",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Tiles.Lib",
+      "sha256": "1be849e0ec8faa543f352da2c0a51a46cd0dad1969ad5bf65d3ea16907042970",
+      "bytes": 145094,
+      "byteRange": "9092364-9237457",
+      "httpStatus": 206,
+      "contentRange": "bytes 9092364-9237457/450359772"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Tiles.Lib",
+      "localFile": "Data_Map_WemadeMir2_Tiles.Lib.range-9373295-9423767",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Tiles.Lib",
+      "sha256": "d10e08321885d183435ae493c86df4ee6b6282b3c9f7c4c353c0fe1712b97b9b",
+      "bytes": 50473,
+      "byteRange": "9373295-9423767",
+      "httpStatus": 206,
+      "contentRange": "bytes 9373295-9423767/450359772"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Tiles.Lib",
+      "localFile": "Data_Map_WemadeMir2_Tiles.Lib.range-9581687-9719036",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Tiles.Lib",
+      "sha256": "cfd1c0da3fc9be3ab4a33db0629dcde4a436dcd5471a9138c6c6c858bd9cc452",
+      "bytes": 137350,
+      "byteRange": "9581687-9719036",
+      "httpStatus": 206,
+      "contentRange": "bytes 9581687-9719036/450359772"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Tiles.Lib",
+      "localFile": "Data_Map_WemadeMir2_Tiles.Lib.range-11061408-11155392",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Tiles.Lib",
+      "sha256": "f7fa37c1804e99c8ad4804d68d00074054961cda4c1824d993a7b3a7b37977a2",
+      "bytes": 93985,
+      "byteRange": "11061408-11155392",
+      "httpStatus": 206,
+      "contentRange": "bytes 11061408-11155392/450359772"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Tiles.Lib",
+      "localFile": "Data_Map_WemadeMir2_Tiles.Lib.range-22284152-22327766",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Tiles.Lib",
+      "sha256": "d6063c0704104b1d378a116a6a183e036fc34c7d1669b646bd08153a2f5b4b07",
+      "bytes": 43615,
+      "byteRange": "22284152-22327766",
+      "httpStatus": 206,
+      "contentRange": "bytes 22284152-22327766/450359772"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Tiles.Lib",
+      "localFile": "Data_Map_WemadeMir2_Tiles.Lib.range-22439428-22481681",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Tiles.Lib",
+      "sha256": "57484066223ed10a176f2ffa57ad1bb4c7554552a763b357e0079f389d8cea2e",
+      "bytes": 42254,
+      "byteRange": "22439428-22481681",
+      "httpStatus": 206,
+      "contentRange": "bytes 22439428-22481681/450359772"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Tiles.Lib",
+      "localFile": "Data_Map_WemadeMir2_Tiles.Lib.range-24048575-24222876",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Tiles.Lib",
+      "sha256": "603bba6473994bacc0516cf1368ef059fd0d6ec569355fd524cd31aaec26b745",
+      "bytes": 174302,
+      "byteRange": "24048575-24222876",
+      "httpStatus": 206,
+      "contentRange": "bytes 24048575-24222876/450359772"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Tiles.Lib",
+      "localFile": "Data_Map_WemadeMir2_Tiles.Lib.range-25266469-25439948",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Tiles.Lib",
+      "sha256": "cfe0e794ad4f0f48eb96b0a90ac4a151c6f77ccfc64ec3117683cb17a62dd18a",
+      "bytes": 173480,
+      "byteRange": "25266469-25439948",
+      "httpStatus": 206,
+      "contentRange": "bytes 25266469-25439948/450359772"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Tiles.Lib",
+      "localFile": "Data_Map_WemadeMir2_Tiles.Lib.range-126948880-126954650",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Tiles.Lib",
+      "sha256": "bd8b073351556200cd697d3c114d62a85cd2fedaf6794ab097a81e949d97fd14",
+      "bytes": 5771,
+      "byteRange": "126948880-126954650",
+      "httpStatus": 206,
+      "contentRange": "bytes 126948880-126954650/450359772"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Tiles.Lib",
+      "localFile": "Data_Map_WemadeMir2_Tiles.Lib.range-142299076-143810455",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Tiles.Lib",
+      "sha256": "baddbc7dfb6c9d5dd5d101b8c08fc106cd043124abe58ce631a07d62bdb29b3c",
+      "bytes": 1511380,
+      "byteRange": "142299076-143810455",
+      "httpStatus": 206,
+      "contentRange": "bytes 142299076-143810455/450359772"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Tiles.Lib",
+      "localFile": "Data_Map_WemadeMir2_Tiles.Lib.range-143853482-143951780",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Tiles.Lib",
+      "sha256": "b31947a1fb10ae5f13d48913c3a630fcf838b2b46fcb177b22c21c8f5cc842d3",
+      "bytes": 98299,
+      "byteRange": "143853482-143951780",
+      "httpStatus": 206,
+      "contentRange": "bytes 143853482-143951780/450359772"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Tiles.Lib",
+      "localFile": "Data_Map_WemadeMir2_Tiles.Lib.range-144046516-144425127",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Tiles.Lib",
+      "sha256": "72037ea9a5e98783e970f06ccdc1c2442399ed19a51304e928bf00c4383dd67e",
+      "bytes": 378612,
+      "byteRange": "144046516-144425127",
+      "httpStatus": 206,
+      "contentRange": "bytes 144046516-144425127/450359772"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Tiles.Lib",
+      "localFile": "Data_Map_WemadeMir2_Tiles.Lib.range-144469644-144871398",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Tiles.Lib",
+      "sha256": "f4f07efd6dcc833f6071008cfacf2f9098e93be674425d0ca97049e9cba56cbe",
+      "bytes": 401755,
+      "byteRange": "144469644-144871398",
+      "httpStatus": 206,
+      "contentRange": "bytes 144469644-144871398/450359772"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects4.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects4.Lib.range-0-11",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects4.Lib",
+      "sha256": "1e3e6c9c3f10ea1beac7480b5d8f0d3759e72ec5e967a2200603f3bf83a7ff27",
+      "bytes": 12,
+      "byteRange": "0-11",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-11/20203938"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects4.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects4.Lib.range-0-40255",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects4.Lib",
+      "sha256": "d2999704d64e5a4c1228d6903f42659591e6bb49fe3fc3ed283175a5f9408a19",
+      "bytes": 40256,
+      "byteRange": "0-40255",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-40255/20203938"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects4.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects4.Lib.range-6604196-6702897",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects4.Lib",
+      "sha256": "7c0ff7fd5bd9bd2c97bc225ea3be6ee113eb4252483f9b5efbe7bbb7de86b495",
+      "bytes": 98702,
+      "byteRange": "6604196-6702897",
+      "httpStatus": 206,
+      "contentRange": "bytes 6604196-6702897/20203938"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects4.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects4.Lib.range-9172535-9266112",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects4.Lib",
+      "sha256": "21d86f020065d4db15e878f9490bd0f9f0d12312f782655d321df2856cd956b2",
+      "bytes": 93578,
+      "byteRange": "9172535-9266112",
+      "httpStatus": 206,
+      "contentRange": "bytes 9172535-9266112/20203938"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects4.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects4.Lib.range-9932272-10071961",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects4.Lib",
+      "sha256": "fa68b3303786561e9fa17f6b822dafabc99ef4509b3e32a7cc13c630453a3ed2",
+      "bytes": 139690,
+      "byteRange": "9932272-10071961",
+      "httpStatus": 206,
+      "contentRange": "bytes 9932272-10071961/20203938"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects5.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects5.Lib.range-0-11",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects5.Lib",
+      "sha256": "1c1cdcdfd441b6d4687fdf09ccfa73825d265cc8a86e74cd76932027fb9a4d66",
+      "bytes": 12,
+      "byteRange": "0-11",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-11/17504331"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects5.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects5.Lib.range-0-39683",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects5.Lib",
+      "sha256": "b561b207b3452ce9eb74135c375b95dddf133ad50e463f1c21b8b8a4829ab44f",
+      "bytes": 39684,
+      "byteRange": "0-39683",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-39683/17504331"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects5.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects5.Lib.range-15992675-16074779",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects5.Lib",
+      "sha256": "b626a532480e01c161f70e57c91f4420dfde369696267f59e1683fe73d3025cc",
+      "bytes": 82105,
+      "byteRange": "15992675-16074779",
+      "httpStatus": 206,
+      "contentRange": "bytes 15992675-16074779/17504331"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects6.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects6.Lib.range-0-11",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects6.Lib",
+      "sha256": "0c2cf4aada3f1db55d973ebd1562102f4e23b3153a794f11f6de3f42addf0bbf",
+      "bytes": 12,
+      "byteRange": "0-11",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-11/15727931"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects6.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects6.Lib.range-0-31011",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects6.Lib",
+      "sha256": "b2a2fbf1ec87cdbaad384f43da8a7aabac5f8882088778fcae75d59271f32ed0",
+      "bytes": 31012,
+      "byteRange": "0-31011",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-31011/15727931"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects6.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects6.Lib.range-1637093-1637309",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects6.Lib",
+      "sha256": "d089bad35c0502b23ea7c97927471b38514519936093fb424c6a5690ac48225e",
+      "bytes": 217,
+      "byteRange": "1637093-1637309",
+      "httpStatus": 206,
+      "contentRange": "bytes 1637093-1637309/15727931"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects6.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects6.Lib.range-1671315-2009906",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects6.Lib",
+      "sha256": "0497a57510ccb3e57071f849b519b35dacaa89762b2cdad3f710f9751bbcb33d",
+      "bytes": 338592,
+      "byteRange": "1671315-2009906",
+      "httpStatus": 206,
+      "contentRange": "bytes 1671315-2009906/15727931"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects6.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects6.Lib.range-2637718-2650283",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects6.Lib",
+      "sha256": "f6e85aff1aa7ce9aa446faf3a35ab6bbd15c392025b70499b2b4fc77acd3fcd1",
+      "bytes": 12566,
+      "byteRange": "2637718-2650283",
+      "httpStatus": 206,
+      "contentRange": "bytes 2637718-2650283/15727931"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects6.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects6.Lib.range-2689672-2820870",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects6.Lib",
+      "sha256": "13984ddcdbed05f792822549b9cb6fe626d34d9fc6bbdcd18890655a02b5fd78",
+      "bytes": 131199,
+      "byteRange": "2689672-2820870",
+      "httpStatus": 206,
+      "contentRange": "bytes 2689672-2820870/15727931"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects20.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects20.Lib.range-0-11",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects20.Lib",
+      "sha256": "a89968b9bb79eb8804c9aed439889e770d56b65dfa246af34c45df54f0b67f15",
+      "bytes": 12,
+      "byteRange": "0-11",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-11/20487220"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects20.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects20.Lib.range-0-38159",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects20.Lib",
+      "sha256": "470d50c149f96401b415189d329f3f9e9e7b2db382df8c6d4248a75d074081c6",
+      "bytes": 38160,
+      "byteRange": "0-38159",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-38159/20487220"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects20.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects20.Lib.range-793276-1033426",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects20.Lib",
+      "sha256": "7972a29d1b4e8340d3fc45eac6a13ed3acab5900453f6a95d578ba5b2af91e79",
+      "bytes": 240151,
+      "byteRange": "793276-1033426",
+      "httpStatus": 206,
+      "contentRange": "bytes 793276-1033426/20487220"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects21.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects21.Lib.range-0-11",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects21.Lib",
+      "sha256": "cff1e6199817bc17a6806e82ed3e5fdc698e4b19a883a94f4b68841773d107c9",
+      "bytes": 12,
+      "byteRange": "0-11",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-11/32882025"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects21.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects21.Lib.range-0-39867",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects21.Lib",
+      "sha256": "f04ffc2d902a37239eb6f14b42bd66cfdb382aa5413bdb025503481ea56a7b4e",
+      "bytes": 39868,
+      "byteRange": "0-39867",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-39867/32882025"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects21.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects21.Lib.range-1157827-2275670",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects21.Lib",
+      "sha256": "8f837abf23b14a340415a05841055579a85587fbdd60d760fee2798f7dc2133d",
+      "bytes": 1117844,
+      "byteRange": "1157827-2275670",
+      "httpStatus": 206,
+      "contentRange": "bytes 1157827-2275670/32882025"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects21.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects21.Lib.range-2336937-2433385",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects21.Lib",
+      "sha256": "8dc8b8a4c47cef03213acd2173e005fb939c367f6afbe5d13c76ed4a387e53a4",
+      "bytes": 96449,
+      "byteRange": "2336937-2433385",
+      "httpStatus": 206,
+      "contentRange": "bytes 2336937-2433385/32882025"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects21.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects21.Lib.range-2472179-2977970",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects21.Lib",
+      "sha256": "cccbdd2a599db5ea337d1575d3e5b8a74278b0cd5a1d0f724f54cfaa2f87dd62",
+      "bytes": 505792,
+      "byteRange": "2472179-2977970",
+      "httpStatus": 206,
+      "contentRange": "bytes 2472179-2977970/32882025"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects21.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects21.Lib.range-3048863-5165408",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects21.Lib",
+      "sha256": "216de9ecb50a59be6c8c750b9e49591ccf57bc8b1cb511254fb630c693da5434",
+      "bytes": 2116546,
+      "byteRange": "3048863-5165408",
+      "httpStatus": 206,
+      "contentRange": "bytes 3048863-5165408/32882025"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects21.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects21.Lib.range-5201138-5297555",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects21.Lib",
+      "sha256": "836bfe85e8bc07271bd018080cee61d3df69e23a85935777e7bef61aae7617ce",
+      "bytes": 96418,
+      "byteRange": "5201138-5297555",
+      "httpStatus": 206,
+      "contentRange": "bytes 5201138-5297555/32882025"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects21.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects21.Lib.range-5383687-8016153",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects21.Lib",
+      "sha256": "50753e89f9773ff094f1b8bbb3fca7e62648c66faadb4b668211a5bba92ee56b",
+      "bytes": 2632467,
+      "byteRange": "5383687-8016153",
+      "httpStatus": 206,
+      "contentRange": "bytes 5383687-8016153/32882025"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects21.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects21.Lib.range-13136212-13310374",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects21.Lib",
+      "sha256": "53d41c336282ba4e1b25ef376dd61c97b645825854881d7280e518d227c1f14d",
+      "bytes": 174163,
+      "byteRange": "13136212-13310374",
+      "httpStatus": 206,
+      "contentRange": "bytes 13136212-13310374/32882025"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects21.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects21.Lib.range-13453161-13725377",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects21.Lib",
+      "sha256": "75d2ae76e6ad73ef6c30d6245e576d21053803caaa82abd8eeaf7f8501438913",
+      "bytes": 272217,
+      "byteRange": "13453161-13725377",
+      "httpStatus": 206,
+      "contentRange": "bytes 13453161-13725377/32882025"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects21.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects21.Lib.range-24203165-24284769",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects21.Lib",
+      "sha256": "654a556864cde06947cbe6d83046d50efd70be94bfdfd46ae19a5f01d237992e",
+      "bytes": 81605,
+      "byteRange": "24203165-24284769",
+      "httpStatus": 206,
+      "contentRange": "bytes 24203165-24284769/32882025"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects23.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects23.Lib.range-0-11",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects23.Lib",
+      "sha256": "48400bc8206293742b626bbd6fe0cc44a4f6cd107b56f6bca62b2cdde83e4f9f",
+      "bytes": 12,
+      "byteRange": "0-11",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-11/36388949"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects23.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects23.Lib.range-0-39903",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects23.Lib",
+      "sha256": "c3bb8688ecaec470932870aff02d0501d59599dba07586bbbf054fd54bd43961",
+      "bytes": 39904,
+      "byteRange": "0-39903",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-39903/36388949"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects23.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects23.Lib.range-650584-950930",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects23.Lib",
+      "sha256": "628a536626a323124b481c07f8504d5d76a74045d50a67c3fd185781a0415be5",
+      "bytes": 300347,
+      "byteRange": "650584-950930",
+      "httpStatus": 206,
+      "contentRange": "bytes 650584-950930/36388949"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects23.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects23.Lib.range-6116810-10102201",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects23.Lib",
+      "sha256": "b40edbff778b3485219b440caaadb89a8cc8bb050a52ea478e7c05f9421ad5ba",
+      "bytes": 3985392,
+      "byteRange": "6116810-10102201",
+      "httpStatus": 206,
+      "contentRange": "bytes 6116810-10102201/36388949"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects23.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects23.Lib.range-10102202-12321071",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects23.Lib",
+      "sha256": "0129495c08bac3ec26da8cbf250d825be3056b7f5dcffe0e5c7360cff94c8a79",
+      "bytes": 2218870,
+      "byteRange": "10102202-12321071",
+      "httpStatus": 206,
+      "contentRange": "bytes 10102202-12321071/36388949"
+    },
+    {
+      "path": "Data/Map/WemadeMir2/Objects23.Lib",
+      "localFile": "Data_Map_WemadeMir2_Objects23.Lib.range-12378344-15700243",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir2/Objects23.Lib",
+      "sha256": "89bdfea048dfbc1a3b88025e20ee41fc98f0b705ae279228e7ec271482946ad6",
+      "bytes": 3321900,
+      "byteRange": "12378344-15700243",
+      "httpStatus": 206,
+      "contentRange": "bytes 12378344-15700243/36388949"
+    },
+    {
+      "path": "Data/Map/WemadeMir3/Snow/Dungeonsc.Lib",
+      "localFile": "Data_Map_WemadeMir3_Snow_Dungeonsc.Lib.range-0-11",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir3/Snow/Dungeonsc.Lib",
+      "sha256": "19f3558ed70a59c63d96d98475d7ab8359f32a349a33a6ffec6b38cf3774773b",
+      "bytes": 12,
+      "byteRange": "0-11",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-11/46555623"
+    },
+    {
+      "path": "Data/Map/WemadeMir3/Snow/Dungeonsc.Lib",
+      "localFile": "Data_Map_WemadeMir3_Snow_Dungeonsc.Lib.range-0-79075",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir3/Snow/Dungeonsc.Lib",
+      "sha256": "ae8baa09fa13b1ff789c096cfb43d1eaf4f1bda3fef22cb3cbf779892c796422",
+      "bytes": 79076,
+      "byteRange": "0-79075",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-79075/46555623"
+    },
+    {
+      "path": "Data/Map/WemadeMir3/Snow/Dungeonsc.Lib",
+      "localFile": "Data_Map_WemadeMir3_Snow_Dungeonsc.Lib.range-7486064-7487814",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir3/Snow/Dungeonsc.Lib",
+      "sha256": "329a9377b65fbab725637d27c20b772b16b90f3d6d9c8d253afd6a80c681e3ef",
+      "bytes": 1751,
+      "byteRange": "7486064-7487814",
+      "httpStatus": 206,
+      "contentRange": "bytes 7486064-7487814/46555623"
+    },
+    {
+      "path": "Data/Map/WemadeMir3/Snow/Furnituresc.Lib",
+      "localFile": "Data_Map_WemadeMir3_Snow_Furnituresc.Lib.range-0-11",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir3/Snow/Furnituresc.Lib",
+      "sha256": "77d4748f7c67515eafb31c3c899f9c42f7694ecd89f51ac4d5980de2cc8627dd",
+      "bytes": 12,
+      "byteRange": "0-11",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-11/223918"
+    },
+    {
+      "path": "Data/Map/WemadeMir3/Snow/Furnituresc.Lib",
+      "localFile": "Data_Map_WemadeMir3_Snow_Furnituresc.Lib.range-0-791",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir3/Snow/Furnituresc.Lib",
+      "sha256": "8947f55188d1e3c1e1c9d2a39d5d88f2578b256d7c06477ee8edb877dc2d4239",
+      "bytes": 792,
+      "byteRange": "0-791",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-791/223918"
+    },
+    {
+      "path": "Data/Map/WemadeMir3/Snow/Wallsc.Lib",
+      "localFile": "Data_Map_WemadeMir3_Snow_Wallsc.Lib.range-0-11",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir3/Snow/Wallsc.Lib",
+      "sha256": "f9cd8c89a4bdc567fecca26467160c037620531750c9320b0627509dbb9c4ace",
+      "bytes": 12,
+      "byteRange": "0-11",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-11/11931749"
+    },
+    {
+      "path": "Data/Map/WemadeMir3/Snow/Wallsc.Lib",
+      "localFile": "Data_Map_WemadeMir3_Snow_Wallsc.Lib.range-0-14079",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir3/Snow/Wallsc.Lib",
+      "sha256": "f470fdf31feb658152b70adcc31e8cacffd49c83e6742c756ea7599cbe6f4400",
+      "bytes": 14080,
+      "byteRange": "0-14079",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-14079/11931749"
+    },
+    {
+      "path": "Data/Map/WemadeMir3/Snow/Wallsc.Lib",
+      "localFile": "Data_Map_WemadeMir3_Snow_Wallsc.Lib.range-9594379-9596309",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir3/Snow/Wallsc.Lib",
+      "sha256": "0e69481229822bb3946f80eab4e2870faba789fe6910b67ffb3deb58b50d2598",
+      "bytes": 1931,
+      "byteRange": "9594379-9596309",
+      "httpStatus": 206,
+      "contentRange": "bytes 9594379-9596309/11931749"
+    },
+    {
+      "path": "Data/Map/WemadeMir3/Snow/SmObjectsc.Lib",
+      "localFile": "Data_Map_WemadeMir3_Snow_SmObjectsc.Lib.range-0-11",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir3/Snow/SmObjectsc.Lib",
+      "sha256": "0196ad475e110b7e62103a690de5d97c7d2b186321fabc0bbaef2fd11bb5bf43",
+      "bytes": 12,
+      "byteRange": "0-11",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-11/23370319"
+    },
+    {
+      "path": "Data/Map/WemadeMir3/Snow/SmObjectsc.Lib",
+      "localFile": "Data_Map_WemadeMir3_Snow_SmObjectsc.Lib.range-0-46495",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir3/Snow/SmObjectsc.Lib",
+      "sha256": "ddf3588a5df0ae882e5c120050755f86db204427a7e64bacabd53350852f4a60",
+      "bytes": 46496,
+      "byteRange": "0-46495",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-46495/23370319"
+    },
+    {
+      "path": "Data/Map/WemadeMir3/Snow/SmObjectsc.Lib",
+      "localFile": "Data_Map_WemadeMir3_Snow_SmObjectsc.Lib.range-6110737-6111538",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Map/WemadeMir3/Snow/SmObjectsc.Lib",
+      "sha256": "9c9b329c3937d73403bbce1ba969fcb7e60bca899a367dc4148bca5bb5b4710c",
+      "bytes": 802,
+      "byteRange": "6110737-6111538",
+      "httpStatus": 206,
+      "contentRange": "bytes 6110737-6111538/23370319"
+    },
+    {
+      "path": "Data/CArmour/01.Lib",
+      "localFile": "Data_CArmour_01.Lib.range-0-11",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/CArmour/01.Lib",
+      "sha256": "4107623f2b9afc0a4b89cf6501534c3a777385ff06c0f31e0818f9337ba1f9dd",
+      "bytes": 12,
+      "byteRange": "0-11",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-11/4529875"
+    },
+    {
+      "path": "Data/CArmour/01.Lib",
+      "localFile": "Data_CArmour_01.Lib.range-0-6471",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/CArmour/01.Lib",
+      "sha256": "2c10d06deabf3f0063ffb9ac5cae3a1ada34cf551fb81c10c7599a4a82a23387",
+      "bytes": 6472,
+      "byteRange": "0-6471",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-6471/4529875"
+    },
+    {
+      "path": "Data/CArmour/01.Lib",
+      "localFile": "Data_CArmour_01.Lib.range-6472-1253900",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/CArmour/01.Lib",
+      "sha256": "16d9601b6712fd2e8222c70bf995cef24a38289b629ca5872a13f1a0da1a53a9",
+      "bytes": 1247429,
+      "byteRange": "6472-1253900",
+      "httpStatus": 206,
+      "contentRange": "bytes 6472-1253900/4529875"
+    },
+    {
+      "path": "Data/CWeapon/01.Lib",
+      "localFile": "Data_CWeapon_01.Lib.range-0-11",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/CWeapon/01.Lib",
+      "sha256": "447a983fb7c43a57f9ab7805c08bfbdd005c1e4bfb4601d151da4fa94dcd76d2",
+      "bytes": 12,
+      "byteRange": "0-11",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-11/134743"
+    },
+    {
+      "path": "Data/CWeapon/01.Lib",
+      "localFile": "Data_CWeapon_01.Lib.range-0-3335",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/CWeapon/01.Lib",
+      "sha256": "a8cf9b2f5f9bf138d747e75d3b053ff883fd56624c36ace57e35bc168747332d",
+      "bytes": 3336,
+      "byteRange": "0-3335",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-3335/134743"
+    },
+    {
+      "path": "Data/CWeapon/01.Lib",
+      "localFile": "Data_CWeapon_01.Lib.range-3336-69588",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/CWeapon/01.Lib",
+      "sha256": "237b11a8788977e4d2de470be3e602bddf7ebf44c44882bd4832e796b3f1392c",
+      "bytes": 66253,
+      "byteRange": "3336-69588",
+      "httpStatus": 206,
+      "contentRange": "bytes 3336-69588/134743"
+    },
+    {
+      "path": "Data/CHair/00.Lib",
+      "localFile": "Data_CHair_00.Lib.range-0-11",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/CHair/00.Lib",
+      "sha256": "4107623f2b9afc0a4b89cf6501534c3a777385ff06c0f31e0818f9337ba1f9dd",
+      "bytes": 12,
+      "byteRange": "0-11",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-11/476194"
+    },
+    {
+      "path": "Data/CHair/00.Lib",
+      "localFile": "Data_CHair_00.Lib.range-0-6471",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/CHair/00.Lib",
+      "sha256": "ba4de7dc4fde93761550747317c5aaaa6296a1e1b80c93e2e908d0ad1f1676b5",
+      "bytes": 6472,
+      "byteRange": "0-6471",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-6471/476194"
+    },
+    {
+      "path": "Data/CHair/00.Lib",
+      "localFile": "Data_CHair_00.Lib.range-6472-90156",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/CHair/00.Lib",
+      "sha256": "8f43d8ca4d6b253e1abb0ae96dadd146570bd624b0fb6c224c98036330933e73",
+      "bytes": 83685,
+      "byteRange": "6472-90156",
+      "httpStatus": 206,
+      "contentRange": "bytes 6472-90156/476194"
+    },
+    {
+      "path": "Data/NPC/00.Lib",
+      "localFile": "Data_NPC_00.Lib.range-0-11",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/NPC/00.Lib",
+      "sha256": "669e8d52ad1fdf30c129625500a008537220da58548c709b28477ec978c056c7",
+      "bytes": 12,
+      "byteRange": "0-11",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-11/95385"
+    },
+    {
+      "path": "Data/NPC/00.Lib",
+      "localFile": "Data_NPC_00.Lib.range-0-179",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/NPC/00.Lib",
+      "sha256": "fcd43ad05897c61d18fdaba71b50e3b282cf48391f4479ad433072e73bd28437",
+      "bytes": 180,
+      "byteRange": "0-179",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-179/95385"
+    },
+    {
+      "path": "Data/NPC/00.Lib",
+      "localFile": "Data_NPC_00.Lib.range-180-73080",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/NPC/00.Lib",
+      "sha256": "0ef78ae2dcd1f74467b70b3ba1c22cf45ead7b29dc1af79c2b986f75f5d60563",
+      "bytes": 72901,
+      "byteRange": "180-73080",
+      "httpStatus": 206,
+      "contentRange": "bytes 180-73080/95385"
+    },
+    {
+      "path": "Data/Monster/004.Lib",
+      "localFile": "Data_Monster_004.Lib.range-0-11",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Monster/004.Lib",
+      "sha256": "74529a796027fd9db9cc1ab4d66dfb1a4318bad9e2cdda7a7020a21ad906da8f",
+      "bytes": 12,
+      "byteRange": "0-11",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-11/414018"
+    },
+    {
+      "path": "Data/Monster/004.Lib",
+      "localFile": "Data_Monster_004.Lib.range-0-939",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Monster/004.Lib",
+      "sha256": "8ccfcc439c879b2f163596d265fb590018422911a4fdb941d30c296c1c2251c4",
+      "bytes": 940,
+      "byteRange": "0-939",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-939/414018"
+    },
+    {
+      "path": "Data/Monster/004.Lib",
+      "localFile": "Data_Monster_004.Lib.range-940-405627",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Monster/004.Lib",
+      "sha256": "acd980bdaa8d49bd727b9c270cf2899f97233b5ec2e3a960f7a239f7ffd4a4a4",
+      "bytes": 404688,
+      "byteRange": "940-405627",
+      "httpStatus": 206,
+      "contentRange": "bytes 940-405627/414018"
+    },
+    {
+      "path": "Data/Monster/005.Lib",
+      "localFile": "Data_Monster_005.Lib.range-0-11",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Monster/005.Lib",
+      "sha256": "09c2996e1525f5fb37df2c53a6f11cce28fe5beff5628c4ddacdff8933211d61",
+      "bytes": 12,
+      "byteRange": "0-11",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-11/461795"
+    },
+    {
+      "path": "Data/Monster/005.Lib",
+      "localFile": "Data_Monster_005.Lib.range-0-947",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Monster/005.Lib",
+      "sha256": "2c6c947e1bcb6046877955ea126b8f1c2778958cb304b02cafdce720c21f8fc2",
+      "bytes": 948,
+      "byteRange": "0-947",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-947/461795"
+    },
+    {
+      "path": "Data/Monster/005.Lib",
+      "localFile": "Data_Monster_005.Lib.range-948-441065",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Monster/005.Lib",
+      "sha256": "349e928aeeabc48d358d3e2667ca890a5863772df677da18a7caf0ef34b0625f",
+      "bytes": 440118,
+      "byteRange": "948-441065",
+      "httpStatus": 206,
+      "contentRange": "bytes 948-441065/461795"
+    },
+    {
+      "path": "Data/Magic.Lib",
+      "localFile": "Data_Magic.Lib.range-0-11",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Magic.Lib",
+      "sha256": "93dcdddb9f8c7083ef290127f474cc13513120fa47bb4d79aef5893e16e21a62",
+      "bytes": 12,
+      "byteRange": "0-11",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-11/9328415"
+    },
+    {
+      "path": "Data/Magic.Lib",
+      "localFile": "Data_Magic.Lib.range-0-16163",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Magic.Lib",
+      "sha256": "d37c1e6d4cfc14bc975648c942bac8401c0d0e569dc430cf5698d4124b12c4cc",
+      "bytes": 16164,
+      "byteRange": "0-16163",
+      "httpStatus": 206,
+      "contentRange": "bytes 0-16163/9328415"
+    },
+    {
+      "path": "Data/Magic.Lib",
+      "localFile": "Data_Magic.Lib.range-16164-535155",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Magic.Lib",
+      "sha256": "fca9f37f182614c0c38eaac0595d378d670b9f3e5bcbae9723a687e41ff7032b",
+      "bytes": 518992,
+      "byteRange": "16164-535155",
+      "httpStatus": 206,
+      "contentRange": "bytes 16164-535155/9328415"
+    },
+    {
+      "path": "Data/NPC/00.Lib",
+      "localFile": "Data_NPC_00.Lib.range-95311-95384",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/NPC/00.Lib",
+      "sha256": "9923406a4a5ca54eb579d2a2a850079d43a3890fb6e11d95307682a28393ad7f",
+      "bytes": 74,
+      "byteRange": "95311-95384",
+      "httpStatus": 206,
+      "contentRange": "bytes 95311-95384/95385"
+    },
+    {
+      "path": "Data/Monster/004.Lib",
+      "localFile": "Data_Monster_004.Lib.range-413734-414017",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Monster/004.Lib",
+      "sha256": "8ed8c096e5dc115d14f4d7a449a892c86ceee01dc4d4a7c1b0f20958460d6007",
+      "bytes": 284,
+      "byteRange": "413734-414017",
+      "httpStatus": 206,
+      "contentRange": "bytes 413734-414017/414018"
+    },
+    {
+      "path": "Data/Monster/005.Lib",
+      "localFile": "Data_Monster_005.Lib.range-461546-461794",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Monster/005.Lib",
+      "sha256": "9b015e0f25cec3c9f9caf47e509d9271e5ed2c915c9851e98fadb1aa229f9cec",
+      "bytes": 249,
+      "byteRange": "461546-461794",
+      "httpStatus": 206,
+      "contentRange": "bytes 461546-461794/461795"
+    }
+  ]
+}

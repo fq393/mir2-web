@@ -1,0 +1,72 @@
+{
+  "sources": [
+    {
+      "name": "Prguse",
+      "path": "Data/Prguse.Lib",
+      "bytes": 12414386,
+      "sha256": "584b67694a420a29c98f51b04cdf681acf1ed071c15c57014fdfd59c762a3c96"
+    },
+    {
+      "name": "Prguse2",
+      "path": "Data/Prguse2.Lib",
+      "bytes": 3557648,
+      "sha256": "510ebc77315089075fc472c9ef745be2e16c6dece970c307d6859ce074cce861"
+    },
+    {
+      "name": "Title",
+      "path": "Data/Title.Lib",
+      "bytes": 5617784,
+      "sha256": "bd3e9485548e9b3cb5d4cb261c9a01a07752fb41fcea7f5d8569e602feaed648"
+    },
+    {
+      "name": "Items",
+      "path": "Data/Items.Lib",
+      "bytes": 4035433,
+      "sha256": "5d5f6e0251d2e5f7d87cb18352be2c2999ea311a7aa988de63dcf2fa78f9fb5a"
+    },
+    {
+      "name": "Stateitem",
+      "path": "Data/Stateitem.Lib",
+      "bytes": 3076805,
+      "sha256": "8394fcc05fbff0161e64efbe26c9c22c05c6e48433b2b23449b42124d7d5397c"
+    },
+    {
+      "name": "MagIcon",
+      "path": "Data/MagIcon.Lib",
+      "bytes": 199927,
+      "sha256": "5f49bf35158f680852a66833ec3c706ad045448ef1526d1f7fdd116807de3030"
+    }
+  ],
+  "classicSources": [
+    {
+      "url": "https://www.mirfiles.com/resources/mir2/Data/UI/1.4Prguse.rar",
+      "archive": "1.4Prguse.rar",
+      "bytes": 1583445,
+      "sha256": "483d14797f12c71a5d6cd168939b26aaea0675f1b9513890dac676cf7589c035",
+      "files": [
+        {
+          "name": "Prguse.WIX",
+          "bytes": 2096,
+          "sha256": "8d96210fd8330bca8fe366ab86beba83d380b381837cbae7893c7f7a5b1c31b9"
+        },
+        {
+          "name": "Prguse.wil",
+          "bytes": 4313717,
+          "sha256": "5f8dcb7a01c77690dde7502477f2df42c734bf7775388757aace84f898335eef"
+        },
+        {
+          "name": "Prguse2.WIX",
+          "bytes": 104,
+          "sha256": "72b2c9299e1dbc661ea57b46310c3c4c72f9fe8b6b4a56b1071fff7a5f3ab7a6"
+        },
+        {
+          "name": "Prguse2.wil",
+          "bytes": 458792,
+          "sha256": "48f40bdd10c679fc624f6c283895df4c24e814af77c3ce4532954762f5a79bf7"
+        }
+      ],
+      "folder": "ui-14"
+    }
+  ],
+  "approvedStyle": "User approved gray stone HUD from 1.4Prguse.rar on 2026-09-07; not claimed verified Shanda 1.76 provenance"
+}

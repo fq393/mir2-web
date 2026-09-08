@@ -1,0 +1,92 @@
+{
+  "map": "0105",
+  "mapSources": [
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Data/Objects.wil",
+      "sha256": "80b27c1be115a19c9d8baac878e90e182c9543ddb0640fda8626b90c636690f0"
+    },
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Data/Objects.WIX",
+      "sha256": "199be3894f277cb4e8ac16e222d7dcda725f2e1fc620d207f432367509afc503"
+    },
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Map/0105.map",
+      "sha256": "9de531bcf6f502482a809bcdbac50a38365f2c163202ba146b9f71b70519523e"
+    }
+  ],
+  "exteriorSource": {
+    "local": "raw-assets/client-176/传奇私服1.76客户/Map/0.map",
+    "sha256": "ef70bd5f5425f7f9dc79cb1ea6957f771c7293d55a554b3ba6239aba372fa370"
+  },
+  "portalSource": "https://github.com/mrzhqiang/mirserver-1.76/blob/39e17246a32247a2c43c4cc481e97e88c692fa53/Mir200/Envir/MapInfo.txt#L85-L92",
+  "portals": [
+    [
+      "0",
+      295,
+      284,
+      "0105",
+      8,
+      24
+    ],
+    [
+      "0",
+      295,
+      285,
+      "0105",
+      9,
+      23
+    ],
+    [
+      "0105",
+      9,
+      25,
+      "0",
+      295,
+      286
+    ],
+    [
+      "0105",
+      9,
+      24,
+      "0",
+      296,
+      285
+    ],
+    [
+      "0",
+      305,
+      275,
+      "0105",
+      20,
+      12
+    ],
+    [
+      "0",
+      305,
+      276,
+      "0105",
+      21,
+      11
+    ],
+    [
+      "0105",
+      21,
+      12,
+      "0",
+      306,
+      276
+    ],
+    [
+      "0105",
+      21,
+      13,
+      "0",
+      306,
+      277
+    ]
+  ],
+  "limitations": [
+    "Source archive directory is labelled private server; not an authenticated official release",
+    "Only door coordinates imported; FIGHT flags, merchant data, prices and NPC scripts not imported"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "sources": [
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Data/npc.wil",
+      "sha256": "7806b71fcca6c257365dd42a9cc614a7b24dd102b69f6e326393e42433b2b052"
+    },
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Data/npc.WIX",
+      "sha256": "d90f18d3a85781bef29cd2fc80e5c2b2a74eac93971e5cd5297fe740da13157b"
+    }
+  ],
+  "animationSource": "pangliang/MirServer-Delphi@f829679d24acb3a097d396d737ab067db2c88ca2 Actor.pas GetNpcOffset / MA35 / TNpcActor.CalcActorFrame",
+  "merchantSource": "mrzhqiang/mirserver-1.76@39e17246a32247a2c43c4cc481e97e88c692fa53 Mir200/Envir/MerChant.txt lines 39-41"
+}

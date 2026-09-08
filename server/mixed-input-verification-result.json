@@ -1,0 +1,1263 @@
+{
+  "time": "2026-09-07T04:45:43.081Z",
+  "success": true,
+  "checks": [
+    "Burst attack/walk/attack/attack/walk preserves exact ACK command order and seq101/102; attack locations never consume walk seq",
+    "Burst FireBall/walk/FireBall/walk preserves seq103/104 through original SpellTime retry delay",
+    "Out-of-range FireBall rejected before TCP write; following walk seq105 has its own real UserLocation"
+  ],
+  "events": [
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "Connected",
+      "data": {}
+    },
+    {
+      "type": "transport",
+      "connected": true,
+      "engine": "Crystal",
+      "packet": "Connected",
+      "packetId": 0,
+      "packetLength": 4,
+      "tcp": "127.0.0.1:17000"
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "ClientVersion",
+      "data": {
+        "Result": 1
+      }
+    },
+    {
+      "type": "protocol",
+      "packet": "ClientVersion",
+      "result": 1
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "StartGame",
+      "data": {
+        "Result": 4,
+        "Resolution": 1024
+      }
+    },
+    {
+      "type": "protocol",
+      "packet": "StartGame",
+      "result": 4
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "Chat",
+      "data": {
+        "Message": "Welcome to the Legend of Mir 2 Server.",
+        "Type": 3
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "NewItemInfo",
+      "data": {
+        "Info": {
+          "Index": 1,
+          "Name": "BichonSword",
+          "Type": 1,
+          "Grade": 0,
+          "RequiredType": 0,
+          "RequiredClass": 31,
+          "RequiredGender": 3,
+          "Set": 0,
+          "Shape": 1,
+          "Weight": 1,
+          "Light": 0,
+          "RequiredAmount": 0,
+          "Image": 2,
+          "Durability": 10000,
+          "Price": 25,
+          "StackSize": 1,
+          "StartItem": true,
+          "Effect": 0,
+          "NeedIdentify": false,
+          "ShowGroupPickup": false,
+          "GlobalDropNotify": false,
+          "ClassBased": false,
+          "LevelBased": false,
+          "CanMine": false,
+          "CanFastRun": false,
+          "CanAwakening": false,
+          "Bind": 0,
+          "Unique": 0,
+          "RandomStatsId": 0,
+          "RandomStats": null,
+          "ToolTip": "",
+          "Slots": 0,
+          "Stats": {
+            "Values": {
+              "MinDC": 5,
+              "MaxDC": 9,
+              "MinMC": 4,
+              "MaxMC": 7
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "NewItemInfo",
+      "data": {
+        "Info": {
+          "Index": 2,
+          "Name": "BichonRobe",
+          "Type": 2,
+          "Grade": 0,
+          "RequiredType": 0,
+          "RequiredClass": 31,
+          "RequiredGender": 3,
+          "Set": 0,
+          "Shape": 1,
+          "Weight": 1,
+          "Light": 0,
+          "RequiredAmount": 0,
+          "Image": 1,
+          "Durability": 10000,
+          "Price": 25,
+          "StackSize": 1,
+          "StartItem": true,
+          "Effect": 0,
+          "NeedIdentify": false,
+          "ShowGroupPickup": false,
+          "GlobalDropNotify": false,
+          "ClassBased": false,
+          "LevelBased": false,
+          "CanMine": false,
+          "CanFastRun": false,
+          "CanAwakening": false,
+          "Bind": 0,
+          "Unique": 0,
+          "RandomStatsId": 0,
+          "RandomStats": null,
+          "ToolTip": "",
+          "Slots": 0,
+          "Stats": {
+            "Values": {
+              "MinAC": 1,
+              "MaxAC": 3
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "MapInformation",
+      "data": {
+        "MapIndex": 1,
+        "FileName": "0",
+        "Title": "比奇省",
+        "MiniMap": 0,
+        "BigMap": 0,
+        "Music": 0,
+        "Lights": 0,
+        "Lightning": false,
+        "Fire": false,
+        "MapDarkLight": 0,
+        "WeatherParticles": 0
+      }
+    },
+    {
+      "type": "ready",
+      "source": "crystal-tcp",
+      "packet": "UserInformation",
+      "objectId": 10,
+      "name": "WebGuest2",
+      "map": "0",
+      "x": 289,
+      "y": 615,
+      "direction": 2,
+      "hp": 18,
+      "mp": 14,
+      "level": 1,
+      "class": 0,
+      "gender": 0,
+      "gold": 200,
+      "inventory": [
+        {
+          "slot": 0,
+          "UniqueID": "5",
+          "ItemIndex": 1,
+          "Count": 1,
+          "CurrentDura": 10000,
+          "Info": {
+            "Index": 1,
+            "Name": "BichonSword",
+            "Type": 1,
+            "Shape": 1,
+            "Image": 2,
+            "Price": 25
+          }
+        },
+        {
+          "slot": 1,
+          "UniqueID": "6",
+          "ItemIndex": 2,
+          "Count": 1,
+          "CurrentDura": 10000,
+          "Info": {
+            "Index": 2,
+            "Name": "BichonRobe",
+            "Type": 2,
+            "Shape": 1,
+            "Image": 1,
+            "Price": 25
+          }
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "equipment": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "magics": [
+        {
+          "spell": 31,
+          "level": 0
+        }
+      ]
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "CompleteQuest",
+      "data": {
+        "CompletedQuests": []
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "ReceiveMail",
+      "data": {
+        "Mail": []
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "FriendUpdate",
+      "data": {
+        "Friends": []
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "LoverUpdate",
+      "data": {
+        "Name": "",
+        "Date": "0001-01-01T00:00:00",
+        "MapName": "",
+        "MarriedDays": 0
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "MentorUpdate",
+      "data": {
+        "Name": "",
+        "Level": 0,
+        "Online": false,
+        "MenteeEXP": 0
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "BaseStatsInfo",
+      "data": {
+        "Stats": {
+          "Job": 0,
+          "Stats": [
+            {
+              "FormulaType": 3,
+              "Type": 0,
+              "Base": 0,
+              "Gain": 0,
+              "GainRate": 0,
+              "Max": 0
+            },
+            {
+              "FormulaType": 3,
+              "Type": 1,
+              "Base": 0,
+              "Gain": 7,
+              "GainRate": 0,
+              "Max": 0
+            },
+            {
+              "FormulaType": 3,
+              "Type": 4,
+              "Base": 0,
+              "Gain": 5,
+              "GainRate": 0,
+              "Max": 0
+            },
+            {
+              "FormulaType": 3,
+              "Type": 5,
+              "Base": 0,
+              "Gain": 5,
+              "GainRate": 0,
+              "Max": 0
+            },
+            {
+              "FormulaType": 3,
+              "Type": 10,
+              "Base": 5,
+              "Gain": 0,
+              "GainRate": 0,
+              "Max": 0
+            },
+            {
+              "FormulaType": 3,
+              "Type": 11,
+              "Base": 15,
+              "Gain": 0,
+              "GainRate": 0,
+              "Max": 0
+            },
+            {
+              "FormulaType": 0,
+              "Type": 12,
+              "Base": 14,
+              "Gain": 4,
+              "GainRate": 4.5,
+              "Max": 0
+            },
+            {
+              "FormulaType": 1,
+              "Type": 13,
+              "Base": 11,
+              "Gain": 3.5,
+              "GainRate": 0,
+              "Max": 0
+            },
+            {
+              "FormulaType": 2,
+              "Type": 16,
+              "Base": 50,
+              "Gain": 3,
+              "GainRate": 0,
+              "Max": 0
+            },
+            {
+              "FormulaType": 2,
+              "Type": 17,
+              "Base": 12,
+              "Gain": 13,
+              "GainRate": 0,
+              "Max": 0
+            },
+            {
+              "FormulaType": 2,
+              "Type": 18,
+              "Base": 15,
+              "Gain": 20,
+              "GainRate": 0,
+              "Max": 0
+            }
+          ],
+          "Caps": {
+            "Values": {
+              "Freezing": 6,
+              "PoisonAttack": 6,
+              "MagicResist": 2,
+              "PoisonResist": 6,
+              "HealthRecovery": 8,
+              "SpellRecovery": 8,
+              "PoisonRecovery": 6,
+              "CriticalRate": 18,
+              "CriticalDamage": 10
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "ObjectNPC",
+      "data": {
+        "ObjectID": 1,
+        "Name": "比奇向导",
+        "NameColour": {},
+        "Image": 0,
+        "Colour": {},
+        "Location": {
+          "X": 286,
+          "Y": 613
+        },
+        "Direction": 1,
+        "QuestIDs": []
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "ObjectNPC",
+      "data": {
+        "ObjectID": 1,
+        "Name": "比奇向导",
+        "NameColour": {},
+        "Image": 0,
+        "Colour": {},
+        "Location": {
+          "X": 286,
+          "Y": 613
+        },
+        "Direction": 1,
+        "QuestIDs": []
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "ObjectMonster",
+      "data": {
+        "ObjectID": 3,
+        "Name": "BichonDeer",
+        "NameColour": {},
+        "Location": {
+          "X": 296,
+          "Y": 614
+        },
+        "Image": 4,
+        "Direction": 1,
+        "Effect": 0,
+        "AI": 0,
+        "Light": 0,
+        "Dead": false,
+        "Skeleton": false,
+        "Poison": 0,
+        "Hidden": false,
+        "Extra": false,
+        "ExtraByte": 0,
+        "ShockTime": 0,
+        "BindingShotCenter": false,
+        "MasterObjectId": 0,
+        "Rarity": 0,
+        "Buffs": []
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "ObjectPlayer",
+      "data": {
+        "ObjectID": 9,
+        "Name": "WebGuest1",
+        "GuildName": "",
+        "GuildRankName": "",
+        "NameColour": {},
+        "Class": 0,
+        "Gender": 0,
+        "Level": 1,
+        "Location": {
+          "X": 284,
+          "Y": 615
+        },
+        "Direction": 0,
+        "Hair": 6,
+        "Light": 0,
+        "Weapon": 1,
+        "WeaponEffect": 0,
+        "Armour": 1,
+        "Poison": 0,
+        "Dead": false,
+        "Hidden": false,
+        "Effect": 0,
+        "WingEffect": 0,
+        "Extra": false,
+        "MountType": -1,
+        "RidingMount": false,
+        "Fishing": false,
+        "TransformType": -1,
+        "ElementOrbEffect": 0,
+        "ElementOrbLvl": 0,
+        "ElementOrbMax": 200,
+        "LevelEffects": 0,
+        "Buffs": []
+      }
+    },
+    {
+      "type": "peer",
+      "source": "crystal-tcp",
+      "packet": "ObjectPlayer",
+      "id": 9,
+      "name": "WebGuest1",
+      "x": 284,
+      "y": 615,
+      "direction": 0
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "ObjectMonster",
+      "data": {
+        "ObjectID": 4,
+        "Name": "BichonDeer",
+        "NameColour": {},
+        "Location": {
+          "X": 296,
+          "Y": 615
+        },
+        "Image": 4,
+        "Direction": 1,
+        "Effect": 0,
+        "AI": 0,
+        "Light": 0,
+        "Dead": false,
+        "Skeleton": false,
+        "Poison": 0,
+        "Hidden": false,
+        "Extra": false,
+        "ExtraByte": 0,
+        "ShockTime": 0,
+        "BindingShotCenter": false,
+        "MasterObjectId": 0,
+        "Rarity": 0,
+        "Buffs": []
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "ObjectPlayer",
+      "data": {
+        "ObjectID": 8,
+        "Name": "WebGuest0",
+        "GuildName": "",
+        "GuildRankName": "",
+        "NameColour": {},
+        "Class": 0,
+        "Gender": 0,
+        "Level": 1,
+        "Location": {
+          "X": 286,
+          "Y": 616
+        },
+        "Direction": 7,
+        "Hair": 2,
+        "Light": 0,
+        "Weapon": 1,
+        "WeaponEffect": 0,
+        "Armour": 1,
+        "Poison": 0,
+        "Dead": false,
+        "Hidden": false,
+        "Effect": 0,
+        "WingEffect": 0,
+        "Extra": false,
+        "MountType": -1,
+        "RidingMount": false,
+        "Fishing": false,
+        "TransformType": -1,
+        "ElementOrbEffect": 0,
+        "ElementOrbLvl": 0,
+        "ElementOrbMax": 200,
+        "LevelEffects": 0,
+        "Buffs": []
+      }
+    },
+    {
+      "type": "peer",
+      "source": "crystal-tcp",
+      "packet": "ObjectPlayer",
+      "id": 8,
+      "name": "WebGuest0",
+      "x": 286,
+      "y": 616,
+      "direction": 7
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "ObjectMonster",
+      "data": {
+        "ObjectID": 2,
+        "Name": "BichonDeer",
+        "NameColour": {},
+        "Location": {
+          "X": 290,
+          "Y": 617
+        },
+        "Image": 4,
+        "Direction": 7,
+        "Effect": 0,
+        "AI": 0,
+        "Light": 0,
+        "Dead": false,
+        "Skeleton": false,
+        "Poison": 0,
+        "Hidden": false,
+        "Extra": false,
+        "ExtraByte": 0,
+        "ShockTime": 0,
+        "BindingShotCenter": false,
+        "MasterObjectId": 0,
+        "Rarity": 0,
+        "Buffs": []
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "ObjectMonster",
+      "data": {
+        "ObjectID": 5,
+        "Name": "BichonScarecrow",
+        "NameColour": {},
+        "Location": {
+          "X": 284,
+          "Y": 618
+        },
+        "Image": 5,
+        "Direction": 5,
+        "Effect": 0,
+        "AI": 1,
+        "Light": 0,
+        "Dead": false,
+        "Skeleton": false,
+        "Poison": 0,
+        "Hidden": false,
+        "Extra": false,
+        "ExtraByte": 0,
+        "ShockTime": 0,
+        "BindingShotCenter": false,
+        "MasterObjectId": 0,
+        "Rarity": 0,
+        "Buffs": []
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "ObjectMonster",
+      "data": {
+        "ObjectID": 6,
+        "Name": "BichonScarecrow",
+        "NameColour": {},
+        "Location": {
+          "X": 283,
+          "Y": 619
+        },
+        "Image": 5,
+        "Direction": 3,
+        "Effect": 0,
+        "AI": 1,
+        "Light": 0,
+        "Dead": false,
+        "Skeleton": false,
+        "Poison": 0,
+        "Hidden": false,
+        "Extra": false,
+        "ExtraByte": 0,
+        "ShockTime": 0,
+        "BindingShotCenter": false,
+        "MasterObjectId": 0,
+        "Rarity": 0,
+        "Buffs": []
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "ObjectMonster",
+      "data": {
+        "ObjectID": 7,
+        "Name": "BichonScarecrow",
+        "NameColour": {},
+        "Location": {
+          "X": 280,
+          "Y": 624
+        },
+        "Image": 5,
+        "Direction": 1,
+        "Effect": 0,
+        "AI": 1,
+        "Light": 0,
+        "Dead": false,
+        "Skeleton": false,
+        "Poison": 0,
+        "Hidden": false,
+        "Extra": false,
+        "ExtraByte": 0,
+        "ShockTime": 0,
+        "BindingShotCenter": false,
+        "MasterObjectId": 0,
+        "Rarity": 0,
+        "Buffs": []
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "TimeOfDay",
+      "data": {
+        "Lights": 2
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "ChangeAMode",
+      "data": {
+        "Mode": 0
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "ChangePMode",
+      "data": {
+        "Mode": 0
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "SwitchGroup",
+      "data": {
+        "AllowGroup": false
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "DefaultNPC",
+      "data": {
+        "ObjectID": 1721029
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "GuildBuffList",
+      "data": {
+        "Remove": 0,
+        "ActiveBuffs": [],
+        "GuildBuffs": []
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "AddBuff",
+      "data": {
+        "Buff": {
+          "Type": 112,
+          "Caster": null,
+          "Visible": false,
+          "ObjectID": 10,
+          "ExpireTime": 599999,
+          "Infinite": false,
+          "Stats": {
+            "Values": {
+              "ExpRatePercent": 5
+            }
+          },
+          "Paused": false,
+          "Values": []
+        }
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "NPCUpdate",
+      "data": {
+        "NPCID": 1721029
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "NPCUpdate",
+      "data": {
+        "NPCID": 1721029
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "data": {
+        "Location": {
+          "X": 289,
+          "Y": 615
+        },
+        "Direction": 4
+      }
+    },
+    {
+      "type": "state",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "objectId": 10,
+      "map": "0",
+      "x": 289,
+      "y": 615,
+      "direction": 4,
+      "accepted": null,
+      "seq": null,
+      "command": "attack"
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "data": {
+        "Location": {
+          "X": 290,
+          "Y": 615
+        },
+        "Direction": 2
+      }
+    },
+    {
+      "type": "state",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "objectId": 10,
+      "map": "0",
+      "x": 290,
+      "y": 615,
+      "direction": 2,
+      "accepted": true,
+      "seq": 101,
+      "command": "walk"
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "data": {
+        "Location": {
+          "X": 290,
+          "Y": 615
+        },
+        "Direction": 6
+      }
+    },
+    {
+      "type": "state",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "objectId": 10,
+      "map": "0",
+      "x": 290,
+      "y": 615,
+      "direction": 6,
+      "accepted": null,
+      "seq": null,
+      "command": "attack"
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "ObjectWalk",
+      "data": {
+        "ObjectID": 2,
+        "Location": {
+          "X": 289,
+          "Y": 616
+        },
+        "Direction": 7
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "data": {
+        "Location": {
+          "X": 290,
+          "Y": 615
+        },
+        "Direction": 0
+      }
+    },
+    {
+      "type": "state",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "objectId": 10,
+      "map": "0",
+      "x": 290,
+      "y": 615,
+      "direction": 0,
+      "accepted": null,
+      "seq": null,
+      "command": "attack"
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "ObjectWalk",
+      "data": {
+        "ObjectID": 4,
+        "Location": {
+          "X": 295,
+          "Y": 615
+        },
+        "Direction": 6
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "ObjectWalk",
+      "data": {
+        "ObjectID": 3,
+        "Location": {
+          "X": 296,
+          "Y": 615
+        },
+        "Direction": 4
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "data": {
+        "Location": {
+          "X": 289,
+          "Y": 615
+        },
+        "Direction": 6
+      }
+    },
+    {
+      "type": "state",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "objectId": 10,
+      "map": "0",
+      "x": 289,
+      "y": 615,
+      "direction": 6,
+      "accepted": true,
+      "seq": 102,
+      "command": "walk"
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "HealthChanged",
+      "data": {
+        "HP": 18,
+        "MP": 11
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "data": {
+        "Location": {
+          "X": 289,
+          "Y": 615
+        },
+        "Direction": 4
+      }
+    },
+    {
+      "type": "state",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "objectId": 10,
+      "map": "0",
+      "x": 289,
+      "y": 615,
+      "direction": 4,
+      "accepted": null,
+      "seq": null,
+      "command": "cast"
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "Magic",
+      "data": {
+        "Spell": 31,
+        "TargetID": 0,
+        "Target": {
+          "X": 289,
+          "Y": 615
+        },
+        "Cast": true,
+        "Level": 0,
+        "SecondaryTargetIDs": []
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "data": {
+        "Location": {
+          "X": 290,
+          "Y": 615
+        },
+        "Direction": 2
+      }
+    },
+    {
+      "type": "state",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "objectId": 10,
+      "map": "0",
+      "x": 290,
+      "y": 615,
+      "direction": 2,
+      "accepted": true,
+      "seq": 103,
+      "command": "walk"
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "ObjectWalk",
+      "data": {
+        "ObjectID": 2,
+        "Location": {
+          "X": 288,
+          "Y": 616
+        },
+        "Direction": 6
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "ObjectWalk",
+      "data": {
+        "ObjectID": 4,
+        "Location": {
+          "X": 294,
+          "Y": 615
+        },
+        "Direction": 6
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "ObjectWalk",
+      "data": {
+        "ObjectID": 3,
+        "Location": {
+          "X": 295,
+          "Y": 615
+        },
+        "Direction": 6
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "HealthChanged",
+      "data": {
+        "HP": 18,
+        "MP": 8
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "data": {
+        "Location": {
+          "X": 290,
+          "Y": 615
+        },
+        "Direction": 4
+      }
+    },
+    {
+      "type": "state",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "objectId": 10,
+      "map": "0",
+      "x": 290,
+      "y": 615,
+      "direction": 4,
+      "accepted": null,
+      "seq": null,
+      "command": "cast"
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "Magic",
+      "data": {
+        "Spell": 31,
+        "TargetID": 0,
+        "Target": {
+          "X": 289,
+          "Y": 615
+        },
+        "Cast": true,
+        "Level": 0,
+        "SecondaryTargetIDs": []
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "data": {
+        "Location": {
+          "X": 289,
+          "Y": 615
+        },
+        "Direction": 6
+      }
+    },
+    {
+      "type": "state",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "objectId": 10,
+      "map": "0",
+      "x": 289,
+      "y": 615,
+      "direction": 6,
+      "accepted": true,
+      "seq": 104,
+      "command": "walk"
+    },
+    {
+      "type": "error",
+      "command": "cast",
+      "message": "Cast rejected: use learned FireBall while alive and within its range."
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "ObjectTurn",
+      "data": {
+        "ObjectID": 1,
+        "Location": {
+          "X": 286,
+          "Y": 613
+        },
+        "Direction": 0
+      }
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "data": {
+        "Location": {
+          "X": 290,
+          "Y": 615
+        },
+        "Direction": 2
+      }
+    },
+    {
+      "type": "state",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "objectId": 10,
+      "map": "0",
+      "x": 290,
+      "y": 615,
+      "direction": 2,
+      "accepted": true,
+      "seq": 105,
+      "command": "walk"
+    },
+    {
+      "type": "packet",
+      "source": "crystal-tcp",
+      "packet": "ObjectWalk",
+      "data": {
+        "ObjectID": 6,
+        "Location": {
+          "X": 284,
+          "Y": 620
+        },
+        "Direction": 3
+      }
+    }
+  ]
+}

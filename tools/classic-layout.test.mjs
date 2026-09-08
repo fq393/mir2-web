@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {CLASSIC,worldToScreen,screenToCell,blocksWorld} from '../client/assets/scripts/core/classicLayout.ts';
+test('one 800x600 coordinate space, original 800x251 panel bottom anchored',()=>{assert.equal(CLASSIC.width,800);assert.equal(CLASSIC.height,600);assert.equal(CLASSIC.hudTop,349);assert.equal(CLASSIC.hudTop+251,600);});
+test('camera transformations round trip at native scale including map edges',()=>{for(const camera of [{x:10,y:12},{x:300,y:500}])for(const cell of [{x:10,y:12},{x:15,y:15},{x:299,y:502}])assert.deepEqual(screenToCell(worldToScreen(cell,camera),camera),cell);});
+test('HUD opacity and visible dialogs block clicks but transparent ornament margins do not',()=>{const rows=Array(251).fill('0'.repeat(800));rows[60]='0'.repeat(285)+'1'+'0'.repeat(514);assert.equal(blocksWorld(285,409,[],rows),true);assert.equal(blocksWorld(250,409,[],rows),false);assert.equal(blocksWorld(30,200,[{x:0,y:176,w:303,h:198}],rows),true);assert.equal(blocksWorld(400,580,[],rows),true);});

@@ -1,0 +1,375 @@
+{
+  "time": "2026-09-07T03:11:56.408Z",
+  "checks": [
+    "Actual Crystal TCP Connected: length4,packetID0",
+    "Actual guest Login (create on first use), StartGame4, UserInformation with authoritative coordinates",
+    "All8 directions sent as real Walk packets; authoritative result matches original map collision",
+    "Crystal rejected real blocked cell with UserLocation and accepted=false",
+    "Two real Crystal sessions: ObjectPlayer, ObjectWalk and ObjectRemove forwarded between WebSockets",
+    "Session remains alive beyond10s Crystal timeout via real KeepAlive packets",
+    "Eight consecutive real guest reconnects reuse accounts and avoid upstream NewAccount rate ban"
+  ],
+  "events": [
+    {
+      "session": "first",
+      "type": "transport",
+      "connected": true,
+      "engine": "Crystal",
+      "packet": "Connected",
+      "packetId": 0,
+      "packetLength": 4,
+      "tcp": "127.0.0.1:17000"
+    },
+    {
+      "session": "first",
+      "type": "protocol",
+      "packet": "ClientVersion",
+      "result": 1
+    },
+    {
+      "session": "first",
+      "type": "protocol",
+      "packet": "StartGame",
+      "result": 4
+    },
+    {
+      "session": "first",
+      "type": "ready",
+      "source": "crystal-tcp",
+      "packet": "UserInformation",
+      "objectId": 1,
+      "name": "WebGuest0",
+      "map": "0",
+      "x": 288,
+      "y": 615,
+      "direction": 0
+    },
+    {
+      "session": "first",
+      "type": "state",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "objectId": 1,
+      "map": "0",
+      "x": 288,
+      "y": 614,
+      "direction": 0,
+      "accepted": true,
+      "seq": 1
+    },
+    {
+      "session": "first",
+      "type": "state",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "objectId": 1,
+      "map": "0",
+      "x": 289,
+      "y": 613,
+      "direction": 1,
+      "accepted": true,
+      "seq": 2
+    },
+    {
+      "session": "first",
+      "type": "peer",
+      "source": "crystal-tcp",
+      "packet": "ObjectPlayer",
+      "id": 2,
+      "name": "WebGuest1",
+      "x": 288,
+      "y": 615,
+      "direction": 0
+    },
+    {
+      "session": "first",
+      "type": "state",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "objectId": 1,
+      "map": "0",
+      "x": 290,
+      "y": 613,
+      "direction": 2,
+      "accepted": true,
+      "seq": 3
+    },
+    {
+      "session": "first",
+      "type": "state",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "objectId": 1,
+      "map": "0",
+      "x": 291,
+      "y": 614,
+      "direction": 3,
+      "accepted": true,
+      "seq": 4
+    },
+    {
+      "session": "first",
+      "type": "state",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "objectId": 1,
+      "map": "0",
+      "x": 291,
+      "y": 615,
+      "direction": 4,
+      "accepted": true,
+      "seq": 5
+    },
+    {
+      "session": "first",
+      "type": "state",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "objectId": 1,
+      "map": "0",
+      "x": 290,
+      "y": 616,
+      "direction": 5,
+      "accepted": true,
+      "seq": 6
+    },
+    {
+      "session": "first",
+      "type": "state",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "objectId": 1,
+      "map": "0",
+      "x": 289,
+      "y": 616,
+      "direction": 6,
+      "accepted": true,
+      "seq": 7
+    },
+    {
+      "session": "first",
+      "type": "state",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "objectId": 1,
+      "map": "0",
+      "x": 289,
+      "y": 616,
+      "direction": 6,
+      "accepted": false,
+      "seq": 8
+    },
+    {
+      "session": "first",
+      "type": "state",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "objectId": 1,
+      "map": "0",
+      "x": 290,
+      "y": 615,
+      "direction": 1,
+      "accepted": true,
+      "seq": 9
+    },
+    {
+      "session": "first",
+      "type": "state",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "objectId": 1,
+      "map": "0",
+      "x": 291,
+      "y": 614,
+      "direction": 1,
+      "accepted": true,
+      "seq": 10
+    },
+    {
+      "session": "first",
+      "type": "state",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "objectId": 1,
+      "map": "0",
+      "x": 291,
+      "y": 614,
+      "direction": 1,
+      "accepted": false,
+      "seq": 11
+    },
+    {
+      "session": "second",
+      "type": "transport",
+      "connected": true,
+      "engine": "Crystal",
+      "packet": "Connected",
+      "packetId": 0,
+      "packetLength": 4,
+      "tcp": "127.0.0.1:17000"
+    },
+    {
+      "session": "second",
+      "type": "protocol",
+      "packet": "ClientVersion",
+      "result": 1
+    },
+    {
+      "session": "second",
+      "type": "protocol",
+      "packet": "StartGame",
+      "result": 4
+    },
+    {
+      "session": "second",
+      "type": "ready",
+      "source": "crystal-tcp",
+      "packet": "UserInformation",
+      "objectId": 3,
+      "name": "WebGuest2",
+      "map": "0",
+      "x": 288,
+      "y": 615,
+      "direction": 0
+    },
+    {
+      "session": "second",
+      "type": "peer",
+      "source": "crystal-tcp",
+      "packet": "ObjectPlayer",
+      "id": 1,
+      "name": "WebGuest0",
+      "x": 291,
+      "y": 614,
+      "direction": 1
+    },
+    {
+      "session": "second",
+      "type": "peer",
+      "source": "crystal-tcp",
+      "packet": "ObjectPlayer",
+      "id": 2,
+      "name": "WebGuest1",
+      "x": 288,
+      "y": 615,
+      "direction": 0
+    },
+    {
+      "session": "first",
+      "type": "peer",
+      "source": "crystal-tcp",
+      "packet": "ObjectPlayer",
+      "id": 3,
+      "name": "WebGuest2",
+      "x": 288,
+      "y": 615,
+      "direction": 0
+    },
+    {
+      "session": "second",
+      "type": "state",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "objectId": 3,
+      "map": "0",
+      "x": 289,
+      "y": 615,
+      "direction": 2,
+      "accepted": true,
+      "seq": 1
+    },
+    {
+      "session": "first",
+      "type": "peer",
+      "source": "crystal-tcp",
+      "packet": "ObjectWalk",
+      "id": 3,
+      "name": "WebGuest2",
+      "x": 289,
+      "y": 615,
+      "direction": 2
+    },
+    {
+      "session": "first",
+      "type": "peerRemoved",
+      "source": "crystal-tcp",
+      "packet": "ObjectRemove",
+      "id": 3
+    },
+    {
+      "session": "first",
+      "type": "state",
+      "source": "crystal-tcp",
+      "packet": "UserLocation",
+      "objectId": 1,
+      "map": "0",
+      "x": 291,
+      "y": 614,
+      "direction": 4,
+      "accepted": true,
+      "seq": 12
+    }
+  ],
+  "health": {
+    "engine": "Suprcode/Crystal",
+    "upstreamCommit": "0e315fe327192afe52c3d7357ddd1f5b7e26c5b8",
+    "running": true,
+    "tcp": "127.0.0.1:17000",
+    "maps": 1,
+    "players": 0,
+    "websocket": "/ws",
+    "gameplay": "real Crystal account, character, map and movement; one-map development database"
+  },
+  "tcpFirstFrame": "04000000",
+  "success": true,
+  "reconnects": [
+    {
+      "iteration": 1,
+      "name": "WebGuest0",
+      "x": 291,
+      "y": 614
+    },
+    {
+      "iteration": 2,
+      "name": "WebGuest0",
+      "x": 291,
+      "y": 614
+    },
+    {
+      "iteration": 3,
+      "name": "WebGuest0",
+      "x": 291,
+      "y": 614
+    },
+    {
+      "iteration": 4,
+      "name": "WebGuest0",
+      "x": 291,
+      "y": 614
+    },
+    {
+      "iteration": 5,
+      "name": "WebGuest0",
+      "x": 291,
+      "y": 614
+    },
+    {
+      "iteration": 6,
+      "name": "WebGuest0",
+      "x": 291,
+      "y": 614
+    },
+    {
+      "iteration": 7,
+      "name": "WebGuest0",
+      "x": 291,
+      "y": 614
+    },
+    {
+      "iteration": 8,
+      "name": "WebGuest0",
+      "x": 291,
+      "y": 614
+    }
+  ]
+}
