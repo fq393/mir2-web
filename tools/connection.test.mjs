@@ -384,3 +384,18 @@ test('new character session clears previous role page and final stats',()=>{
  const w=world();w.characterPage=3;w.skillPage=2;w.skillReturnBag=true;w.attributes={maxdc:999};w.serverEvent({type:'ready',objectId:1,x:2,y:2});
  assert.equal(w.characterPage,0);assert.equal(w.skillPage,0);assert.equal(w.skillReturnBag,false);assert.equal(w.attributes,null);
 });
+
+test('drag updates both the original panel and its world hit rectangle with viewport bounds',()=>{
+ const w=world(),positions=[];w.menu.active=true;w.menuKind='inventory';const rect={x:0,y:0,w:336,h:270};w.inventoryWindows.set('bag',{node:{setPosition:(x,y)=>positions.push([x,y])},rect});w.windowDrag={id:'bag',dx:20,dy:5};w.mousePoint={x:220,y:85};w.moveInventoryWindow();
+ assert.deepEqual(positions[0],[200,-80]);assert.equal(rect.x,200);assert.equal(rect.y,80);assert.equal(w.windowPositions.bag.x,200);
+ w.mousePoint={x:999,y:999};w.moveInventoryWindow();assert.equal(rect.x,464);assert.equal(rect.y,330);
+ w.menu.active=false;w.moveInventoryWindow();assert.equal(w.windowDrag,null);
+});
+test('window focus order survives refresh and does not move another window',()=>{
+ const w=world(),order=[];w.menu.children=[{},{}];for(const id of ['bag','character'])w.inventoryWindows.set(id,{node:{isValid:true,setSiblingIndex:()=>order.push(id)},rect:{x:0,y:0,w:10,h:10}});
+ w.focusInventoryWindow('bag');assert.equal(w.windowOrder.join(','),'character,bag');assert.equal(order.join(','),'character,bag');assert.equal(w.windowPositions.character.x,568);
+});
+test('drag release cannot become ground movement and disconnect cancels capture',()=>{
+ const w=world();let moved=false;w.destination=()=>moved=true;w.windowDrag={id:'bag',dx:0,dy:0};w.onMouse({getButton:()=>0,getUILocation:()=>({x:500,y:500})});assert.equal(moved,false);
+ w.serverEvent({type:'disconnected'});assert.equal(w.windowDrag,null);
+});

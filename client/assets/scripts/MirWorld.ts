@@ -62,7 +62,7 @@ export class MirWorld extends Component {
     private facing=4;
     private animationClock=0;private worldClock=0;
     private lastFrame='';
-    private ready=false;private hudRows:string[]=[];private panelRects:PanelRect[]=[];private inventoryPage='bag';private bagOpen=false;private characterOpen=false;private carrySprite?:Sprite;private bagIcons=new Map<number,Node>();private bagSwapSource=-1;private selectedEquipment=-1;private equipmentPending=false;private equipmentPendingAt=0;private equipmentIcons=new Map<number,Node>();private characterPage=0;private characterNavAt=-Infinity;private characterValues:{label:Label,value:()=>string}[]=[];private attributes:Record<string,number>|null=null;private skillReturnBag=false;private shopTop=0;private shopBagOpen=true;private hovered=0;
+    private ready=false;private hudRows:string[]=[];private panelRects:PanelRect[]=[];private inventoryPage='bag';private bagOpen=false;private characterOpen=false;private carrySprite?:Sprite;private bagIcons=new Map<number,Node>();private bagSwapSource=-1;private selectedEquipment=-1;private equipmentPending=false;private equipmentPendingAt=0;private equipmentIcons=new Map<number,Node>();private windowPositions:Record<string,{x:number;y:number}>={bag:{x:0,y:0},character:{x:568,y:0}};private windowOrder=['bag','character'];private inventoryWindows=new Map<string,{node:Node;rect:PanelRect}>();private windowDrag:{id:string;dx:number;dy:number}|null=null;private dragMouseUntil=0;private characterPage=0;private characterNavAt=-Infinity;private characterValues:{label:Label,value:()=>string}[]=[];private attributes:Record<string,number>|null=null;private skillReturnBag=false;private shopTop=0;private shopBagOpen=true;private hovered=0;
     private connection:CrystalConnection|null=null;
     private debug=false;
     private zoom=1;
@@ -133,7 +133,7 @@ export class MirWorld extends Component {
             input.on(Input.EventType.KEY_DOWN,this.onKeyDown,this);input.on(Input.EventType.KEY_UP,this.onKeyUp,this);
             input.on(Input.EventType.MOUSE_UP,this.onMouse,this);input.on(Input.EventType.TOUCH_END,this.onTouch,this);
             input.on(Input.EventType.MOUSE_MOVE,this.onHover,this);
-            if(typeof document!=='undefined')document.addEventListener('pointermove',this.trackPointer,true);
+            if(typeof document!=='undefined'){document.addEventListener('pointermove',this.trackPointer,true);document.addEventListener('pointerdown',this.windowPointerDown,true);document.addEventListener('pointerup',this.windowPointerUp,true);document.addEventListener('pointercancel',this.windowPointerUp,true);document.addEventListener('mousedown',this.blockDragMouse,true);document.addEventListener('mouseup',this.blockDragMouse,true);}
             game.on(Game.EVENT_HIDE,this.pauseInput,this);
             this.connection=new CrystalConnection(text=>{this.statusText=text;},event=>this.serverEvent(event));
             this.connection.connect();this.updateView();
@@ -181,12 +181,40 @@ export class MirWorld extends Component {
     private trackPointer=(event:PointerEvent):void=>{
         const canvas=document.querySelector('canvas'),rect=canvas?.getBoundingClientRect();if(!rect||!rect.width||!rect.height)return;
         this.mousePoint={x:(event.clientX-rect.left)*800/rect.width,y:(event.clientY-rect.top)*600/rect.height};
-        this.positionCarriedItem();this.positionItemTooltip();
+        this.moveInventoryWindow();this.positionCarriedItem();this.positionItemTooltip();
     };
+    private blockDragMouse=(event:MouseEvent):void=>{if(this.windowDrag||Date.now()<this.dragMouseUntil){event.preventDefault();event.stopImmediatePropagation();}};
+    private windowPointerDown=(event:PointerEvent):void=>{
+        if(event.button!==0||event.target!==document.querySelector('canvas')||this.accounts?.active||!this.menu.active||this.menuKind!=='inventory')return;
+        this.trackPointer(event);const p=this.mousePoint;
+        const id=[...this.windowOrder].reverse().find(id=>{const r=this.inventoryWindows.get(id)?.rect;return r&&p.x>=r.x&&p.x<r.x+r.w&&p.y>=r.y&&p.y<r.y+r.h;});if(!id)return;
+        this.focusInventoryWindow(id);
+        const r=this.inventoryWindows.get(id)!.rect,localY=p.y-r.y;
+        // Original TDWindow drags background, never the item/control children.
+        // Web drag handles use the original upper border/name region, without new art.
+        if((id==='bag'?localY<12:localY<40)&&this.selectedBag<6&&this.selectedEquipment<0&&!this.equipmentPending&&!this.bagMovePending){
+            this.windowDrag={id,dx:p.x-r.x,dy:p.y-r.y};this.clearItemTooltip();this.keys.clear();this.path=[];
+            event.preventDefault();event.stopImmediatePropagation();
+        }
+    };
+    private windowPointerUp=(event:PointerEvent):void=>{
+        if(!this.windowDrag)return;this.trackPointer(event);this.windowDrag=null;this.dragMouseUntil=Date.now()+200;event.preventDefault();event.stopImmediatePropagation();
+    };
+    private focusInventoryWindow(id:string):void {
+        this.windowOrder=this.windowOrder.filter(v=>v!==id).concat(id);
+        for(const key of this.windowOrder){const w=this.inventoryWindows.get(key);if(w?.node.isValid)w.node.setSiblingIndex(this.menu.children.length-1);}
+    }
+    private moveInventoryWindow():void {
+        if(!this.windowDrag)return;
+        if(!this.menu.active||this.menuKind!=='inventory'||this.accounts?.active){this.windowDrag=null;return;}
+        const w=this.inventoryWindows.get(this.windowDrag.id);if(!w)return;
+        const x=Math.round(Math.max(0,Math.min(800-w.rect.w,this.mousePoint.x-this.windowDrag.dx))),y=Math.round(Math.max(0,Math.min(600-w.rect.h,this.mousePoint.y-this.windowDrag.dy)));
+        this.windowPositions[this.windowDrag.id]={x,y};w.rect.x=x;w.rect.y=y;w.node.setPosition(x,-y);
+    }
     private onKeyUp(e:EventKeyboard):void {this.keys.delete(e.keyCode);}
-    private pauseInput():void {this.sound.stop();this.keys.clear();this.path=[];}
-    private onMouse(e:EventMouse):void {if(this.accounts?.active||this.selectedBag>=6||this.selectedEquipment>=0||this.equipmentPending)return;this.sound.unlock();if(e.getButton()!==0)return;const p=e.getUILocation();if(this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT)){this.harvestAt({x:p.x,y:600-p.y});return;}this.destination(p);}
-    private onTouch(e:EventTouch):void {if(this.accounts?.active||this.selectedBag>=6||this.selectedEquipment>=0||this.equipmentPending)return;this.sound.unlock();const p=e.getUILocation();if(this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT)){this.harvestAt({x:p.x,y:600-p.y});return;}this.destination(p);}
+    private pauseInput():void {this.windowDrag=null;this.sound.stop();this.keys.clear();this.path=[];}
+    private onMouse(e:EventMouse):void {if(this.accounts?.active||this.selectedBag>=6||this.selectedEquipment>=0||this.equipmentPending||this.windowDrag||Date.now()<this.dragMouseUntil)return;this.sound.unlock();if(e.getButton()!==0)return;const p=e.getUILocation();if(this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT)){this.harvestAt({x:p.x,y:600-p.y});return;}this.destination(p);}
+    private onTouch(e:EventTouch):void {if(this.accounts?.active||this.selectedBag>=6||this.selectedEquipment>=0||this.equipmentPending||this.windowDrag||Date.now()<this.dragMouseUntil)return;this.sound.unlock();const p=e.getUILocation();if(this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT)){this.harvestAt({x:p.x,y:600-p.y});return;}this.destination(p);}
     private onHover(e:EventMouse):void {
         if(!this.ready)return;const p=e.getUILocation(),screen={x:p.x,y:600-p.y};
         this.mousePoint=screen;this.positionItemTooltip();this.positionCarriedItem();
@@ -340,10 +368,10 @@ export class MirWorld extends Component {
             return;
         }
         if(event.type==='packet'){this.packet(event.packet,event.data);return;}
-        if(event.type==='disconnected'){this.attributes=null;this.characterValues=[];this.skillRequest++;this.skillPending=false;this.selectedEquipment=-1;this.equipmentPending=false;this.selectedBag=-1;this.bagMovePending=false;this.tradeRequest++;this.tradeItem=null;this.tradeQuote=null;this.chatInput?.setActive(false);this.logs=[];if(this.logText)this.logText.string='';if(this.menu)this.menu.active=false;if(this.targetText)this.targetText.string='';this.party?.reset();this.clearLoot();this.pendingUses.clear();this.fireTargets.clear();this.serverReady=false;this.clearMovement();this.peers.forEach(p=>{p.node.destroy();p.label?.node.destroy();p.healthBar?.node.destroy();});this.peers.clear();return;}
+        if(event.type==='disconnected'){this.windowDrag=null;this.attributes=null;this.characterValues=[];this.skillRequest++;this.skillPending=false;this.selectedEquipment=-1;this.equipmentPending=false;this.selectedBag=-1;this.bagMovePending=false;this.tradeRequest++;this.tradeItem=null;this.tradeQuote=null;this.chatInput?.setActive(false);this.logs=[];if(this.logText)this.logText.string='';if(this.menu)this.menu.active=false;if(this.targetText)this.targetText.string='';this.party?.reset();this.clearLoot();this.pendingUses.clear();this.fireTargets.clear();this.serverReady=false;this.clearMovement();this.peers.forEach(p=>{p.node.destroy();p.label?.node.destroy();p.healthBar?.node.destroy();});this.peers.clear();return;}
         if(event.type==='vitals'){const d=this.normalize(event.data);if(d.objectid!==this.ownId)return;this.authoritativeMaxHP=d.maxhp;this.authoritativeMaxMP=d.maxmp;this.bagWeight=d.bagweight;this.maxBagWeight=d.maxbagweight;this.handWeight=d.handweight;this.maxHandWeight=d.maxhandweight;this.wearWeight=d.wearweight;this.maxWearWeight=d.maxwearweight;this.attributes=d.attributes??null;return;}
         if(event.type==='transport')this.statusText='正在进入游戏';
-        if(event.type==='ready') {this.characterPage=0;this.skillPage=0;this.skillReturnBag=false;this.attributes=null;this.characterValues=[];this.chatInput?.setActive(true);this.gender=event.gender??0;this.hairShape=event.hair??0;this.missingActors.clear();this.characterName=event.name??'旅人';if(this.ownLabel)this.ownLabel.string=this.characterName;
+        if(event.type==='ready') {this.windowPositions={bag:{x:0,y:0},character:{x:568,y:0}};this.windowOrder=['bag','character'];this.windowDrag=null;this.characterPage=0;this.skillPage=0;this.skillReturnBag=false;this.attributes=null;this.characterValues=[];this.chatInput?.setActive(true);this.gender=event.gender??0;this.hairShape=event.hair??0;this.missingActors.clear();this.characterName=event.name??'旅人';if(this.ownLabel)this.ownLabel.string=this.characterName;
             if(event.map&&event.map!==this.mapId&&!this.changeMap(event.map))return;
             this.authoritativeMaxHP=0;this.authoritativeMaxMP=0;this.experience=event.experience??0;this.maxExperience=event.maxExperience??0;this.magics=this.normalize(event.magics??[]);this.job=event.class??0;this.hp=event.hp??0;this.mp=event.mp??0;this.gold=event.gold??0;this.level=event.level??1;this.inventory=this.normalize(event.inventory??[]);this.equipment=this.normalize(event.equipment??[]);
             this.pendingUses.clear();this.refreshBelt();this.serverReady=true;this.ownId=event.objectId;this.statusText='已进入游戏';
@@ -425,7 +453,13 @@ export class MirWorld extends Component {
     }
     private closeNative(parent:Node,x:number,y:number,action:()=>void=()=>{this.menu.active=false;if(this.targetText)this.targetText.string='';}):void {const button=this.nativeCrop(parent,'ui:ClassicPrguse:370',x,y,8,40,15,23);this.nativeClick(button.node,action);}
     private nativeWindow(parent:Node,key:string,x:number,y:number):Node {
-        const n=this.makeNode('Native window',parent);n.setPosition(x,-y);this.nativeImage(n,key,0,0);const f=this.frames.get(key)!.meta;this.panelRects.push({x,y,w:f.w,h:f.h});return n;
+        const id=this.menuKind==='inventory'?(key==='ui:ClassicPrguse:3'?'bag':key==='ui:ClassicPrguse:370'?'character':null):null;
+        if(id){x=this.windowPositions[id].x;y=this.windowPositions[id].y;}
+        const n=this.makeNode('Native window',parent);n.setPosition(x,-y);this.nativeImage(n,key,0,0);const f=this.frames.get(key)!.meta,rect={x,y,w:f.w,h:f.h};this.panelRects.push(rect);
+        n.getComponent(UITransform)!.setAnchorPoint(0,1);n.getComponent(UITransform)!.setContentSize(f.w,f.h);
+        // A panel background consumes input so an overlapped lower item cannot fire.
+        for(const type of [Node.EventType.MOUSE_DOWN,Node.EventType.MOUSE_UP,Node.EventType.TOUCH_START,Node.EventType.TOUCH_END])n.on(type,(e:EventMouse|EventTouch)=>{e.propagationStopped=true;});
+        if(id)this.inventoryWindows.set(id,{node:n,rect});return n;
     }
     private createNativeHUD():void {
         this.hudRoot.destroy();this.nativeLayer=this.makeNode('Classic gray stone UI',this.node);this.nativeLayer.setPosition(-400,300);
@@ -514,11 +548,12 @@ export class MirWorld extends Component {
         if(page==='bag')this.bagOpen=!this.bagOpen;
         if(page==='character')this.characterOpen=!this.characterOpen;
         this.inventoryPage=this.characterOpen?'character':'bag';
-        this.clearItemTooltip();this.menuKind='inventory';this.menu.children.slice().forEach(c=>c.destroy());this.panelRects=[];
+        this.windowDrag=null;this.inventoryWindows.clear();this.clearItemTooltip();this.menuKind='inventory';this.menu.children.slice().forEach(c=>c.destroy());this.panelRects=[];
         this.menu.active=this.bagOpen||this.characterOpen;
         if(!this.bagOpen)this.selectedBag=-1;if(!this.characterOpen)this.selectedEquipment=-1;
         if(this.bagOpen)this.renderBag(0);
         if(this.characterOpen)this.renderCharacter();
+        if(page&&this.inventoryWindows.has(page))this.focusInventoryWindow(page);else this.focusInventoryWindow(this.windowOrder[this.windowOrder.length-1]);
     }
     private renderCharacter():void {
         this.equipmentIcons.clear();this.characterValues=[];
@@ -891,7 +926,7 @@ export class MirWorld extends Component {
     onDestroy():void {this.miniMap?.destroy();this.party?.destroy();this.accounts?.destroy();this.chatInput?.destroy();this.resizeObserver?.disconnect();this.sound.destroy();
         input.off(Input.EventType.KEY_DOWN,this.onKeyDown,this);input.off(Input.EventType.KEY_UP,this.onKeyUp,this);
         input.off(Input.EventType.MOUSE_UP,this.onMouse,this);input.off(Input.EventType.TOUCH_END,this.onTouch,this);input.off(Input.EventType.MOUSE_MOVE,this.onHover,this);
-        if(typeof document!=='undefined')document.removeEventListener('pointermove',this.trackPointer,true);
+        if(typeof document!=='undefined'){document.removeEventListener('pointermove',this.trackPointer,true);document.removeEventListener('pointerdown',this.windowPointerDown,true);document.removeEventListener('pointerup',this.windowPointerUp,true);document.removeEventListener('pointercancel',this.windowPointerUp,true);document.removeEventListener('mousedown',this.blockDragMouse,true);document.removeEventListener('mouseup',this.blockDragMouse,true);}
         this.connection?.close();delete (globalThis as any).__MIRQA;
         game.off(Game.EVENT_HIDE,this.pauseInput,this);
         this.terrain?.destroy();this.store?.destroy();
