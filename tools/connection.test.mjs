@@ -192,3 +192,15 @@ test('book double-click accepts fast mouse clicks and suppresses synthetic mouse
  handlers.touch({});handlers.mouse({getButton:()=>0});assert.equal(used,1);
  handlers.touch({});assert.equal(used,2);handlers.mouse({getButton:()=>0});assert.equal(used,2);
 });
+
+test('ground pickup waits for confirmed arrival and never removes loot optimistically',()=>{
+ const w=world(),sent=[];w.serverReady=true;w.connection.send=p=>{sent.push(p);return true;};
+ w.loot.set(7,{point:{x:2,y:2},node:{destroy(){}},label:{node:{destroy(){}}}});w.pickupTarget=7;w.step={};
+ w.pickupAtDestination();assert.equal(sent.length,0);w.step=null;w.pickupAtDestination();assert.equal(sent[0].type,'pickup');assert.equal(w.loot.size,1);w.pickupAtDestination();assert.equal(sent.length,1);
+ w.packet('ObjectRemove',{ObjectID:7});assert.equal(w.loot.size,0);
+});
+test('map changes, disconnect and unavailable targets clear pending ground pickup',()=>{
+ const w=world();let removed=0;w.loot.set(7,{node:{destroy(){removed++;}},label:{node:{destroy(){removed++;}}}});w.pickupTarget=7;
+ w.serverEvent({type:'disconnected'});assert.equal(removed,2);assert.equal(w.loot.size,0);assert.equal(w.pickupTarget,0);
+ w.serverReady=true;w.pickupTarget=99;w.pickupAtDestination();assert.equal(w.pickupTarget,0);
+});

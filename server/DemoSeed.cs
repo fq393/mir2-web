@@ -6,7 +6,7 @@ using Server.MirEnvir;
 // Local content migration only. Combat, inventory and NPC behavior stay in upstream Crystal.
 static class DemoSeed
 {
-    const string Revision = "bichon-jewellery-v5";
+    const string Revision = "bichon-wildlife-v6";
     public static void Apply(Envir envir, string dataDir, string root)
     {
         var backup = Path.Combine(dataDir,"demo-backups",DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff"));
@@ -59,12 +59,7 @@ static class DemoSeed
             potion.Stats=new Stats {[Stat.HP]=spec.HP,[Stat.MP]=spec.MP};
         }
         if(!envir.MagicInfoList.Any(m=>m.Spell==Spell.FireBall)) envir.MagicInfoList.Add(new MagicInfo {Name="FireBall",Spell=Spell.FireBall,BaseCost=1,Level1=1,Level2=2,Level3=3,Need1=100,Need2=100,Need3=100,PowerBase=12,PowerBonus=2,MPowerBase=12,MPowerBonus=2,Range=9});
-        foreach(var spec in new[]{(Name:"BichonDeer",Image:Monster.Deer,AI:(byte)0,X:294,Y:615),(Name:"BichonScarecrow",Image:Monster.Scarecrow,AI:(byte)1,X:282,Y:621)}) {
-            var monster=envir.MonsterInfoList.FirstOrDefault(m=>m.Name==spec.Name);
-            if(monster==null) { monster=new MonsterInfo {Index=++envir.MonsterIndex,Name=spec.Name,Image=spec.Image,AI=spec.AI,Level=1,Experience=10,MoveSpeed=2500,AttackSpeed=3000};envir.MonsterInfoList.Add(monster); }
-            monster.Stats[Stat.HP]=40;monster.Stats[Stat.MinDC]=1;monster.Stats[Stat.MaxDC]=2;monster.Stats[Stat.Accuracy]=5;
-            if(!map.Respawns.Any(r=>r.MonsterIndex==monster.Index))map.Respawns.Add(new RespawnInfo {MonsterIndex=monster.Index,Location=new Point(spec.X,spec.Y),Count=3,Spread=3,Delay=1});
-        }
+        WildlifeSeed.Apply(envir,root,map);
         var guide=envir.NPCInfoList.FirstOrDefault(n=>n.FileName=="BichonGuide");
         if(guide==null) { guide=new NPCInfo {Index=++envir.NPCIndex,FileName="BichonGuide",Name="比奇向导",Image=0,Colour=Color.White,Rate=100};envir.NPCInfoList.Add(guide); }
         guide.MapIndex=map.Index;

@@ -34,6 +34,7 @@ Settings.CheckVersion = false; // No Windows Mir2.exe exists in this browser-onl
 Settings.EnforceDBChecks = false; // Isolated demo does not contain the complete commercial content database.
 Settings.StartHTTPService = false;
 Settings.Multithreaded = false;
+Settings.MonsterRarityEnabled = false; // No later rarity/elite multipliers in this baseline.
 Settings.AllowStartGame = true;
 Settings.IPBlockSeconds = 0; // Several browser sessions share the loopback address.
 Settings.MaxIP = 16;
@@ -66,7 +67,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseUrls("http://127.0.0.1:17080");
 var app = builder.Build();
 app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSeconds(20) });
-app.MapGet("/health", () => Results.Json(new { engine = "Suprcode/Crystal", upstreamCommit = "0e315fe327192afe52c3d7357ddd1f5b7e26c5b8", running = envir.Running, tcp = "127.0.0.1:17000", maps = envir.MapList.Count, players = envir.PlayerCount, websocket = "/ws", gameplay = "Crystal authoritative Bichon demo: equipment, shop, monsters, FireBall", demo = DemoSeed.Manifest(envir) }));
+app.MapGet("/health", () => Results.Json(new { engine = "Suprcode/Crystal", upstreamCommit = "0e315fe327192afe52c3d7357ddd1f5b7e26c5b8", running = envir.Running, tcp = "127.0.0.1:17000", maps = envir.MapList.Count, players = envir.PlayerCount, monsters = envir.MonsterCount, websocket = "/ws", gameplay = "Crystal authoritative Bichon demo: equipment, shop, monsters, FireBall", demo = DemoSeed.Manifest(envir) }));
 app.Map("/ws", async context => {
     if (!context.WebSockets.IsWebSocketRequest) { context.Response.StatusCode = 400; return; }
     // Only local browser development pages may connect to this loopback service.
@@ -239,9 +240,11 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey) : IDisposab
                 var r=doc.RootElement;
                 int Num(string k,int fallback=0)=>r.TryGetProperty(k,out var v)?v.GetInt32():fallback;
                 ulong Id(string k)=>r.GetProperty(k).ValueKind==JsonValueKind.String?ulong.Parse(r.GetProperty(k).GetString()!):r.GetProperty(k).GetUInt64();
-                if(command is "attack" or "cast" && (Num("direction")<0 || Num("direction")>7)) throw new InvalidDataException("direction must be 0..7");
+                if(command is "attack" or "cast" or "harvest" && (Num("direction")<0 || Num("direction")>7)) throw new InvalidDataException("direction must be 0..7");
                 Packet? action=command switch {
                     "revive"=>new C.TownRevive(),
+                    "pickup"=>new C.PickUp(),
+                    "harvest"=>new C.Harvest {Direction=(MirDirection)Num("direction")},
                     "attack"=>new C.Attack {Direction=(MirDirection)Num("direction"),Spell=Spell.None},
                     "cast"=>new C.Magic {ObjectID=objectId,Spell=(Spell)Num("spell",31),Direction=(MirDirection)Num("direction"),TargetID=(uint)Id("targetId"),Location=new Point(Num("x"),Num("y"))},
                     "use"=>new C.UseItem {Grid=MirGridType.Inventory,UniqueID=Id("uniqueId")},
@@ -251,7 +254,7 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey) : IDisposab
                     "buy"=>new C.BuyItem {ItemIndex=Id("itemIndex"),Count=(ushort)Math.Clamp(Num("count",1),1,100),Type=PanelType.Buy},
                     _=>null
                 };
-                if(action is C.Attack || action is C.Magic) {
+                if(action is C.Attack || action is C.Magic || action is C.Harvest) {
                     if(action is C.Magic magic) {
                         var info=Envir.Main.MagicInfoList.FirstOrDefault(m=>m.Spell==Spell.FireBall);
                         if(magic.Spell!=Spell.FireBall || !learnedSpells.Contains((int)magic.Spell) || currentHP<=0 || info==null ||
@@ -263,7 +266,7 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey) : IDisposab
                 }
                 if(action!=null) { await Write(action,ct);continue; }
             }
-            if(command!="walk" && command!="turn") {await Send(new {type="error",message="Supported commands: walk, turn, attack, cast, use, equip, unequip, npc, buy, revive, ping"},ct);continue;}
+            if(command!="walk" && command!="turn") {await Send(new {type="error",message="Supported commands: walk, turn, attack, cast, use, equip, unequip, npc, buy, revive, pickup, harvest, ping"},ct);continue;}
             if(objectId==0) {await Send(new {type="error",message="Crystal game not ready"},ct);continue;}
             int direction=doc.RootElement.GetProperty("direction").GetInt32();
             if(direction<0 || direction>7) throw new InvalidDataException("direction must be 0..7 clockwise from up");

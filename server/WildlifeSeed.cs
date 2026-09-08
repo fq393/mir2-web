@@ -1,0 +1,39 @@
+using System.Drawing;
+using System.Text.Json;
+using Server;
+using Server.MirDatabase;
+using Server.MirEnvir;
+
+// Candidate content, pinned sources in the profile. Engine owns RNG and timers.
+static class WildlifeSeed
+{
+    public static void Apply(Envir envir,string root,MapInfo map)
+    {
+        using var file=JsonDocument.Parse(File.ReadAllText(Path.Combine(root,"server/content/bichon-wildlife.json")));
+        var profile=file.RootElement;var monsters=new Dictionary<string,MonsterInfo>();
+        foreach(var row in profile.GetProperty("monsters").EnumerateArray()){
+            string key=row.GetProperty("key").GetString()!;
+            var m=envir.MonsterInfoList.FirstOrDefault(m=>m.Name==key);
+            if(m==null){m=new MonsterInfo{Index=++envir.MonsterIndex,Name=key};envir.MonsterInfoList.Add(m);}
+            m.Image=Enum.Parse<Monster>(row.GetProperty("image").GetString()!);m.AI=row.GetProperty("ai").GetByte();
+            m.Level=row.GetProperty("level").GetUInt16();m.Experience=row.GetProperty("experience").GetUInt32();m.Undead=row.GetProperty("undead").GetBoolean();
+            m.MoveSpeed=row.GetProperty("moveMs").GetUInt16();m.AttackSpeed=row.GetProperty("attackMs").GetUInt16();
+            m.Stats=new Stats{[Stat.HP]=row.GetProperty("hp").GetInt32(),[Stat.MinDC]=row.GetProperty("minDC").GetInt32(),[Stat.MaxDC]=row.GetProperty("maxDC").GetInt32(),[Stat.Accuracy]=row.GetProperty("accuracy").GetInt32(),[Stat.Agility]=row.GetProperty("agility").GetInt32()};
+            monsters.Add(row.GetProperty("name").GetString()!,m);
+            var lines=profile.GetProperty("drops").TryGetProperty(key,out var drops)?drops.EnumerateArray().Select(v=>v.GetString()!).ToArray():Array.Empty<string>();
+            foreach(var line in lines)if(DropInfo.FromLine(line)==null)throw new InvalidDataException("Unresolved wildlife drop: "+line);
+            Directory.CreateDirectory(Settings.DropPath);File.WriteAllLines(Path.Combine(Settings.DropPath,key+".txt"),lines);m.DropPath=key;
+        }
+        // Reconcile only managed species. Retain other map spawns and stable indices.
+        var managed=monsters.Values.Select(m=>m.Index).ToHashSet();var old=map.Respawns.Where(r=>managed.Contains(r.MonsterIndex)).ToList();
+        map.Respawns.RemoveAll(r=>managed.Contains(r.MonsterIndex));
+        foreach(var row in profile.GetProperty("respawns").EnumerateArray()){
+            var m=monsters[row.GetProperty("name").GetString()!];var at=new Point(row.GetProperty("x").GetInt32(),row.GetProperty("y").GetInt32());
+            var count=row.GetProperty("count").GetUInt16();var spread=row.GetProperty("spread").GetUInt16();var delay=row.GetProperty("minutes").GetUInt16();
+            if(count==0||delay==0)throw new InvalidDataException("Invalid wildlife respawn");
+            var prior=old.FirstOrDefault(r=>r.MonsterIndex==m.Index&&r.Location==at&&r.Count==count&&r.Spread==spread&&r.Delay==delay);
+            if(prior!=null)old.Remove(prior);
+            map.Respawns.Add(prior??new RespawnInfo{RespawnIndex=++envir.RespawnIndex,MonsterIndex=m.Index,Location=at,Count=count,Spread=spread,Delay=delay});
+        }
+    }
+}
