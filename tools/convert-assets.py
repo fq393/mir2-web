@@ -109,15 +109,16 @@ def validate_crop(ox,oy,cw,ch,w,h):
 def actor_actions(key,spec):
     return {name:[[f'{key}:{start+d*count+i}' for i in range(count)] for d in range(8)] for name,(start,count) in spec.items()}
 
-PLAYER_ACTIONS={'stand':(0,4),'walk':(32,6),'attack':(136,6),'cast':(296,6),'hit':(360,3),'die':(384,4)}
+PLAYER_ACTIONS={'stand':(0,4),'walk':(32,6),'attack':(136,6),'cast':(296,6),'harvest':(344,2),'hit':(360,3),'die':(384,4)}
 MONSTER_ACTIONS={'stand':(0,4),'walk':(32,6),'attack':(80,6),'hit':(128,2),'die':(144,10)}
-ACTION_IDS={'stand':0,'walk':1,'attack':9,'hit':18,'cast':20,'die':21}
+ACTION_IDS={'stand':0,'walk':1,'attack':9,'hit':18,'harvest':19,'cast':20,'die':21,'skeleton':23}
 
 def apply_custom_frames(actors):
     for key,a in actors.items():
         if key not in ('npc0','monster4','monster5'):continue
         frames=Library(rawpath(LIBRARIES[key])).frame_set()
         a['frameSetSource']='Lib-v3-tail';a['sourceFrameSet']=frames
+        if key=='monster4':a['skeleton']=[]
         for action,ident in ACTION_IDS.items():
             if action not in a:continue
             if ident not in frames:raise ValueError(f'{key} custom FrameSet lacks {action}')
@@ -129,7 +130,7 @@ def apply_custom_frames(actors):
 def build(ox=0,oy=0,cw=700,ch=700):
     w,h,getcell=read_map(rawpath('Map/0.map'));validate_crop(ox,oy,cw,ch,w,h)
     actors={k:actor_actions(k,PLAYER_ACTIONS if k.startswith(('armour','weapon','hair')) else MONSTER_ACTIONS if k.startswith('monster') else {'stand':(0,4)}) for k in LIBRARIES if isinstance(k,str) and k!='magic'}
-    for a in actors.values():a['actionFrameMs']={'stand':500,'walk':100,'attack':100,'cast':100,'hit':200,'die':100}
+    for a in actors.values():a['actionFrameMs']={'stand':500,'walk':100,'attack':100,'cast':100,'hit':200,'harvest':300,'die':100}
     apply_custom_frames(actors)
     spell={'cast':[f'magic:{i}' for i in range(10)],'projectile':[[f'magic:{10+d*10+i}' for i in range(6)] for d in range(16)],'hit':[f'magic:{i}' for i in range(170,180)]}
     wanted=set();cells=[]

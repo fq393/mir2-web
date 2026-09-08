@@ -204,3 +204,18 @@ test('map changes, disconnect and unavailable targets clear pending ground picku
  w.serverEvent({type:'disconnected'});assert.equal(removed,2);assert.equal(w.loot.size,0);assert.equal(w.pickupTarget,0);
  w.serverReady=true;w.pickupTarget=99;w.pickupAtDestination();assert.equal(w.pickupTarget,0);
 });
+
+test('instance upgrades replace matching ID only, preserving other identical base items',()=>{
+ const w=world();w.refreshBelt=()=>{};const info={name:'牛角戒指'};w.itemInfo.set(20,info);
+ w.inventory[6]={uniqueid:'one',itemindex:20};w.inventory[7]={uniqueid:'two',itemindex:20};
+ w.packet('ItemUpgraded',{Item:{UniqueID:'one',ItemIndex:20,AddedStats:{Values:{MaxDC:3}}}});
+ assert.equal(w.inventory[6].addedstats.values.maxdc,3);assert.equal(w.inventory[7].addedstats,undefined);assert.equal(info.maxdc,undefined);
+});
+test('harvest has no optimistic reward and obeys death, range, movement and send failure',()=>{
+ const w=world(),sent=[];w.serverReady=true;w.notice=()=>{};w.entityAt=()=>8;w.peers.set(8,{point:{x:3,y:2},dead:true});
+ w.connection.send=p=>{sent.push(p);return false;};w.harvestAt({x:400,y:200});assert.equal(sent.length,1);assert.equal(w.actionTime,0);
+ w.connection.send=p=>{sent.push(p);return true;};w.hp=0;w.harvestAt({x:400,y:200});assert.equal(sent.length,1);
+ w.hp=18;w.step={};w.harvestAt({x:400,y:200});assert.equal(sent.length,1);w.step=null;
+ w.peers.get(8).point.x=5;w.harvestAt({x:400,y:200});assert.equal(sent.length,1);w.peers.get(8).point.x=3;
+ w.harvestAt({x:400,y:200});assert.equal(sent.at(-1).type,'harvest');assert.equal(w.inventory.filter(Boolean).length,0);assert.equal(w.peers.get(8).harvested,undefined);
+});

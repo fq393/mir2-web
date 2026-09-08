@@ -26,7 +26,7 @@ npm start
 
 访问 [本地游戏](http://127.0.0.1:17600/)。Web 17600、WebSocket 17080、Crystal TCP 17000均只监听回环地址。保留启动终端；`启动传奇.command`是同一入口。
 
-操作：点击地面寻路；WASD/方向键移动；选中怪物后空格近战；1–6药品栏；B/F9背包、F10人物、F11技能、Escape关闭。F1仅在已学火球时施法。这些输入仍含测试操作，并非全部原版快捷键。
+操作：点击地面寻路；WASD/方向键移动；选中怪物后空格近战；靠近尸体后 Alt+左键采集；1–6药品栏；B/F9背包、F10人物、F11技能、Escape关闭。F1仅在已学火球时施法。这些输入仍含测试操作，并非全部原版快捷键。
 
 ## 新环境准备
 
@@ -68,6 +68,7 @@ npm test
 .runtime/dotnet/dotnet build server/Mir2.Headless.csproj
 .runtime/dotnet/dotnet run --project tools/CrystalContentTests -- "$PWD"
 .runtime/assets-venv/bin/python tools/test-ui.py
+.runtime/assets-venv/bin/python tools/test-harvest-assets.py
 .runtime/assets-venv/bin/python tools/test-interiors.py
 .runtime/assets-venv/bin/python tools/test-audio.py
 .runtime/assets-venv/bin/python tools/test-jewellery.py
@@ -88,3 +89,5 @@ npm test
 ### 比奇生态与后续地域
 
 已接鹿/稻草人候选基础属性、52组区域刷新、稻草人掉落白名单、原生地面物品和服务器确认拾取；真实击杀/拾取/重启保存已验收。规则来源及未完成部分见 [怪物掉落与刷新](docs/wildlife-sources.md)。比奇完整新手循环、周边洞穴、沃玛/毒蛇山谷、盟重、封魔、白日门/赤月、苍月及特殊区域的阶段依赖见 [世界流程规划](docs/world-progression-plan.md)。
+
+采集与极品：已接 Alt 左键采尸、鹿肉入包与满包重试、单件附加属性登录/展示、三种基础戒指的候选极品生成。材料→制毒→施毒的完整依赖和概率证据见 [采集与极品属性](docs/harvest-and-bonuses.md)；尚未宣称毒材料链路与所有装备随机属性完成。

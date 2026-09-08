@@ -41,6 +41,40 @@ static class WildlifeTests {
   process.Invoke(map,null);Check(spawn.Count==2,"initial population differs");var due=spawn.RespawnTime;
   var monster=envir.Objects.OfType<MonsterObject>().First(m=>m.Respawn==spawn);monster.Die();Check(spawn.Count==1,"death did not release spawn slot");monster.Die();Check(spawn.Count==1,"duplicate death released slot twice");
   Time(due-1);process.Invoke(map,null);Check(spawn.Count==1,"respawn before deadline");Time(due);process.Invoke(map,null);Check(spawn.Count==2,"missing respawn at deadline");process.Invoke(map,null);Check(spawn.Count==2,"respawn exceeded population");
+  // Harvest via the actual deer AI: no ground reward, full bag retains pending meat.
+  deer.Drops.Clear();deer.Drops.Add(DropInfo.FromLine("1/1 肉"));
+  var carcass=MonsterObject.GetMonster(deer);Check(carcass.Spawn(map,new Point(9,9)),"deer fixture spawn failed");carcass.Die();
+  for(int i=0;i<owner.Info.Inventory.Length;i++)owner.Info.Inventory[i]=envir.CreateFreshItem(item.Info);
+  for(int i=0;i<6;i++)carcass.Harvest(owner);
+  Check(!carcass.Harvested&&owner.Info.Inventory.All(i=>i.Info.Type!=ItemType.Meat),"full bag lost pending meat");
+  owner.Info.Inventory[7]=null;carcass.Harvest(owner);
+  Check(carcass.Harvested&&owner.Info.Inventory[7]?.Info.Name=="肉","harvest retry did not transfer meat");
+  Check(owner.Info.Inventory.Count(i=>i?.Info.Type==ItemType.Meat)==1,"harvest duplicated meat");
+  // Production profile gives independent DC/MC/SC trials; shop creation stays plain.
+  var ring=envir.ItemInfoList.Single(i=>i.Name=="牛角戒指");
+  Check(ring.RandomStats.MaxDcChance==30&&ring.RandomStats.MaxDcMaxStat==7,"candidate bonus profile differs");
+  var plain=envir.CreateFreshItem(ring);Check(plain.AddedStats[Stat.MaxDC]==0,"shop item rolled a bonus");
+  var original=ring.RandomStats;
+  // Deterministic +3 is a test fixture only, never the production profile.
+  ring.RandomStats=new RandomItemStat{MaxDcChance=1,MaxDcStatChance=1,MaxDcMaxStat=3};
+  var enhanced=envir.CreateDropItem(ring);ring.RandomStats=original;
+  Check(enhanced.AddedStats[Stat.MaxDC]==3&&plain.AddedStats[Stat.MaxDC]==0,"per-instance bonus leaked into another item");
+  owner.Info.Level=20;owner.Info.Equipment[8]=plain;owner.RefreshStats();var baseDC=owner.Stats[Stat.MaxDC];
+  owner.Info.Equipment[8]=enhanced;owner.RefreshStats();Check(owner.Stats[Stat.MaxDC]==baseDC+3,"equipped bonus missing from authoritative combat stats");
+  owner.Info.Equipment[8]=plain;owner.RefreshStats();Check(owner.Stats[Stat.MaxDC]==baseDC,"unequip retained bonus combat stats");
+  using(var bytes=new MemoryStream()){
+   using(var writer=new BinaryWriter(bytes,System.Text.Encoding.UTF8,true))enhanced.Save(writer);
+   bytes.Position=0;var restored=new UserItem(new BinaryReader(bytes));
+   Check(restored.UniqueID==enhanced.UniqueID&&restored.AddedStats[Stat.MaxDC]==3,"binary save lost instance bonus");
+  }
+  var hitsBonus=0;for(int i=0;i<30000;i++){
+   var rolled=envir.CreateDropItem(ring);if(rolled.AddedStats[Stat.MaxDC]>0)hitsBonus++;
+   Check(rolled.AddedStats[Stat.MaxDC]<=7,"bonus exceeded candidate trial bound");
+  }
+  Check(hitsBonus>750&&hitsBonus<1250,"candidate DC 1/30 activation rate differs");
+  var wire=System.Text.Json.JsonSerializer.Serialize(DemoSeed.Items(new[]{enhanced}));
+  using(var json=System.Text.Json.JsonDocument.Parse(wire))Check(json.RootElement[0].GetProperty("AddedStats").GetProperty("Values").GetProperty("MaxDC").GetInt32()==3,"login lost instance bonus");
+  Console.WriteLine("PASS deer harvest/full-bag retry, candidate ring bonuses, ordinary item isolation and login AddedStats.");
   envir.Objects.Clear();Time(0);
   Console.WriteLine("PASS wildlife source mapping/idempotence, 1/N probability/gold range, ownership/full-bag/pickup/expiry, death and timed respawn population (isolated map).");
  }

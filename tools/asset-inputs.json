@@ -905,6 +905,16 @@
       "byteRange": "461546-461794",
       "httpStatus": 206,
       "contentRange": "bytes 461546-461794/461795"
+    },
+    {
+      "path": "Data/Monster/004.Lib",
+      "localFile": "Data_Monster_004.Lib.range-405628-413733",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Monster/004.Lib",
+      "sha256": "b1683caf4a3795bc5e46930544fcaeeacf98ad357097927e135afdbda4895b85",
+      "bytes": 8106,
+      "byteRange": "405628-413733",
+      "httpStatus": 206,
+      "contentRange": "bytes 405628-413733/414018"
     }
   ]
 }

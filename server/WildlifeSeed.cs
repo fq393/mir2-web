@@ -7,10 +7,27 @@ using Server.MirEnvir;
 // Candidate content, pinned sources in the profile. Engine owns RNG and timers.
 static class WildlifeSeed
 {
+    // StdMode 22 candidate defaults: M2Share.pas 2953-2961 and ItmUnit.RandomUpgrade22.
+    // Crystal performs MaxStat-1 Bernoulli trials, followed by +1.
+    static readonly RandomItemStat Ring22 = new() {
+        MaxDcChance=30,MaxDcStatChance=20,MaxDcMaxStat=7,
+        MaxMcChance=30,MaxMcStatChance=20,MaxMcMaxStat=7,
+        MaxScChance=30,MaxScStatChance=20,MaxScMaxStat=7
+    };
     public static void Apply(Envir envir,string root,MapInfo map)
     {
         using var file=JsonDocument.Parse(File.ReadAllText(Path.Combine(root,"server/content/bichon-wildlife.json")));
         var profile=file.RootElement;var monsters=new Dictionary<string,MonsterInfo>();
+        var bonusIndex=Settings.RandomItemStatsList.IndexOf(Ring22);
+        if(bonusIndex<0){bonusIndex=Settings.RandomItemStatsList.Count;if(bonusIndex>=255)throw new InvalidDataException("No random-stat profile slot");Settings.RandomItemStatsList.Add(Ring22);}
+        foreach(var ring in envir.ItemInfoList.Where(i=>i.Name is "牛角戒指" or "玻璃戒指" or "六角戒指")){
+            ring.RandomStatsId=(byte)bonusIndex;ring.RandomStats=Ring22;
+        }
+
+        // Reconstructed meat identity; probability token preserved from pinned deer file.
+        var meat=envir.ItemInfoList.FirstOrDefault(i=>i.Name=="肉");
+        if(meat==null){meat=new ItemInfo{Index=++envir.ItemIndex,Name="肉"};envir.ItemInfoList.Add(meat);}
+        meat.Type=ItemType.Meat;meat.Image=1;meat.Weight=3;meat.Durability=10000;meat.Price=200;meat.StackSize=1;meat.RequiredAmount=0;meat.StartItem=false;
         foreach(var row in profile.GetProperty("monsters").EnumerateArray()){
             string key=row.GetProperty("key").GetString()!;
             var m=envir.MonsterInfoList.FirstOrDefault(m=>m.Name==key);

@@ -1,3 +1,4 @@
+import {itemStatLines} from './core/itemStats';
 import {CLASSIC,worldToScreen,screenToCell,blocksWorld,PanelRect,JEWELLERY_SLOTS} from './core/classicLayout';
 import {gainItem,consumeItem,equipmentTarget} from './core/inventory';
 import {healthWidth,showHealth} from './core/health';
@@ -17,7 +18,7 @@ const C = {gold:new Color(202,171,110),paper:new Color(220,218,197),dark:new Col
 type TileRef = Ref & {drawX?:number;drawY?:number;floor?:boolean;render?:boolean;blend?:boolean};
 type CachedFrame = {sprite:SpriteFrame;meta:Frame};
 type RenderTile = {node:Node;x:number;y:number;w:number;h:number;sort:number;kind:string};
-type Peer = {node:Node;body:Sprite;point:Point;visual:Point;from:Point;direction:number;elapsed:number;name?:string;kind?:string;image?:number;hp?:number;healthUntil?:number;nameHeight?:number;healthBar?:{node:Node;fill:Sprite};dead?:boolean;action?:string;actionTime?:number;label?:Label;weapon?:Sprite;hair?:Sprite;armour?:number;weaponShape?:number};
+type Peer = {node:Node;body:Sprite;point:Point;visual:Point;from:Point;direction:number;elapsed:number;name?:string;kind?:string;image?:number;hp?:number;healthUntil?:number;nameHeight?:number;healthBar?:{node:Node;fill:Sprite};dead?:boolean;harvested?:boolean;action?:string;actionTime?:number;label?:Label;weapon?:Sprite;hair?:Sprite;armour?:number;weaponShape?:number};
 
 @ccclass('MirWorld')
 export class MirWorld extends Component {
@@ -156,15 +157,15 @@ export class MirWorld extends Component {
     private onKeyDown(e:EventKeyboard):void {this.sound.unlock();if(e.keyCode===KeyCode.KEY_B||e.keyCode===KeyCode.F9){this.showInventory('bag');return;}if(e.keyCode===KeyCode.F10){this.showInventory('character');return;}if(e.keyCode===KeyCode.F11){this.showSkills();return;}if(e.keyCode>=KeyCode.DIGIT_1&&e.keyCode<=KeyCode.DIGIT_6){this.usePotion(this.inventory[e.keyCode-KeyCode.DIGIT_1]);return;}if(e.keyCode===KeyCode.F1){this.cast();return;}if(e.keyCode===KeyCode.SPACE){this.attack();return;}if(e.keyCode===KeyCode.ESCAPE){this.menu.active=false;this.selected=0;return;}this.pickupTarget=0;this.keys.add(e.keyCode);this.path=[];if(this.ready&&!this.step)this.beginStep();}
     private onKeyUp(e:EventKeyboard):void {this.keys.delete(e.keyCode);}
     private pauseInput():void {this.sound.stop();this.keys.clear();this.path=[];}
-    private onMouse(e:EventMouse):void {this.sound.unlock();if(e.getButton()===0)this.destination(e.getUILocation());}
-    private onTouch(e:EventTouch):void {this.sound.unlock();this.destination(e.getUILocation());}
+    private onMouse(e:EventMouse):void {this.sound.unlock();if(e.getButton()!==0)return;const p=e.getUILocation();if(this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT)){this.harvestAt({x:p.x,y:600-p.y});return;}this.destination(p);}
+    private onTouch(e:EventTouch):void {this.sound.unlock();const p=e.getUILocation();if(this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT)){this.harvestAt({x:p.x,y:600-p.y});return;}this.destination(p);}
     private onHover(e:EventMouse):void {
         if(!this.ready)return;const p=e.getUILocation(),screen={x:p.x,y:600-p.y};
         this.hovered=blocksWorld(screen.x,screen.y,this.menu.active?this.panelRects:[],this.hudRows)?0:this.entityAt(screen);
     }
-    private entityAt(screen:Point):number {
+    private entityAt(screen:Point,corpse=false):number {
         const cell=screenToCell(screen,this.camera),wx=screen.x-400+this.camera.x*48,wy=screen.y-222+this.camera.y*32;
-        return Array.from(this.peers.entries()).filter(([,p])=>{if(p.dead)return false;const f=p.body.spriteFrame;if(!f)return p.point.x===cell.x&&p.point.y===cell.y;
+        return Array.from(this.peers.entries()).filter(([,p])=>{if(corpse?(!p.dead||p.kind!=='monster'||p.harvested):p.dead)return false;const f=p.body.spriteFrame;if(!f)return p.point.x===cell.x&&p.point.y===cell.y;
             const left=p.visual.x*48+p.body.node.position.x,top=p.visual.y*32-p.body.node.position.y;return wx>=left&&wx<=left+f.rect.width&&wy>=top&&wy<=top+f.rect.height-12;
         }).sort((a,b)=>b[1].point.y-a[1].point.y)[0]?.[0]??0;
     }
@@ -250,7 +251,7 @@ export class MirWorld extends Component {
         const armour=this.equipment[1],weapon=this.equipment[0];
         this.drawActor(this.body,armour?'armour1':'armour0',action,this.facing,this.animationClock);
         this.drawActor(this.hair,'hair0',action,this.facing,this.animationClock);
-        this.drawActor(this.weapon,'weapon1',action,this.facing,this.animationClock);this.weapon.node.active=!!weapon;
+        this.drawActor(this.weapon,'weapon1',action,this.facing,this.animationClock);this.weapon.node.active=!!weapon||action==='harvest';
         this.weapon.node.setSiblingIndex([0,5,6,7].includes(this.facing)?0:2);
         this.ownLabel.node.setPosition(Math.round(this.visual.x*48+24-80),Math.round(-this.visual.y*32+70));
         this.drawHealthBar(this.ownHealth,this.visual.x*48+24,-this.visual.y*32+60,100*this.hp/Math.max(1,this.displayedMaxHP),this.serverReady&&this.hp>0&&this.displayedMaxHP>0);
@@ -259,10 +260,10 @@ export class MirWorld extends Component {
         sorted.push({node:this.feet,sort:actorOrder((this.step?.to??this.point).y,this.ownId)});
         this.peers.forEach((p,id)=>{
             p.node.setPosition(p.visual.x*48,-p.visual.y*32);
-            const action=p.dead?'die':(p.actionTime??0)>0?p.action!:(p.elapsed<0.6?'walk':'stand');
+            const action=p.dead?(p.harvested&&p.image===4?'skeleton':'die'):(p.actionTime??0)>0?p.action!:(p.elapsed<0.6?'walk':'stand');
             const actor=p.kind==='monster'?`monster${p.image}`:p.kind==='npc'?`npc${p.image}`:p.armour?'armour1':'armour0';
             this.drawActor(p.body,actor,action,p.direction,p.elapsed);
-            if(p.weapon&&p.hair){this.drawActor(p.weapon,'weapon1',action,p.direction,p.elapsed);p.weapon.node.active=!!p.weaponShape;this.drawActor(p.hair,'hair0',action,p.direction,p.elapsed);p.weapon.node.setSiblingIndex([0,5,6,7].includes(p.direction)?0:2);}
+            if(p.weapon&&p.hair){this.drawActor(p.weapon,'weapon1',action,p.direction,p.elapsed);p.weapon.node.active=!!p.weaponShape||action==='harvest';this.drawActor(p.hair,'hair0',action,p.direction,p.elapsed);p.weapon.node.setSiblingIndex([0,5,6,7].includes(p.direction)?0:2);}
             p.nameHeight??=p.kind==='npc'?Math.max(70,p.body.node.position.y+12):70;
             if(p.label){p.label.node.setPosition(Math.round(p.visual.x*48+24-80),Math.round(-p.visual.y*32+p.nameHeight));p.label.string=p.name??'旅人';p.label.node.active=!p.dead&&(p.kind!=='monster'||id===this.hovered||id===this.selected);}
             if(p.kind==='player'||p.kind==='monster'){
@@ -330,6 +331,12 @@ export class MirWorld extends Component {
         if(!p||p.kind!=='monster'||p.dead){this.notice('先点击选择一只怪物');return;}
         if(Math.max(Math.abs(p.point.x-this.point.x),Math.abs(p.point.y-this.point.y))>1){this.notice('靠近目标后按空格攻击');return;}
         this.fireTargets.delete(this.selected);this.facing=directionTo(this.point,p.point);if(this.connection?.send({type:'attack',direction:this.facing})){if(this.equipment[0])this.sound.play('50');this.ownAction='attack';this.actionTime=.8;this.animationClock=0;}
+    }
+    private harvestAt(screen:Point):void {
+        if(!this.serverReady||this.hp<=0||this.step||this.actionTime>0||blocksWorld(screen.x,screen.y,this.menu.active?this.panelRects:[],this.hudRows))return;
+        const target=this.peers.get(this.entityAt(screen,true));if(!target){this.notice('请对准尚未采集的怪物尸体');return;}
+        if(Math.max(Math.abs(target.point.x-this.point.x),Math.abs(target.point.y-this.point.y))>2){this.notice('请靠近尸体后按住 Alt 点击采集');return;}
+        this.facing=directionTo(this.point,target.point);if(this.connection?.send({type:'harvest',direction:this.facing})){this.ownAction='harvest';this.actionTime=.6;this.animationClock=0;}
     }
     private cast():void {
         if(!this.magics.some(m=>m.spell===31)){this.notice('尚未学习火球术');return;}
@@ -476,7 +483,7 @@ export class MirWorld extends Component {
     private nativeItem(parent:Node,item:any,x:number,y:number,action:()=>void,double=false):void {
         const info=item.info??this.itemInfo.get(item.itemindex),key=`ui:Items:${info?.image}`;if(!this.frames.has(key))return;
         const f=this.frames.get(key)!;const icon=this.nativeImage(parent,key,x+(36-f.meta.w)/2,y+(32-f.meta.h)/2);if(double)this.nativeDoubleClick(icon.node,action);else this.nativeClick(icon.node,action);
-        icon.node.on(Node.EventType.MOUSE_ENTER,()=>this.targetText.string=`${this.itemName(item)}${info?.type===20?' · 双击学习':''}${info?.type===13?' · 持续恢复 '+((info.hp??info.stats?.values?.hp)?'HP '+(info.hp??info.stats.values.hp):'MP '+(info.mp??info.stats?.values?.mp??0)):''} · ${info?.price??25} 金币`);
+        icon.node.on(Node.EventType.MOUSE_ENTER,()=>this.targetText.string=`${this.itemName(item)}${info?.type===20?' · 双击学习':''}${info?.type===15?' · 品质 '+Math.floor((item.currentdura??0)/1000):''}${info?.type===13?' · 持续恢复 '+((info.hp??info.stats?.values?.hp)?'HP '+(info.hp??info.stats.values.hp):'MP '+(info.mp??info.stats?.values?.mp??0)):''}${info?.type===15?'':` · ${info?.price??25} 金币`}${itemStatLines(item,info).length?' · '+itemStatLines(item,info).join(' · '):''}`);
         if(item.count>1)this.nativeLabel(parent,String(item.count),x+21,y+26,9,25,C.gold);
     }
     private showNPC(page:string[]):void {
@@ -544,7 +551,7 @@ export class MirWorld extends Component {
         const names:Record<string,string>={BichonTrader:'比奇商人',BichonDeer:'鹿',BichonScarecrow:'稻草人'};
         if(kind==='player'&&!p.weapon){p.weapon=this.sprite(p.node,'Weapon');p.hair=this.sprite(p.node,'Hair');}
         if(d.namecolour&&p.label)p.label.color=this.nameColor(d.namecolour);
-        Object.assign(p,{kind,name:names[d.name]??d.name??kind,image:d.image??0,armour:d.armour??0,weaponShape:d.weapon??0,dead:d.dead??false});
+        Object.assign(p,{kind,name:names[d.name]??d.name??kind,image:d.image??0,armour:d.armour??0,weaponShape:d.weapon??0,dead:d.dead??false,harvested:d.skeleton??false});
     }
     private spellEffect(from:Point,to:Point,hit=false):void {
         const def=this.manifest.spellFireBall;let keys:string[]=hit?def?.hit:def?.projectile?.[(directionTo(from,to)*2)%16];
@@ -558,6 +565,8 @@ export class MirWorld extends Component {
         if(name==='ObjectName'){if(p?.label)p.label.color=this.nameColor(d.namecolour);if(p&&d.name)p.name=d.name;return;}
         if(name==='NewItemInfo'){this.itemInfo.set(d.info.index,d.info);return;}
         if(name==='ObjectItem'||name==='ObjectGold'){this.groundItem(d,name==='ObjectGold');return;}
+        if(name==='ObjectHarvested'&&p){p.harvested=true;this.notice('尸体已采集完毕');return;}
+        if(name==='ObjectHarvest'&&p){p.action='harvest';p.actionTime=.6;p.elapsed=0;p.direction=d.direction;if(d.location){p.point={...d.location};p.from={...d.location};p.visual={...d.location};}return;}
         if(name==='ObjectMonster'){this.spawnEntity(d,'monster');return;}
         if(name==='ObjectNPC'){this.spawnEntity(d,'npc');return;}
         if(name==='ObjectPlayer'){this.spawnEntity(d,'player');return;}
@@ -585,6 +594,11 @@ export class MirWorld extends Component {
             const index=from.findIndex(i=>i&&String(i.uniqueid)===String(d.uniqueid));
             if(index>=0){this.sound.play((from[index].info??this.itemInfo.get(from[index].itemindex))?.type===1?'111':'112');const previous=to[d.to];to[d.to]=from[index];from[index]=previous??null;this.notice(name==='EquipItem'?'装备已穿戴':'装备已卸下');}
             this.refreshBelt();if(this.menu.active){if(this.menuKind==='inventory')this.showInventory();else if(this.menuKind==='shop')this.showShop();}
+        }
+        if(name==='ItemUpgraded'){
+            const item=d.item;item.info=this.itemInfo.get(item.itemindex);
+            for(const bag of [this.inventory,this.equipment]){const index=bag.findIndex(v=>v&&String(v.uniqueid)===String(item.uniqueid));if(index>=0)bag[index]=item;}
+            this.refreshBelt();if(this.menuKind==='inventory'&&this.menu.active)this.showInventory();
         }
         if(name==='GainedItem'){this.sound.play('106');d.item.info=this.itemInfo.get(d.item.itemindex);if(!gainItem(this.inventory,d.item)){this.notice('物品状态待同步，正在重新连接');this.connection?.reconnect();return;}this.refreshBelt();this.notice(`获得 ${this.itemName(d.item)}`);if(this.menu.active){if(this.menuKind==='inventory')this.showInventory();else if(this.menuKind==='shop')this.showShop();}}
         if(name==='UseItem'){

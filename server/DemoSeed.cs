@@ -6,7 +6,7 @@ using Server.MirEnvir;
 // Local content migration only. Combat, inventory and NPC behavior stay in upstream Crystal.
 static class DemoSeed
 {
-    const string Revision = "bichon-wildlife-v6";
+    const string Revision = "bichon-harvest-bonus-v7";
     public static void Apply(Envir envir, string dataDir, string root)
     {
         var backup = Path.Combine(dataDir,"demo-backups",DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff"));
@@ -100,7 +100,7 @@ static class DemoSeed
         account.Gold+=200;
         File.WriteAllText(marker,Revision);
     }
-    public static object Items(UserItem[] items)=>items.Select((i,slot)=>i==null?null:new {slot,UniqueID=i.UniqueID.ToString(),ItemIndex=i.ItemIndex,Count=i.Count,CurrentDura=i.CurrentDura,Info=Info(i.ItemIndex)}).ToArray();
-    static object? Info(int index) {var i=Envir.Main.ItemInfoList.FirstOrDefault(x=>x.Index==index);return i==null?null:new {Index=i.Index,Name=i.Name,Type=(int)i.Type,Shape=i.Shape,Image=i.Image,Price=i.Price,StackSize=i.StackSize,Durability=i.Durability,HP=i.Stats[Stat.HP],MP=i.Stats[Stat.MP],Weight=i.Weight,RequiredAmount=i.RequiredAmount,Combat=new {MinDC=i.Stats[Stat.MinDC],MaxDC=i.Stats[Stat.MaxDC],MinMC=i.Stats[Stat.MinMC],MaxMC=i.Stats[Stat.MaxMC],MinAC=i.Stats[Stat.MinAC],MaxAC=i.Stats[Stat.MaxAC],MinMAC=i.Stats[Stat.MinMAC],MaxMAC=i.Stats[Stat.MaxMAC]}};}
+    public static object Items(UserItem[] items)=>items.Select((i,slot)=>i==null?null:new {slot,UniqueID=i.UniqueID.ToString(),ItemIndex=i.ItemIndex,Count=i.Count,CurrentDura=i.CurrentDura,MaxDura=i.MaxDura,AddedStats=new {Values=i.AddedStats.Values.ToDictionary(v=>v.Key.ToString(),v=>v.Value)},Info=Info(i.ItemIndex)}).ToArray();
+    static object? Info(int index) {var i=Envir.Main.ItemInfoList.FirstOrDefault(x=>x.Index==index);return i==null?null:new {Index=i.Index,Name=i.Name,Type=(int)i.Type,Shape=i.Shape,Image=i.Image,Price=i.Price,StackSize=i.StackSize,Durability=i.Durability,HP=i.Stats[Stat.HP],MP=i.Stats[Stat.MP],Weight=i.Weight,RequiredAmount=i.RequiredAmount,Stats=new {Values=i.Stats.Values.ToDictionary(v=>v.Key.ToString(),v=>v.Value)},Combat=new {MinDC=i.Stats[Stat.MinDC],MaxDC=i.Stats[Stat.MaxDC],MinMC=i.Stats[Stat.MinMC],MaxMC=i.Stats[Stat.MaxMC],MinAC=i.Stats[Stat.MinAC],MaxAC=i.Stats[Stat.MaxAC],MinMAC=i.Stats[Stat.MinMAC],MaxMAC=i.Stats[Stat.MaxMAC]}};}
     public static object Manifest(Envir envir)=>new {revision=Revision,spell=31,npc=new{x=290,y=610,image=0},items=envir.ItemInfoList.Where(i=>i.Name.StartsWith("Bichon")).Select(i=>Info(i.Index))};
 }

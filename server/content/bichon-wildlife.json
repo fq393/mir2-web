@@ -8,7 +8,8 @@
   "notes": [
     "Monster.DB numeric fields agree in both pinned candidates. AI numbers are mapped to Crystal behavior, never copied from Delphi Race.",
     "MonGen map 0 deer/scarecrow rows retained verbatim. Density is candidate-only and must be profiled.",
-    "Scarecrow drops only include currently verified item definitions. Duplicate ebony sword and private-server special potions excluded. Deer drop file is corrupted; no fabricated meat drop rate."
+    "Scarecrow drops only include currently verified item definitions. Duplicate ebony sword and private-server special potions excluded. Deer drop file has corrupted item names; reconstruction is separately disclosed below.",
+    "Reconstructed candidate: deer first line keeps its readable 1/1 token; item identity 肉 inferred from old harvest guides and two agreeing StdItems databases. Corrupted extra entries, deer blood and any extra meat roll remain excluded. Not authenticated original probability."
   ],
   "monsters": [
     {
@@ -524,6 +525,9 @@
       "1/36 六角戒指",
       "1/36 铁手镯",
       "1/36 传统项链"
+    ],
+    "BichonDeer": [
+      "1/1 肉"
     ]
   }
 }
