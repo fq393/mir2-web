@@ -286,6 +286,15 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey) : IDisposab
                 int Num(string k,int fallback=0)=>r.TryGetProperty(k,out var v)?v.GetInt32():fallback;
                 ulong Id(string k)=>r.GetProperty(k).ValueKind==JsonValueKind.String?ulong.Parse(r.GetProperty(k).GetString()!):r.GetProperty(k).GetUInt64();
                 if(command is "attack" or "cast" or "harvest" && (Num("direction")<0 || Num("direction")>7)) throw new InvalidDataException("direction must be 0..7");
+                if(command=="skillKey"){
+                    int request=Num("request");
+                    try{
+                        int spell=Num("spell",-1),key=Num("key",-1);
+                        var bindings=await WorldRequests.Run(e=>SkillBindings.Apply(e.Players.FirstOrDefault(p=>p.ObjectID==objectId),spell,key),ct);
+                        await Send(new{type="skillBindings",request,success=true,bindings,message="技能键位已保存。"},ct);
+                    }catch(InvalidOperationException ex){await Send(new{type="skillBindings",request,success=false,message=ex.Message},ct);}
+                    continue;
+                }
                 if(command is "tradeQuote" or "tradeCommit"){
                     var request=r.TryGetProperty("request",out var req)?req.GetInt32():0;
                     try{

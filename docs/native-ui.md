@@ -20,7 +20,7 @@
 | 装备面板、人物底图 | ClassicPrguse 370、376 |
 | NPC 对话、商店 | ClassicPrguse 360、380 |
 | 木剑、布衣图标及纸娃娃 | Items / Stateitem 30、60 |
-| 火球、攻击图标 | MagIcon 0、4 |
+| 基本剑术、火球、治愈图标 | MagIcon 0、2、4（2026-09-08按Magic.DB Effect×2与原图复核，纠正旧记录） |
 
 524 帧打包为两张图集；原 RGBA 与偏移均逐帧核验。WIL 读取依据固定 Crystal 源码的 WeMadeLibrary：48 字节 WIX 头、8 字节帧头、内嵌调色板、倒序像素行。界面整体缩放适配网页；聊天内区按原客户端思路深色着色，动态文字使用中文。
 

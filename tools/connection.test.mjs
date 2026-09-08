@@ -16,7 +16,7 @@ function load(file, mocks = {}, globals = {}) {
   return exports;
 }
 const cc = {Node:{EventType:{TOUCH_END:'touch',MOUSE_UP:'mouse'}},_decorator: {ccclass: () => cls => cls}, Component: class {}, Color: class {constructor(r,g,b,a){Object.assign(this,{r,g,b,a});}},
-  KeyCode: {KEY_D: 68, ARROW_RIGHT: 39, KEY_A: 65, ARROW_LEFT: 37, KEY_S: 83, ARROW_DOWN: 40, KEY_W: 87, ARROW_UP: 38}};
+  KeyCode: {F1:112,F8:119,F11:122,ESCAPE:27,ENTER:13,KEY_D: 68, ARROW_RIGHT: 39, KEY_A: 65, ARROW_LEFT: 37, KEY_S: 83, ARROW_DOWN: 40, KEY_W: 87, ARROW_UP: 38}};
 const {MirWorld} = load('../client/assets/scripts/MirWorld.ts', {
   cc, './core/classicLayout':classicLayout, './core/inventory':inventory, './platform/MirAudio':{MirAudio:class{stop(){}play(){}unlock(){}}}, './core/stepSound':{stepSound:()=>1}, './core/grid': grid, './platform/connection': {}, './renderer/MirSprite': {}, './renderer/TerrainStream':{TerrainStream:class{constructor(){this.newTerrain=true;}destroy(){}}},
 });
@@ -248,4 +248,51 @@ test('bag selection sends one move and keeps inventory until the server replies'
 test('first bag click keeps the hit region alive for a fast second click',()=>{
  const w=world();w.inventory=Array(46).fill(null);w.inventory[6]={uniqueid:'weapon',info:{type:1}};w.equipment=[];let renders=0;w.showInventory=()=>renders++;const sent=[];w.connection.send=c=>{sent.push(c);return true};
  w.bagCell(6);assert.equal(renders,0);w.bagCell(6);assert.equal(sent.length,1);assert.equal(sent[0].type,'equip');assert.equal(sent[0].uniqueId,'weapon');
+});
+
+test('skill keys resolve learned binding, never fall back to hardcoded fireball',()=>{
+  const w=world(),casts=[],notices=[];w.magics=[{spell:31,key:3},{spell:61,key:8}];
+  w.cast=spell=>casts.push(spell);w.notice=text=>notices.push(text);
+  w.castKey(1);w.castKey(3);w.castKey(8);
+  assert.deepEqual(casts,[31,61]);assert.equal(notices.length,1);
+});
+test('skill key save waits for matching acknowledgement and preserves training',()=>{
+  const w=world(),sent=[];w.serverReady=true;w.notice=()=>{};w.showSkillKeys=()=>{};
+  w.magics=[{spell:31,key:1,level:2,experience:19},{spell:61,key:3}];
+  w.bindingSpell=31;w.bindingKey=3;w.connection.send=c=>(sent.push(c),true);
+  w.saveSkillKey();w.saveSkillKey();assert.equal(sent.length,1);assert.equal(w.magics[0].key,1);
+  w.serverEvent({type:'skillBindings',request:sent[0].request-1,success:true,bindings:[{spell:31,key:8}]});
+  assert.equal(w.skillPending,true);assert.equal(w.magics[0].key,1);
+  w.serverEvent({type:'skillBindings',request:sent[0].request,success:true,bindings:[{Spell:31,Key:3},{Spell:61,Key:0}]});
+  assert.equal(w.skillPending,false);assert.deepEqual(w.magics,[{spell:31,key:3,level:2,experience:19},{spell:61,key:0}]);
+});
+test('failed save and disconnect do not apply unconfirmed or stale bindings',()=>{
+  const w=world();w.serverReady=true;w.notice=()=>{};w.showSkillKeys=()=>{};w.magics=[{spell:31,key:1}];
+  w.bindingSpell=31;w.bindingKey=8;w.connection.send=()=>false;w.saveSkillKey();
+  assert.equal(w.skillPending,false);assert.equal(w.magics[0].key,1);
+  w.connection.send=()=>true;w.saveSkillKey();const request=w.skillRequest;
+  w.serverEvent({type:'skillBindings',request,success:false,message:'未学习'});
+  assert.equal(w.magics[0].key,1);assert.equal(w.skillPending,false);
+  w.saveSkillKey();const stale=w.skillRequest;w.serverEvent({type:'disconnected'});
+  w.serverEvent({type:'skillBindings',request:stale,success:true,bindings:[{spell:31,key:8}]});
+  assert.equal(w.magics[0].key,1);assert.equal(w.skillPending,false);
+});
+test('unsupported bound skill does not dispatch fireball',()=>{
+ const w=world(),sent=[];w.magics=[{spell:61,key:8}];w.notice=()=>{};w.connection.send=c=>sent.push(c);
+ w.castKey(8);assert.equal(sent.length,0);
+});
+
+test('F1-F8 dispatch the binding and modal keys select without casting',()=>{
+ const w=world(),keys=[];w.castKey=key=>keys.push(key);
+ for(const keyCode of [112,114,119])w.onKeyDown({keyCode});assert.deepEqual(keys,[1,3,8]);
+ w.menu.active=true;w.menuKind='skillKeys';w.bindingSpell=31;w.showSkillKeys=()=>{};
+ w.onKeyDown({keyCode:119});assert.equal(w.bindingKey,8);assert.equal(keys.length,3);
+ w.skillPending=true;w.onKeyDown({keyCode:112});assert.equal(w.bindingKey,8);
+ w.onKeyDown({keyCode:27});assert.equal(w.menu.active,false);
+});
+test('small map is hidden underneath native windows and restored when closed',()=>{
+ const w=world(),states=[];w.serverReady=true;w.miniMap={update:(dt,map,p,peers,active)=>states.push(active)};
+ w.menu.active=true;w.panelRects=[{x:540,y:0,w:260,h:360}];w.update(.1);
+ w.menu.active=false;w.update(.1);w.menu.active=true;w.panelRects=[{x:0,y:0,w:400,h:300}];w.update(.1);
+ assert.deepEqual(states,[false,true,true]);
 });
