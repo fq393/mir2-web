@@ -7,7 +7,7 @@ ROOT=Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('convert',ROOT/'tools/convert-assets.py')
 convert=importlib.util.module_from_spec(spec);spec.loader.exec_module(convert)
 manifest=json.loads((convert.OUT/'manifest.json').read_text());atlases={};checked=0
-for actor in ('armour0','armour1','weapon1','hair0','monster4'):
+for actor in ('armour0','armour1','weapon1','hair0','armour0f','armour1f','weapon1f','hair0f','monster4'):
     action='skeleton' if actor=='monster4' else 'harvest'
     library=convert.Library(convert.rawpath(convert.LIBRARIES[actor]))
     rows=manifest['actors'][actor][action]
@@ -15,7 +15,8 @@ for actor in ('armour0','armour1','weapon1','hair0','monster4'):
     for direction,row in enumerate(rows):
         assert len(row)==(1 if action=='skeleton' else 2),(actor,'frame count')
         for step,key in enumerate(row):
-            expected=224+direction if action=='skeleton' else 344+direction*2+step
+            offset=(416 if actor.startswith('weapon') else 808) if actor.endswith('f') else 0
+            expected=224+direction if action=='skeleton' else offset+344+direction*2+step
             assert key==f'{actor}:{expected}',key
             frame=manifest['frames'].get(key)
             assert frame is not None,f'Declared animation frame was not exported: {key}'

@@ -1,4 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings></PropertyGroup>
-  <ItemGroup><ProjectReference Include="../../server/engine/CrystalEngine.csproj" /><Compile Include="../../server/DemoSeed.cs" Link="DemoSeed.cs" /><Compile Include="../../server/JewellerySeed.cs" Link="JewellerySeed.cs" /><Compile Include="../../server/WildlifeSeed.cs" Link="WildlifeSeed.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="../../server/ChineseText.cs" Link="ChineseText.cs" /><Compile Include="../../server/ContentProfiles.cs" Link="ContentProfiles.cs" /><ProjectReference Include="../../server/engine/CrystalEngine.csproj" /><Compile Include="../../server/DemoSeed.cs" Link="DemoSeed.cs" /><Compile Include="../../server/JewellerySeed.cs" Link="JewellerySeed.cs" /><Compile Include="../../server/WildlifeSeed.cs" Link="WildlifeSeed.cs" /></ItemGroup>
 </Project>

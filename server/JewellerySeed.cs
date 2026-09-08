@@ -9,7 +9,7 @@ static class JewellerySeed
 {
     public static void Apply(Envir envir, string root, MapInfo map)
     {
-        using var source=JsonDocument.Parse(File.ReadAllText(Path.Combine(root,"server/content/jewellery.json")));
+        using var source=JsonDocument.Parse(ContentProfiles.Read(root,"jewellery"));
         foreach(var row in source.RootElement.GetProperty("items").EnumerateArray()) {
             var name=row.GetProperty("name").GetString()!;
             var item=envir.ItemInfoList.FirstOrDefault(i=>i.Name==name);

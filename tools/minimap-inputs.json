@@ -1,0 +1,19 @@
+{
+  "source": "User supplied 1.76 candidate client; map 0 -> MiniMap index 101 -> WIL frame 100 (ClMain.pas:6025)",
+  "files": [
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Data/mmap.wil",
+      "sha256": "4bab9e49fb4b0c82ee0c90b264c7918e392907d46dd6fe9b3048ca47501895ee"
+    },
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Data/mmap.WIX",
+      "sha256": "fface5fd53c83b2bc70085b618af3908ef6a61b98e680394d3111fd8deb80eb6"
+    }
+  ],
+  "indexSource": {
+    "url": "https://github.com/mrzhqiang/mirserver-1.76/blob/39e17246a32247a2c43c4cc481e97e88c692fa53/Mir200/Envir/MiniMap.txt",
+    "sha256": "3cfc1d0293ee7d25628c5f21517b514de8394c67b54ad5c6c24a68ba160d31d5"
+  },
+  "map": "0",
+  "frame": 100
+}

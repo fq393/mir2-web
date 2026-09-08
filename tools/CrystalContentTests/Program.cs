@@ -10,7 +10,8 @@ var root=Path.GetFullPath(args[0]);
 var sandbox=Path.Combine(Path.GetTempPath(),"mir2-content-test-"+Guid.NewGuid());
 Directory.CreateDirectory(sandbox);Directory.SetCurrentDirectory(sandbox);
 try {
-    Settings.Load();Packet.IsServer=true;
+    ProfileTests.Run(root);
+    Settings.Load();ChineseText.Apply();Packet.IsServer=true;
     var envir=Envir.Main;
     JewellerySeed.Apply(envir,root,new MapInfo{Index=1,FileName="0105"});
     // A real connection on an ephemeral loopback port is enough for upstream's

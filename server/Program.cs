@@ -66,6 +66,7 @@ envir.Start();
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseUrls("http://127.0.0.1:17080");
 var app = builder.Build();
+AdminUI.Map(app,repoRoot);
 app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSeconds(20) });
 app.MapGet("/health", () => Results.Json(new { engine = "Suprcode/Crystal", upstreamCommit = "0e315fe327192afe52c3d7357ddd1f5b7e26c5b8", running = envir.Running, tcp = "127.0.0.1:17000", maps = envir.MapList.Count, players = envir.PlayerCount, monsters = envir.MonsterCount, websocket = "/ws", gameplay = "Crystal authoritative Bichon demo: equipment, shop, monsters, FireBall", demo = DemoSeed.Manifest(envir) }));
 app.Map("/ws", async context => {
@@ -89,6 +90,8 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey) : IDisposab
     static readonly int[] slots = new int[4];
     int slot = -1;
     string accountId = "", password = "", characterName = "";
+    bool protocolReady,guest,authBusy,authenticated;
+    readonly List<SelectInfo> characters=new();
     uint objectId;
     WorldVitals? lastVitals;
     Point lastLocation;
@@ -130,11 +133,6 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey) : IDisposab
         using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(requestCt);
         var ct = lifetime.Token;
         try {
-            for(int i=0;i<slots.Length;i++) if(Interlocked.CompareExchange(ref slots[i],1,0)==0) {slot=i;break;}
-            if(slot<0) throw new InvalidOperationException("All4 local Crystal guest slots are in use; close another tab first.");
-            accountId="webslot"+slot.ToString("00");
-            characterName="WebGuest"+slot;
-            password=Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(bridgeKey+accountId)))[..14];
             await tcp.ConnectAsync(IPAddress.Loopback, port, ct);
             var server = ReceiveCrystal(ct);
             var client = ReceiveBrowser(ct);
@@ -173,20 +171,29 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey) : IDisposab
                 case S.ClientVersion v:
                     if(v.Result != 1) throw new InvalidOperationException("Crystal version rejected: " + v.Result);
                     await Send(new {type="protocol", packet="ClientVersion", result=v.Result},ct);
-                    await Write(new C.Login {AccountID=accountId,Password=password},ct); break;
+                    protocolReady=true;await Send(new{type="auth",stage="login"},ct);break;
                 case S.NewAccount a:
-                    if(a.Result != 8) throw new InvalidOperationException("Crystal account creation result: "+a.Result);
-                    await Write(new C.Login {AccountID=accountId,Password=password},ct); break;
-                case S.Login login when login.Result == 3:
-                    await Write(new C.NewAccount {AccountID=accountId,Password=password,UserName="WebGuest",BirthDate=new DateTime(2000,1,1),SecretQuestion="Development",SecretAnswer="Local",EMailAddress="guest@example.invalid"},ct); break;
-                case S.Login login: throw new InvalidOperationException("Crystal login rejected: "+login.Result);
+                    if(a.Result==8&&guest){await Write(new C.Login{AccountID=accountId,Password=password},ct);break;}
+                    authBusy=false;password="";await Send(new{type="auth",stage="login",message=a.Result==8?"注册成功，请登录。":a.Result==7?"账号已存在。":"注册未成功，请检查填写内容。",result=a.Result},ct);break;
+                case S.Login login when login.Result==3&&guest:
+                    await Write(new C.NewAccount{AccountID=accountId,Password=password,UserName="WebGuest",BirthDate=new DateTime(2000,1,1),SecretQuestion="Development",SecretAnswer="Local",EMailAddress="guest@example.invalid"},ct);break;
+                case S.Login login:
+                    authBusy=false;password="";await Send(new{type="auth",stage="login",message=login.Result switch{0=>"登录暂时关闭。",1=>"账号格式不正确。",2=>"密码格式不正确。",3 or 4=>"账号或密码错误。",_=>"登录未成功。"},result=login.Result},ct);break;
+                case S.LoginBanned:
+                case S.ChangePasswordBanned:
+                    authBusy=false;password="";await Send(new{type="auth",stage="login",message="该账户操作暂时被限制，请稍后重试。"},ct);break;
+                case S.ChangePassword changed:
+                    authBusy=false;password="";await Send(new{type="auth",stage="login",message=changed.Result==6?"密码修改成功，请重新登录。":"密码修改失败，请核对账号和密码。"},ct);break;
                 case S.LoginSuccess loggedIn:
-                    if(loggedIn.Characters.Count>0) { DemoSeed.Character(Envir.Main.CharacterList.First(c=>c.Index==loggedIn.Characters[0].Index)); await Write(new C.StartGame {CharacterIndex=loggedIn.Characters[0].Index},ct); }
-                    else await Write(new C.NewCharacter {Name=characterName,Gender=MirGender.Male,Class=MirClass.Warrior},ct); break;
-                case S.NewCharacter character: throw new InvalidOperationException("Crystal character rejected: "+character.Result);
+                    authBusy=false;authenticated=true;password="";characters.Clear();characters.AddRange(loggedIn.Characters);
+                    if(guest){if(characters.Count>0){DemoSeed.Character(Envir.Main.CharacterList.First(c=>c.Index==characters[0].Index));await Write(new C.StartGame{CharacterIndex=characters[0].Index},ct);}else await Write(new C.NewCharacter{Name=characterName,Gender=MirGender.Male,Class=MirClass.Warrior},ct);}
+                    else await Send(new{type="auth",stage="characters",characters=JsonSerializer.SerializeToElement(characters,packetJson)},ct);break;
+                case S.NewCharacter character:
+                    authBusy=false;await Send(new{type="auth",stage="characters",message="角色创建失败，请检查姓名、重名或角色数量。",result=character.Result,characters=JsonSerializer.SerializeToElement(characters,packetJson)},ct);break;
                 case S.NewCharacterSuccess created:
-                    DemoSeed.Character(Envir.Main.CharacterList.First(c=>c.Index==created.CharInfo.Index));
-                    await Write(new C.StartGame {CharacterIndex=created.CharInfo.Index},ct); break;
+                    authBusy=false;characters.Add(created.CharInfo);
+                    if(guest){DemoSeed.Character(Envir.Main.CharacterList.First(c=>c.Index==created.CharInfo.Index));await Write(new C.StartGame{CharacterIndex=created.CharInfo.Index},ct);}
+                    else await Send(new{type="auth",stage="characters",message="角色创建成功。",characters=JsonSerializer.SerializeToElement(characters,packetJson)},ct);break;
                 case S.StartGame started:
                     await Send(new {type="protocol",packet="StartGame",result=started.Result},ct);
                     if(started.Result != 4) throw new InvalidOperationException("Crystal startgame result: "+started.Result); break;
@@ -236,12 +243,60 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey) : IDisposab
             using var doc=JsonDocument.Parse(buffer.AsMemory(0,result.Count));
             var command=doc.RootElement.GetProperty("type").GetString();
             if(command=="ping") {await Write(new C.KeepAlive {Time=DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()},ct);continue;}
+            if(command is "login" or "register" or "guest" or "changePassword" or "createCharacter" or "startCharacter"){
+                var r=doc.RootElement;
+                if(!protocolReady||objectId!=0||authBusy){await Send(new{type="error",message="请等待当前账户操作完成。"},ct);continue;}
+                if(command is "login" or "register" or "guest" or "changePassword"){
+                    if(authenticated){await Send(new{type="error",message="请先退出当前账户。"},ct);continue;}
+                    if(command=="guest"){
+                        if(slot<0)for(int i=0;i<slots.Length;i++)if(Interlocked.CompareExchange(ref slots[i],1,0)==0){slot=i;break;}
+                        if(slot<0){await Send(new{type="auth",stage="login",message="本地体验角色已被占用。"},ct);continue;}
+                        guest=true;accountId="webslot"+slot.ToString("00");characterName="WebGuest"+slot;
+                        password=Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(bridgeKey+accountId)))[..14];
+                    }else{
+                        guest=false;accountId=r.GetProperty("account").GetString()??"";password=r.GetProperty("password").GetString()??"";
+                        if(accountId.StartsWith("webslot",StringComparison.OrdinalIgnoreCase)||accountId.Length<Globals.MinAccountIDLength||accountId.Length>Globals.MaxAccountIDLength||password.Length<Globals.MinPasswordLength||password.Length>Globals.MaxPasswordLength){password="";await Send(new{type="auth",stage="login",message="账号须为3至15字符，密码须为5至15字符；体验账号前缀不可注册。"},ct);continue;}
+                    }
+                    DateTime birth=default;
+                    if(command=="register"&&(!r.TryGetProperty("birthDate",out var birthValue)||!DateTime.TryParseExact(birthValue.GetString(),"yyyy-MM-dd",System.Globalization.CultureInfo.InvariantCulture,System.Globalization.DateTimeStyles.None,out birth))){password="";await Send(new{type="error",message="生日格式不正确。"},ct);continue;}
+                    if(command=="changePassword"){
+                        var next=r.GetProperty("newPassword").GetString()??"";
+                        if(next.Length<Globals.MinPasswordLength||next.Length>Globals.MaxPasswordLength){password="";await Send(new{type="error",message="新密码须为5至15字符。"},ct);continue;}
+                        authBusy=true;await Write(new C.ChangePassword{AccountID=accountId,CurrentPassword=password,NewPassword=next},ct);password="";continue;
+                    }
+                    authBusy=true;
+                    if(command=="register")await Write(new C.NewAccount{AccountID=accountId,Password=password,UserName=r.GetProperty("userName").GetString()??"",BirthDate=birth,SecretQuestion=r.GetProperty("question").GetString()??"",SecretAnswer=r.GetProperty("answer").GetString()??"",EMailAddress=r.GetProperty("email").GetString()??""},ct);
+                    else await Write(new C.Login{AccountID=accountId,Password=password},ct);
+                }else if(command=="createCharacter"){
+                    int role=r.GetProperty("class").GetInt32(),gender=r.GetProperty("gender").GetInt32();string name=r.GetProperty("name").GetString()??"";
+                    if(!authenticated||guest||role<0||role>2||gender<0||gender>1||name.Length<Globals.MinCharacterNameLength||name.Length>Globals.MaxCharacterNameLength){await Send(new{type="error",message="请选择战士、法师或道士，姓名须为3至15字符。"},ct);continue;}
+                    authBusy=true;await Write(new C.NewCharacter{Name=name,Class=(MirClass)role,Gender=(MirGender)gender},ct);
+                }else{
+                    int index=r.GetProperty("index").GetInt32();if(!characters.Any(c=>c.Index==index)){await Send(new{type="error",message="角色不属于当前账户。"},ct);continue;}await Write(new C.StartGame{CharacterIndex=index},ct);
+                }
+                continue;
+            }
             if(objectId!=0) {
                 var r=doc.RootElement;
                 int Num(string k,int fallback=0)=>r.TryGetProperty(k,out var v)?v.GetInt32():fallback;
                 ulong Id(string k)=>r.GetProperty(k).ValueKind==JsonValueKind.String?ulong.Parse(r.GetProperty(k).GetString()!):r.GetProperty(k).GetUInt64();
                 if(command is "attack" or "cast" or "harvest" && (Num("direction")<0 || Num("direction")>7)) throw new InvalidDataException("direction must be 0..7");
+                if(command=="chat"){
+                    var message=r.GetProperty("message").GetString()??"";
+                    if(message.Length==0||message.Length>Globals.MaxChatLength||message.Any(c=>char.IsControl(c))){await Send(new{type="error",message="聊天内容须为1至80个字符且不含控制字符。"},ct);continue;}
+                    await Write(new C.Chat{Message=message},ct);continue;
+                }
+                if(command is "groupAdd" or "groupRemove"){
+                    var member=r.GetProperty("name").GetString()??"";
+                    if(member.Length<Globals.MinCharacterNameLength||member.Length>Globals.MaxCharacterNameLength||member.Any(char.IsControl)){await Send(new{type="error",message="请输入有效的角色名。"},ct);continue;}
+                }
+                if(command=="attackMode"&&(Num("mode")<0||Num("mode")>5)){await Send(new{type="error",message="无效的攻击模式。"},ct);continue;}
                 Packet? action=command switch {
+                    "attackMode"=>new C.ChangeAMode {Mode=(AttackMode)Num("mode")},
+                    "groupSwitch"=>new C.SwitchGroup {AllowGroup=r.GetProperty("allow").GetBoolean()},
+                    "groupAdd"=>new C.AddMember {Name=r.GetProperty("name").GetString()??""},
+                    "groupRemove"=>new C.DelMember {Name=r.GetProperty("name").GetString()??""},
+                    "groupReply"=>new C.GroupInvite {AcceptInvite=r.GetProperty("accept").GetBoolean()},
                     "revive"=>new C.TownRevive(),
                     "pickup"=>new C.PickUp(),
                     "harvest"=>new C.Harvest {Direction=(MirDirection)Num("direction")},

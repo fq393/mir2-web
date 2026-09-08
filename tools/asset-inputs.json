@@ -915,6 +915,36 @@
       "byteRange": "405628-413733",
       "httpStatus": 206,
       "contentRange": "bytes 405628-413733/414018"
+    },
+    {
+      "path": "Data/CArmour/01.Lib",
+      "localFile": "Data_CArmour_01.Lib.range-2313027-3501907",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/CArmour/01.Lib",
+      "sha256": "a59fa36ecef4821fc6757ae800a333f9662c33b1bae6c155fed1d6fdac531bc3",
+      "bytes": 1188881,
+      "byteRange": "2313027-3501907",
+      "httpStatus": 206,
+      "contentRange": "bytes 2313027-3501907/4529875"
+    },
+    {
+      "path": "Data/CHair/00.Lib",
+      "localFile": "Data_CHair_00.Lib.range-169585-327312",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/CHair/00.Lib",
+      "sha256": "0773f4106fff35f984edd9bd4cdb0578a9b657b62dd0e0c9be982e822cc76d42",
+      "bytes": 157728,
+      "byteRange": "169585-327312",
+      "httpStatus": 206,
+      "contentRange": "bytes 169585-327312/476194"
+    },
+    {
+      "path": "Data/CWeapon/01.Lib",
+      "localFile": "Data_CWeapon_01.Lib.range-69589-134742",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/CWeapon/01.Lib",
+      "sha256": "04522f9f4c5623a9fe29ab705c5a08b5730530c173478ef59db2b452d420e332",
+      "bytes": 65154,
+      "byteRange": "69589-134742",
+      "httpStatus": 206,
+      "contentRange": "bytes 69589-134742/134743"
     }
   ]
 }

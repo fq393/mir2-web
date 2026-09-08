@@ -13,6 +13,8 @@ for k in (5,6,7,21,22,24): LIBRARIES[k]=f'Data/Map/WemadeMir2/Objects{k-1}.Lib'
 for k,n in ((251,'Dungeonsc'),(253,'Furnituresc'),(254,'Wallsc'),(255,'SmObjectsc'),(257,'Object1c')): LIBRARIES[k]=f'Data/Map/WemadeMir3/Snow/{n}.Lib'
 LIBRARIES.update(armour1='Data/CArmour/01.Lib',weapon1='Data/CWeapon/01.Lib',hair0='Data/CHair/00.Lib',npc0='Data/NPC/00.Lib',monster4='Data/Monster/004.Lib',monster5='Data/Monster/005.Lib',magic='Data/Magic.Lib')
 
+for actor in ('armour0','armour1','weapon1','hair0'):LIBRARIES[actor+'f']=LIBRARIES[actor]
+
 def rawpath(name): return RAW / name.replace('/','_')
 
 class Library:
@@ -107,7 +109,8 @@ def validate_crop(ox,oy,cw,ch,w,h):
         raise ValueError(f'Crop {ox},{oy},{cw},{ch} must have positive size and fit inside {w}x{h}')
 
 def actor_actions(key,spec):
-    return {name:[[f'{key}:{start+d*count+i}' for i in range(count)] for d in range(8)] for name,(start,count) in spec.items()}
+    offset=(416 if key.startswith('weapon') else 808) if key.endswith('f') else 0
+    return {name:[[f'{key}:{offset+start+d*count+i}' for i in range(count)] for d in range(8)] for name,(start,count) in spec.items()}
 
 PLAYER_ACTIONS={'stand':(0,4),'walk':(32,6),'attack':(136,6),'cast':(296,6),'harvest':(344,2),'hit':(360,3),'die':(384,4)}
 MONSTER_ACTIONS={'stand':(0,4),'walk':(32,6),'attack':(80,6),'hit':(128,2),'die':(144,10)}

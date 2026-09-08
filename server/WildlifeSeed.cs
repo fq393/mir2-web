@@ -16,7 +16,7 @@ static class WildlifeSeed
     };
     public static void Apply(Envir envir,string root,MapInfo map)
     {
-        using var file=JsonDocument.Parse(File.ReadAllText(Path.Combine(root,"server/content/bichon-wildlife.json")));
+        using var file=JsonDocument.Parse(ContentProfiles.Read(root,"bichon-wildlife"));
         var profile=file.RootElement;var monsters=new Dictionary<string,MonsterInfo>();
         var bonusIndex=Settings.RandomItemStatsList.IndexOf(Ring22);
         if(bonusIndex<0){bonusIndex=Settings.RandomItemStatsList.Count;if(bonusIndex>=255)throw new InvalidDataException("No random-stat profile slot");Settings.RandomItemStatsList.Add(Ring22);}

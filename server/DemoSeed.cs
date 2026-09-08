@@ -13,7 +13,7 @@ static class DemoSeed
         Directory.CreateDirectory(backup);
         if(!OperatingSystem.IsWindows())File.SetUnixFileMode(backup,UnixFileMode.UserRead|UnixFileMode.UserWrite|UnixFileMode.UserExecute);
         foreach(var file in Directory.GetFiles(dataDir)) File.Copy(file,Path.Combine(backup,Path.GetFileName(file)));
-        using(var profile=System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(root,"server/content/experience.json")))) {
+        using(var profile=System.Text.Json.JsonDocument.Parse(ContentProfiles.Read(root,"experience"))) {
             int level=0;foreach(var entry in profile.RootElement.GetProperty("requiredExperience").EnumerateArray()){
                 long value=entry.GetInt64();if(value<=0)throw new InvalidDataException("Experience requirement must be positive");
                 if(level<Settings.ExperienceList.Count)Settings.ExperienceList[level]=value;level++;
