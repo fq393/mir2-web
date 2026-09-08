@@ -49,3 +49,5 @@
 本地截图：native-login-error.png、native-bag-and-character.png、native-carried-robe.png、native-book-description.png。所有键鼠验收使用隔离账户；未把主账号改成测试前置状态。
 
 补充失败保护：移动请求发送失败时保留双方物品并清除交换意图；未就绪/断线/关闭窗口时取消鼠标图，避免上一场景残留。
+
+补充焦点回归：原错误框打开后点击外置本地体验按钮，焦点仍在alertdialog，未触发体验登录；按Enter后消息框关闭，登录表单解除inert。NativeConfirm使用focusin约束并在销毁时清理监听。修复后再次通过86项Node回归、TypeScript和Web构建。

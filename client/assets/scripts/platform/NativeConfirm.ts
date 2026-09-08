@@ -7,7 +7,7 @@ export class NativeConfirm {
  private overlay:HTMLDivElement;
  private previousFocus:HTMLElement|null;
  private siblings:{node:HTMLElement;inert:boolean}[]=[];
- private finished=false;
+ private finished=false;private trapFocus:(event:FocusEvent)=>void=()=>{};
  constructor(parent:HTMLElement,text:string,private choose:(accepted:boolean)=>void,mode:'confirm'|'alert'='confirm'){
   this.previousFocus=document.activeElement instanceof HTMLElement?document.activeElement:null;
   for(const child of Array.from(parent.children)){if(child instanceof HTMLElement){this.siblings.push({node:child,inert:child.inert});child.inert=true;}}
@@ -29,8 +29,9 @@ export class NativeConfirm {
    if(event.key==='Enter'){event.preventDefault();event.stopPropagation();if(mode==='alert')this.finish(true);}
    if(event.key==='Tab'){event.preventDefault();const i=buttons.indexOf(document.activeElement as HTMLButtonElement);buttons[i<0?(event.shiftKey?buttons.length-1:0):(i+(event.shiftKey?-1:1)+buttons.length)%buttons.length].focus();}
   };
-  panel.focus();
+  this.trapFocus=event=>{if(!this.finished&&!this.overlay.contains(event.target as Node))panel.focus();};
+  document.addEventListener('focusin',this.trapFocus);panel.focus();
  }
  private finish(accepted:boolean):void{if(this.finished)return;this.destroy();this.choose(accepted);}
- destroy():void{if(this.finished)return;this.finished=true;this.overlay.remove();for(const {node,inert} of this.siblings)node.inert=inert;this.siblings=[];if(this.previousFocus?.isConnected)this.previousFocus.focus();}
+ destroy():void{if(this.finished)return;this.finished=true;document.removeEventListener('focusin',this.trapFocus);this.overlay.remove();for(const {node,inert} of this.siblings)node.inert=inert;this.siblings=[];if(this.previousFocus?.isConnected)this.previousFocus.focus();}
 }
