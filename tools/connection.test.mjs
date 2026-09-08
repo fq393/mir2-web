@@ -15,7 +15,7 @@ function load(file, mocks = {}, globals = {}) {
   vm.runInNewContext(code, {exports, require: name => mocks[name], console: {info() {}}, ...globals});
   return exports;
 }
-const cc = {_decorator: {ccclass: () => cls => cls}, Component: class {}, Color: class {constructor(r,g,b,a){Object.assign(this,{r,g,b,a});}},
+const cc = {Node:{EventType:{TOUCH_END:'touch',MOUSE_UP:'mouse'}},_decorator: {ccclass: () => cls => cls}, Component: class {}, Color: class {constructor(r,g,b,a){Object.assign(this,{r,g,b,a});}},
   KeyCode: {KEY_D: 68, ARROW_RIGHT: 39, KEY_A: 65, ARROW_LEFT: 37, KEY_S: 83, ARROW_DOWN: 40, KEY_W: 87, ARROW_UP: 38}};
 const {MirWorld} = load('../client/assets/scripts/MirWorld.ts', {
   cc, './core/classicLayout':classicLayout, './core/inventory':inventory, './platform/MirAudio':{MirAudio:class{stop(){}play(){}unlock(){}}}, './core/stepSound':{stepSound:()=>1}, './core/grid': grid, './platform/connection': {}, './renderer/MirSprite': {}, './renderer/TerrainStream':{TerrainStream:class{constructor(){this.newTerrain=true;}destroy(){}}},
@@ -169,4 +169,26 @@ test('learned skills are added, progressed and removed from actual packets',()=>
  w.packet('NewMagic',{Hero:false,Magic:{Spell:1,Level:0,Experience:0}});
  w.packet('MagicLeveled',{ObjectID:9,Spell:1,Level:1,Experience:14});assert.equal(w.magics[0].level,1);assert.equal(w.magics[0].experience,14);
  w.packet('RemoveMagic',{PlaceId:0});assert.equal(w.magics.length,0);
+});
+
+test('skill books wait for both authoritative learning and item replies; belt cannot drink a book',()=>{
+ const w=world(),sent=[],sounds=[],notices=[];w.serverReady=true;w.ownId=9;
+ w.connection.send=p=>{sent.push(p);return true;};w.sound.play=s=>sounds.push(s);w.notice=s=>notices.push(s);w.refreshBelt=()=>{};
+ const book={uniqueid:'book1',count:1,info:{type:20,name:'基本剑术'}};w.inventory[6]=book;
+ w.usePotion(book);assert.equal(sent.length,0);
+ w.useInventoryItem(book);w.useInventoryItem(book);assert.equal(sent.length,1);assert.equal(w.inventory[6],book);assert.equal(w.magics.length,0);
+ w.packet('UseItem',{UniqueID:'book1',Success:false});assert.equal(w.inventory[6],book);assert.equal(w.pendingUses.size,0);assert.match(notices.at(-1),/技能书未使用/);
+ w.lastUse=0;w.useInventoryItem(book);w.packet('NewMagic',{Hero:false,Magic:{Spell:1,Level:0,Experience:0,Need1:500}});
+ assert.equal(w.inventory[6],book);assert.equal(w.magics.length,1);
+ w.packet('UseItem',{UniqueID:'book1',Success:true});assert.equal(w.inventory[6],null);assert.equal(w.pendingUses.size,0);assert.equal(sounds.includes('108'),false);assert.match(notices.at(-1),/技能书/);
+ w.packet('UseItem',{UniqueID:'book1',Success:true});assert.equal(w.magics.length,1);assert.equal(w.inventory[6],null);
+});
+
+test('book double-click accepts fast mouse clicks and suppresses synthetic mouse after touch',()=>{
+ const w=world(),handlers={};let used=0;w.nativeDoubleClick({on:(name,fn)=>handlers[name]=fn},()=>used++);
+ handlers.mouse({getButton:()=>2});assert.equal(used,0);
+ handlers.mouse({getButton:()=>0});assert.equal(used,0);
+ handlers.mouse({getButton:()=>0});assert.equal(used,1);
+ handlers.touch({});handlers.mouse({getButton:()=>0});assert.equal(used,1);
+ handlers.touch({});assert.equal(used,2);handlers.mouse({getButton:()=>0});assert.equal(used,2);
 });

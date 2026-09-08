@@ -47,6 +47,35 @@ try {
             checkedGoods++;
         }
     }
+    // Learning uses the real engine, with synthetic content only in this temporary DB.
+    // The fixture threshold is a test boundary, not a shipped 1.76 training profile.
+    envir.MagicInfoList.Add(new MagicInfo {Spell=Spell.Fencing,Name="基本剑术",Level1=7,Level2=11,Level3=16,Need1=1,Need2=2,Need3=3});
+    var bookInfo=new ItemInfo {Index=++envir.ItemIndex,Name="基本剑术",Type=ItemType.Book,Shape=(short)Spell.Fencing,RequiredClass=RequiredClass.Warrior,RequiredType=RequiredType.Level,RequiredAmount=7,StackSize=1};
+    envir.ItemInfoList.Add(bookInfo);
+    var learner=new RecordingPlayer {Stats=new Stats(),Info=new CharacterInfo {Level=6,Class=MirClass.Warrior},Account=new AccountInfo(),Connection=connection};
+    learner.Info.Mount=new MountInfo(learner);learner.Report=new Reporting(learner);
+    var book=envir.CreateFreshItem(bookInfo);learner.Info.Inventory[6]=book;
+    learner.UseItem(book.UniqueID);Check(learner.Info.Inventory[6]==book&&learner.Info.Magics.Count==0,"under-level book consumed or learned");
+    learner.Info.Level=7;learner.Info.Class=MirClass.Wizard;
+    learner.UseItem(book.UniqueID);Check(learner.Info.Inventory[6]==book&&learner.Info.Magics.Count==0,"wrong-class book consumed or learned");
+    learner.Info.Class=MirClass.Warrior;learner.UseItem(book.UniqueID);
+    Check(learner.Info.Inventory[6]==null&&learner.Info.Magics.Single().Spell==Spell.Fencing,"valid learning did not consume exactly one book and add skill");
+    Check(learner.Packets.OfType<ServerPackets.NewMagic>().Count()==1&&learner.Packets.OfType<ServerPackets.UseItem>().Count(p=>p.Success)==1,"learning authoritative replies missing or duplicated");
+    var duplicate=envir.CreateFreshItem(bookInfo);learner.Info.Inventory[6]=duplicate;learner.UseItem(duplicate.UniqueID);
+    Check(learner.Info.Inventory[6]==duplicate&&learner.Info.Magics.Count==1,"duplicate book consumed or skill duplicated");
+    learner.UseItem(ulong.MaxValue);Check(learner.Info.Inventory[6]==duplicate,"unknown book ID mutated inventory");
+    Console.WriteLine("PASS real Crystal skill-book transaction: level/class gates, learning, consumption, NewMagic acknowledgement, duplicate and unknown item protection.");
+    var trained=learner.Info.Magics.Single();learner.Stats[Stat.SkillGainMultiplier]=1;
+    learner.LevelMagic(trained);Check(trained.Level==1,"initial skill did not train to level 1");
+    var held=trained.Experience;learner.LevelMagic(trained);Check(trained.Level==1&&trained.Experience==held,"skill trained below next character-level gate");
+    learner.Info.Level=11;trained.Experience=(ushort)(trained.Info.Need2-1);learner.Stats[Stat.SkillGainMultiplier]=1;learner.LevelMagic(trained);
+    Check(trained.Level==2,"skill level 2 threshold failed");
+    learner.Info.Level=16;trained.Experience=(ushort)(trained.Info.Need3-1);learner.Stats[Stat.SkillGainMultiplier]=1;learner.LevelMagic(trained);
+    Check(trained.Level==3&&trained.Experience==0,"skill cap did not clear experience");
+    learner.LevelMagic(trained);Check(trained.Level==3&&trained.Experience==0,"max skill exceeded level 3");
+    Check(learner.Packets.OfType<ServerPackets.MagicLeveled>().Count()==3,"skill growth replies mismatch");
+    Console.WriteLine("PASS real Crystal LevelMagic: level gates, three training thresholds, cap and authoritative replies (fixture training values only).");
+
     var legacy=new CharacterInfo {Index=987,Class=MirClass.Warrior};
     var sampleInfo=envir.ItemInfoList.First();legacy.Inventory[0]=envir.CreateFreshItem(sampleInfo);var unique=legacy.Inventory[0].UniqueID;
     File.WriteAllText("demo-character-987-v1","existing");DemoSeed.Character(legacy);
