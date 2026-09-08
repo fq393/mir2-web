@@ -188,18 +188,22 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey) : IDisposab
                 case S.LoginSuccess loggedIn:
                     authBusy=false;authenticated=true;password="";characters.Clear();characters.AddRange(loggedIn.Characters);
                     if(guest){if(characters.Count>0){DemoSeed.Character(Envir.Main.CharacterList.First(c=>c.Index==characters[0].Index));await Write(new C.StartGame{CharacterIndex=characters[0].Index},ct);}else await Write(new C.NewCharacter{Name=characterName,Gender=MirGender.Male,Class=MirClass.Warrior},ct);}
-                    else await Send(new{type="auth",stage="characters",characters=JsonSerializer.SerializeToElement(characters,packetJson)},ct);break;
+                    else await Send(new{type="auth",stage="characters",characterLimit=Globals.MaxCharacterCount,characters=JsonSerializer.SerializeToElement(characters,packetJson)},ct);break;
                 case S.NewCharacter character:
-                    authBusy=false;await Send(new{type="auth",stage="characters",message="角色创建失败，请检查姓名、重名或角色数量。",result=character.Result,characters=JsonSerializer.SerializeToElement(characters,packetJson)},ct);break;
+                    authBusy=false;await Send(new{type="auth",stage="characters",message=character.Result switch{0=>"当前暂不允许创建角色。",1=>"角色姓名不符合要求，请使用中文、字母、数字或下划线。",2=>"请选择有效性别。",3=>"该职业暂未开放。",4=>"当前账号角色数量已达上限。",5=>"该角色姓名已被使用，请换一个姓名。",_=>"角色创建失败，请稍后重试。"},result=character.Result,characterLimit=Globals.MaxCharacterCount,characters=JsonSerializer.SerializeToElement(characters,packetJson)},ct);break;
                 case S.NewCharacterSuccess created:
                     authBusy=false;characters.Add(created.CharInfo);
                     if(guest){DemoSeed.Character(Envir.Main.CharacterList.First(c=>c.Index==created.CharInfo.Index));await Write(new C.StartGame{CharacterIndex=created.CharInfo.Index},ct);}
-                    else await Send(new{type="auth",stage="characters",message="角色创建成功。",characters=JsonSerializer.SerializeToElement(characters,packetJson)},ct);break;
+                    else await Send(new{type="auth",stage="characters",message="角色创建成功。",selectedIndex=created.CharInfo.Index,characterLimit=Globals.MaxCharacterCount,characters=JsonSerializer.SerializeToElement(characters,packetJson)},ct);break;
                 case S.StartGame started:
                     await Send(new {type="protocol",packet="StartGame",result=started.Result},ct);
-                    if(started.Result != 4) throw new InvalidOperationException("Crystal startgame result: "+started.Result); break;
+                    if(started.Result != 4){authBusy=false;await Send(new{type="auth",stage="characters",message=started.Result switch{0=>"当前暂不允许进入游戏。",1=>"登录状态已失效，请退出后重新登录。",2=>"该角色已不存在，请重新登录刷新列表。",3=>"没有可用出生地图，请检查本地地图配置。",_=>"暂时无法进入游戏，请稍后重试。"},characterLimit=Globals.MaxCharacterCount,characters=JsonSerializer.SerializeToElement(characters,packetJson)},ct);}break;
+                case S.StartGameDelay delayed:
+                    authBusy=false;await Send(new{type="auth",stage="characters",message=$"角色暂时无法进入，请在{Math.Max(1,Math.Ceiling(delayed.Milliseconds/1000d))}秒后重试。",characters=JsonSerializer.SerializeToElement(characters,packetJson)},ct);break;
+                case S.StartGameBanned:
+                    authBusy=false;await Send(new{type="auth",stage="characters",message="该角色暂时被限制进入游戏。",characters=JsonSerializer.SerializeToElement(characters,packetJson)},ct);break;
                 case S.UserInformation user when p.GetType() == typeof(S.UserInformation):
-                    objectId=user.ObjectID;
+                    authBusy=false;objectId=user.ObjectID;
                     lastLocation=user.Location;
                     currentHP=user.HP;
                     learnedSpells.Clear();foreach(var magic in user.Magics) learnedSpells.Add((int)magic.Spell);
@@ -273,7 +277,7 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey) : IDisposab
                     if(!authenticated||guest||role<0||role>2||gender<0||gender>1||name.Length<Globals.MinCharacterNameLength||name.Length>Globals.MaxCharacterNameLength){await Send(new{type="error",message="请选择战士、法师或道士，姓名须为3至15字符。"},ct);continue;}
                     authBusy=true;await Write(new C.NewCharacter{Name=name,Class=(MirClass)role,Gender=(MirGender)gender},ct);
                 }else{
-                    int index=r.GetProperty("index").GetInt32();if(!characters.Any(c=>c.Index==index)){await Send(new{type="error",message="角色不属于当前账户。"},ct);continue;}await Write(new C.StartGame{CharacterIndex=index},ct);
+                    int index=r.GetProperty("index").GetInt32();if(!characters.Any(c=>c.Index==index)){await Send(new{type="error",message="角色不属于当前账户。"},ct);continue;}authBusy=true;await Write(new C.StartGame{CharacterIndex=index},ct);
                 }
                 continue;
             }
