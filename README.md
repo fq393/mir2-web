@@ -31,7 +31,7 @@ npm ci
 npm start
 ```
 
-账户/聊天/组队与数值配置说明：[本轮系统说明](docs/accounts-social-admin.md)。管理地址：[本地数值后台](http://127.0.0.1:17080/admin)，保存后重启服务生效。
+账户/聊天/组队与数值配置说明：[本轮系统说明](docs/accounts-social-admin.md)。现提供五类中文表单、筛选分页及保存前差异预览，见[管理台说明](docs/admin-console.md)。管理地址：[本地数值后台](http://127.0.0.1:17080/admin)，保存后重启服务生效。
 
 访问 [本地游戏](http://127.0.0.1:17600/)。Web 17600、WebSocket 17080、Crystal TCP 17000均只监听回环地址。保留启动终端；`启动传奇.command`是同一入口。
 
