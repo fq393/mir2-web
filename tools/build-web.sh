@@ -14,5 +14,6 @@ set -e
 # Creator documents exit 36 as successful command-line build.
 if [ "$build_exit" -ne 36 ] && [ "$build_exit" -ne 0 ]; then tail -60 "$project_root/.runtime/build-web.log";exit "$build_exit";fi
 if [ ! -f "$project_root/build/web/index.html" ]; then echo 'Build did not create index.html';exit 1;fi
+"$project_root/.runtime/assets-venv/bin/python" "$project_root/tools/export-auth-assets.py"
 node "$project_root/tools/prepare-web.mjs"
 echo "Web build ready: $project_root/build/web"

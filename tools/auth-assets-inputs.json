@@ -1,0 +1,31 @@
+{
+  "sourceCommit": "f829679d24acb3a097d396d737ab067db2c88ca2",
+  "provenance": "User supplied client archive; candidate package, not independently authenticated official 1.76.",
+  "files": [
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Data/ChrSel.wil",
+      "sha256": "4bac812aae60e0638b9ff38518f3fcdb6c284efbe55430f5aef737cf2c8e6b4d",
+      "bytes": 18830145
+    },
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Data/ChrSel.WIX",
+      "sha256": "9cdabbb910df77c2e1e42de8d4d95261c77f9dc8b901a833f022e4ce1710691c",
+      "bytes": 1168
+    },
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Wav/Log-in-long2.wav",
+      "sha256": "afc532be2ca8d51aac6f517623580d46b023a447cbd4d3d2f944b009efcda972",
+      "bytes": 12094764
+    },
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Wav/sellect-loop2.wav",
+      "sha256": "7bb52f091638879c534f9d9ee48554da40be64b728071e4ef92ead6fcea17f80",
+      "bytes": 6345596
+    },
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Wav/100.wav",
+      "sha256": "b80222a6ac8aee6f3580d065a87177bf28ec6f3834b265d52c1ad3b05248df62",
+      "bytes": 265842
+    }
+  ]
+}
