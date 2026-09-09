@@ -24,10 +24,16 @@ static class JewellerySeed
         }
         foreach(var row in source.RootElement.GetProperty("merchants").EnumerateArray()) {
             var file=row.GetProperty("file").GetString()!;
+            if(map.FileName=="0141")file="Boundary"+file;
             var npc=envir.NPCInfoList.FirstOrDefault(n=>n.FileName==file);
             if(npc==null){npc=new NPCInfo{Index=++envir.NPCIndex,FileName=file};envir.NPCInfoList.Add(npc);}
             npc.Name=row.GetProperty("name").GetString()!;npc.Image=row.GetProperty("image").GetUInt16();
             npc.MapIndex=map.Index;npc.Location=new Point(row.GetProperty("x").GetInt32(),row.GetProperty("y").GetInt32());
+            if(map.FileName=="0141"){
+                npc.Name=npc.Name.Replace("比奇","边界村");
+                // MerChant.txt 58-60: original image and tile positions.
+                npc.Location=npc.Image switch {4=>new Point(23,23),5=>new Point(16,16),6=>new Point(10,10),_=>throw new InvalidDataException("Unknown boundary merchant")};
+            }
             npc.Colour=Color.Lime;npc.Rate=100;
             var goods=string.Join("\n",row.GetProperty("goods").EnumerateArray().Select(n=>n.GetString()+" 1"));
             var type=envir.ItemInfoList.Single(i=>i.Name==row.GetProperty("goods")[0].GetString()).Type;

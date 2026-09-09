@@ -324,6 +324,14 @@
       "archiveSha256": "41372080474b00796c1d931946f162993f8b5d5b3078c2d2aab3800e065500b9",
       "originalFilename": "22.wav",
       "verification": "byte-identical SHA-256 to user-supplied client; runtime alias may differ"
+    },
+    {
+      "file": "107.wav",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/107.wav",
+      "bytes": 132572,
+      "sha256": "aa85a14f3b0a9188210c1d6311406bc52c5aef1dd9ff900d02385979f667ed6d",
+      "originalFilename": "107.wav",
+      "verification": "Original SoundUtil.pas s_eat_drug=107; successful consumption only"
     }
   ],
   "missing": [

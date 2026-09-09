@@ -16,4 +16,4 @@ mapping={int(a):b.lower() for a,b in re.findall(r'^\s*(\d+):\s+wav\\([^\r\n]+)',
 files={f['file']:f for f in m['sources']}
 for category in ['fireball','deer','scarecrow']:
  for alias,index in lst[category].items():assert mapping[index]==files[alias]['originalFilename'].lower()
-print('All 36 match local original bytes; 9 renamed event files match original sound.lst IDs')
+print(f'All {len(m["sources"])} match local original bytes; 9 renamed event files match original sound.lst IDs')

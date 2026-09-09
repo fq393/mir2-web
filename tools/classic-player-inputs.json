@@ -1,0 +1,32 @@
+{
+  "sources": [
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Data/Hum.wil",
+      "sha256": "6a3867b84cdda2f972aea76586e68d113894832b07d93bb7f10bfcfb1e17005e"
+    },
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Data/Hum.WIX",
+      "sha256": "4bee2d5bc788aa6180672d83c76a253390ebe0c251f5f00ca4b2308771bcfaa8"
+    },
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Data/Weapon.wil",
+      "sha256": "130e39f4656584769d7d0ff8ab615830f4e74ddddcb82bd8ca76ac4da5c0a63e"
+    },
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Data/Weapon.wix",
+      "sha256": "dfdfa65d82b1aa6a4f4cad8f2bbfcd65bfbfd42712c51dff97cc657201f85a38"
+    },
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Data/Hair.WIX",
+      "sha256": "4efb8372a1338d673941c224a926440106662d18db381e8cd078ab0598d4fed0"
+    },
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Data/Hair.wil",
+      "sha256": "ae377f1529913d97f0ff9ba25c94352fc348490a99d291adc2e821fbb3180927"
+    }
+  ],
+  "reference": "MirServer-Delphi/MirClient/Actor.pas HA; EM2Engine/ObjBase.pas GetFeature",
+  "limitations": [
+    "Actor layout reference is a historical Delphi client candidate, not an authenticated official release."
+  ]
+}

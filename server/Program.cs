@@ -52,12 +52,13 @@ if (!File.Exists(Envir.DatabasePath))
     envir.MapIndex = 1;
     envir.SaveDB();
 }
-var roomPath=Path.Combine(repoRoot,"raw-assets/client-176/传奇私服1.76客户/Map/0105.map");
-using(var roomPin=JsonDocument.Parse(File.ReadAllText(Path.Combine(repoRoot,"tools/interior-inputs.json")))) {
-    var expected=roomPin.RootElement.GetProperty("mapSources").EnumerateArray().Single(s=>s.GetProperty("path").GetString()!.EndsWith("Map/0105.map")).GetProperty("sha256").GetString();
-    if(!Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(roomPath))).Equals(expected,StringComparison.OrdinalIgnoreCase))throw new InvalidDataException("Original room map hash mismatch");
+foreach(var roomId in new[]{"0105","0141"}) {
+ var roomPath=Path.Combine(repoRoot,$"raw-assets/client-176/传奇私服1.76客户/Map/{roomId}.map");
+ using var roomPin=JsonDocument.Parse(File.ReadAllText(Path.Combine(repoRoot,roomId=="0105"?"tools/interior-inputs.json":$"tools/interior-{roomId}-inputs.json")));
+ var expected=roomPin.RootElement.GetProperty("mapSources").EnumerateArray().Single(s=>s.GetProperty("path").GetString()!.EndsWith($"Map/{roomId}.map")).GetProperty("sha256").GetString();
+ if(!Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(roomPath))).Equals(expected,StringComparison.OrdinalIgnoreCase))throw new InvalidDataException("Original room map hash mismatch");
+ File.Copy(roomPath,Path.Combine(Settings.MapPath,roomId+".map"),true);
 }
-File.Copy(roomPath,Path.Combine(Settings.MapPath,"0105.map"),true);
 DemoSeed.Apply(envir, dataDir, repoRoot);
 var logTask = Task.Run(async () => {
     while (true) { while (MessageQueue.Instance.MessageLog.TryDequeue(out var message)) Console.WriteLine("Crystal " + message.Trim()); await Task.Delay(100); }
@@ -216,7 +217,7 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey) : IDisposab
                     await Send(new {type="ready",source="crystal-tcp",packet="UserInformation",objectId,name=user.Name,map=currentMap,x=user.Location.X,y=user.Location.Y,direction=(int)user.Direction,hp=user.HP,mp=user.MP,experience=user.Experience,maxExperience=user.MaxExperience,level=user.Level,@class=(int)user.Class,gender=(int)user.Gender,hair=user.Hair,gold=user.Gold,inventory=DemoSeed.Items(user.Inventory),equipment=DemoSeed.Items(user.Equipment),magics=JsonSerializer.SerializeToElement(user.Magics,packetJson)},ct); break;
                 case S.UserLocation location:
                     var hasCommand = pending.TryDequeue(out var request);
-                    bool? accepted = hasCommand && request.Type is "walk" or "turn" ? (request.Type=="walk" ? location.Location!=lastLocation : (int)location.Direction==request.Direction) : null;
+                    bool? accepted = hasCommand && request.Type is "walk" or "run" or "turn" ? (request.Type is "walk" or "run" ? location.Location!=lastLocation : (int)location.Direction==request.Direction) : null;
                     lastLocation=location.Location;
                     await Send(new {type="state",source="crystal-tcp",packet="UserLocation",objectId,map=currentMap,x=location.Location.X,y=location.Location.Y,direction=(int)location.Direction,accepted,seq=hasCommand?request.Seq:null,command=hasCommand?request.Type:null},ct);
                     if(hasCommand) { var completion=locationReply; locationReply=null;completion?.TrySetResult(); }
@@ -318,6 +319,16 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey) : IDisposab
                     }catch(InvalidOperationException ex){await Send(new{type="tradeResult",success=false,request,message=ex.Message},ct);}
                     continue;
                 }
+                if(command=="targetHealth"){
+                    var target=doc.RootElement.GetProperty("target").GetUInt32();
+                    var targetResult=await WorldRequests.Run(e=>{
+                        var player=e.Players.FirstOrDefault(p=>p.ObjectID==objectId);
+                        var monster=e.Objects.FirstOrDefault(o=>o.ObjectID==target&&o.CurrentMap==player?.CurrentMap) as Server.MirObjects.MonsterObject;
+                        if(player==null||player.Dead||monster==null||monster.Dead||!Functions.InRange(player.CurrentLocation,monster.CurrentLocation,Globals.DataRange))return null;
+                        return new {type="targetHealth",objectId=target,percent=monster.PercentHealth};
+                    },ct);
+                    if(targetResult!=null)await Send(targetResult,ct);continue;
+                }
                 if(command=="chat"){
                     var message=r.GetProperty("message").GetString()??"";
                     if(message.Length==0||message.Length>Globals.MaxChatLength||message.Any(c=>char.IsControl(c))){await Send(new{type="error",message="聊天内容须为1至80个字符且不含控制字符。"},ct);continue;}
@@ -360,13 +371,13 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey) : IDisposab
                 }
                 if(action!=null) { await Write(action,ct);continue; }
             }
-            if(command!="walk" && command!="turn") {await Send(new {type="error",message="Supported commands: walk, turn, attack, cast, use, equip, unequip, npc, buy, revive, pickup, harvest, ping"},ct);continue;}
+            if(command!="walk" && command!="run" && command!="turn") {await Send(new {type="error",message="Supported commands: walk, turn, attack, cast, use, equip, unequip, npc, buy, revive, pickup, harvest, ping"},ct);continue;}
             if(objectId==0) {await Send(new {type="error",message="Crystal game not ready"},ct);continue;}
             int direction=doc.RootElement.GetProperty("direction").GetInt32();
             if(direction<0 || direction>7) throw new InvalidDataException("direction must be 0..7 clockwise from up");
             if(pending.Count>=4) {await Send(new {type="error",message="Too many pending movement commands; wait for state"},ct);continue;}
             int? seq=doc.RootElement.TryGetProperty("seq",out var sequence)?sequence.GetInt32():null;
-            await LocationAction(command=="walk" ? new C.Walk {Direction=(MirDirection)direction} : new C.Turn {Direction=(MirDirection)direction},command!,direction,seq,ct);
+            await LocationAction(command=="walk" ? new C.Walk {Direction=(MirDirection)direction} : command=="run" ? new C.Run {Direction=(MirDirection)direction} : new C.Turn {Direction=(MirDirection)direction},command!,direction,seq,ct);
         }
     }
     async Task KeepAlive(CancellationToken ct) {

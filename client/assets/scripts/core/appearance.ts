@@ -18,5 +18,5 @@ export function actorFrame(actors:Record<string,any>|undefined,key:string|null,a
  const frames=anim[direction%anim.length];if(!frames?.length)return null;
  const duration=def.actionFrameMs?.[action]??(action==='stand'?500:100);
  const index=Math.floor(Math.max(0,clock)*1000/duration);
- return frames[['stand','walk'].includes(action)?index%frames.length:Math.min(frames.length-1,index)]??null;
+ return frames[['stand','walk','run'].includes(action)?index%frames.length:Math.min(frames.length-1,index)]??null;
 }

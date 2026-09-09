@@ -53,7 +53,9 @@ bash tools/setup-assets.sh
 # 自行准备原客户端并解包至 raw-assets/client-176/，核对输入清单中的路径和哈希
 .runtime/assets-venv/bin/python tools/convert-ui.py
 .runtime/assets-venv/bin/python tools/convert-classic-npcs.py
+.runtime/assets-venv/bin/python tools/convert-classic-players.py
 .runtime/assets-venv/bin/python tools/convert-interiors.py
+.runtime/assets-venv/bin/python tools/convert-interiors.py 0141
 .runtime/assets-venv/bin/python tools/fetch-audio.py
 npm run build
 npm start
@@ -82,6 +84,9 @@ npm test
 .runtime/assets-venv/bin/python tools/test-ui.py
 .runtime/assets-venv/bin/python tools/test-harvest-assets.py
 .runtime/assets-venv/bin/python tools/test-interiors.py
+.runtime/assets-venv/bin/python tools/test-interiors.py 0141
+.runtime/assets-venv/bin/python tools/test-classic-players.py
+.runtime/assets-venv/bin/python tools/test-shadow-edges.py
 .runtime/assets-venv/bin/python tools/test-audio.py
 .runtime/assets-venv/bin/python tools/test-jewellery.py
 ```

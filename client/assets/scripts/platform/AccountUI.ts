@@ -54,7 +54,7 @@ export class AccountUI {
    state.characters.forEach((c,i)=>{
     this.presentation.portrait(p,c.role,c.gender,i,this.selected===c.index);
     const b=this.button(p,`选择角色 ${c.name}`,i?681:133,455,76,30,()=>{this.selected=c.index;this.show('characters');});b.setAttribute('aria-pressed',String(this.selected===c.index));if(this.selected===c.index)b.style.outline='1px solid #c3a157';
-    for(const [value,y] of [[c.name,493],[c.level?String(c.level):'初入玛法',522],[(c.gender?'女':'男')+(['战士','法师','道士'][c.role]??'未支持'),552]] as const){const text=document.createElement('div');text.textContent=value;text.style.cssText=`position:absolute;left:${117+i*554}px;top:${y}px;width:110px;height:20px;color:#e9dba7;font:12px ${CLASSIC_FONT_FAMILY};`;p.append(text);}
+    for(const [value,y] of [[c.name,494],[String(c.level??1),i?527:523],[['战士','法师','道士'][c.role]??'未支持',i?557:553]] as const){const text=document.createElement('div');text.textContent=value;text.style.cssText=`position:absolute;left:${117+i*554}px;top:${y}px;width:110px;height:16px;color:#fff;font:12px ${CLASSIC_FONT_FAMILY};line-height:12px;text-shadow:1px 0 #000,-1px 0 #000,0 1px #000,0 -1px #000;`;p.append(text);}
    });
    this.button(p,'退出当前账号',383,548,60,30,()=>this.logout());
    this.image(p,68,385,456);const enter=this.button(p,'进入游戏',385,456,44,21,()=>{if(!this.selected)return;this.submit({type:'startCharacter',index:this.selected});});enter.disabled=!this.selected;

@@ -12,6 +12,8 @@ settings.engine.macros.ENABLE_WEBGL_ANTIALIAS=false;
 await writeFile(settingsPath,JSON.stringify(settings));
 const path=new URL('index.html',dir);
 let html=await readFile(path,'utf8');
+// Preserve native game colors: official Dark Reader opt-out for already themed sites.
+if(!html.includes('name="darkreader-lock"'))html=html.replace('<head>','<head>\n<meta name="darkreader-lock">');
 html=html.replace(/<title>.*?<\/title>/,'<title>玛法 · Mir2</title>')
   .replace(/<h1 class="header">.*?<\/h1>/s,'').replace(/<p class="footer">[\s\S]*?<\/p>/,'')
   .replace('cc_exact_fit_screen="false"','cc_exact_fit_screen="true"')

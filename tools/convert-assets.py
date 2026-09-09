@@ -4,7 +4,7 @@ Only selected frames are exported; original numeric library/image IDs survive.
 """
 import argparse, gzip, hashlib, json, struct
 from pathlib import Path
-from PIL import Image, ImageChops, ImageFilter
+from PIL import Image, ImageChops, ImageFilter, ImageOps
 ROOT = Path(__file__).resolve().parents[1]
 RAW = ROOT / 'raw-assets'
 OUT = ROOT / 'client/assets/resources/mir'
@@ -58,6 +58,19 @@ class Library:
             if len(pixels)!=sw*sh*4:raise ValueError(f'BGRA byte count mismatch {self.path.name}:{index}: {w}x{h} versus {len(pixels)} bytes')
         return Image.frombytes('RGBA',(sw,sh),pixels,'raw','BGRA').crop((0,0,w,h)),dict(storedWidth=sw,storedHeight=sh,w=w,h=h,offsetX=x,offsetY=y,shadowX=sx,shadowY=sy,shadow=shadow,sourceOffset=off,sourceLength=length)
 
+def reflect_border(image):
+    """Reflect one texel preserving checker parity, including at slice boundaries."""
+    w,h=image.size
+    if w<2 or h<2:return ImageOps.expand(image,border=1)
+    out=Image.new(image.mode,(w+2,h+2));out.paste(image,(1,1))
+    out.paste(image.crop((1,0,2,h)),(0,1));out.paste(image.crop((w-2,0,w-1,h)),(w+1,1))
+    out.paste(out.crop((0,2,w+2,3)),(0,0));out.paste(out.crop((0,h-1,w+2,h)),(0,h+1))
+    return out
+
+def shadow_filter(image,kernel):
+    w,h=image.size
+    return reflect_border(image).filter(kernel).crop((1,1,w+1,h+1))
+
 def shadow_mask(image,color=None):
     """Opaque checker candidates with two transparent cardinal and two dark
     diagonal neighbours. An exact palette colour can further restrict matching.
@@ -66,9 +79,9 @@ def shadow_mask(image,color=None):
     channels=[ch.point(lambda p,target=target:255 if (p==target if color is not None else p<=8) else 0) for ch,target in zip((r,g,b),color or (0,0,0))]
     dark=ImageChops.darker(ImageChops.darker(channels[0],channels[1]),channels[2])
     transparent=a.point(lambda p:255 if p==0 else 0)
-    neighbours=transparent.filter(ImageFilter.Kernel((3,3),(0,1,0,1,0,1,0,1,0),scale=4)).point(lambda p:255 if p>=127 else 0)
+    neighbours=shadow_filter(transparent,ImageFilter.Kernel((3,3),(0,1,0,1,0,1,0,1,0),scale=4)).point(lambda p:255 if p>=127 else 0)
     opaque_dark=ImageChops.multiply(dark,a.point(lambda p:255 if p>=200 else 0))
-    diagonal=opaque_dark.filter(ImageFilter.Kernel((3,3),(1,0,1,0,0,0,1,0,1),scale=4)).point(lambda p:255 if p>=127 else 0)
+    diagonal=shadow_filter(opaque_dark,ImageFilter.Kernel((3,3),(1,0,1,0,0,0,1,0,1),scale=4)).point(lambda p:255 if p>=127 else 0)
     return ImageChops.multiply(ImageChops.multiply(opaque_dark,neighbours),diagonal)
 
 def smooth_shadow(image,library=None):
@@ -80,7 +93,7 @@ def smooth_shadow(image,library=None):
     for color in ([None,(16,8,8)] if library in ('monster4','monster5') else [None]):
         mask=shadow_mask(image,color)
         if not mask.getbbox():continue
-        blurred=mask.filter(ImageFilter.BoxBlur(.5))
+        blurred=shadow_filter(mask,ImageFilter.BoxBlur(.5))
         replace=ImageChops.lighter(mask,transparent)
         if color is not None:replace=ImageChops.multiply(replace,blurred.point(lambda p:255 if p else 0))
         shadow=Image.new('RGBA',image.size,(*(color or (0,4,0)),0));shadow.putalpha(blurred)
@@ -112,9 +125,9 @@ def actor_actions(key,spec):
     offset=(416 if key.startswith('weapon') else 808) if key.endswith('f') else 0
     return {name:[[f'{key}:{offset+start+d*count+i}' for i in range(count)] for d in range(8)] for name,(start,count) in spec.items()}
 
-PLAYER_ACTIONS={'stand':(0,4),'walk':(32,6),'attack':(136,6),'cast':(296,6),'harvest':(344,2),'hit':(360,3),'die':(384,4)}
+PLAYER_ACTIONS={'stand':(0,4),'walk':(32,6),'run':(80,6),'attack':(136,6),'cast':(296,6),'harvest':(344,2),'hit':(360,3),'die':(384,4)}
 MONSTER_ACTIONS={'stand':(0,4),'walk':(32,6),'attack':(80,6),'hit':(128,2),'die':(144,10)}
-ACTION_IDS={'stand':0,'walk':1,'attack':9,'hit':18,'harvest':19,'cast':20,'die':21,'skeleton':23}
+ACTION_IDS={'stand':0,'walk':1,'run':2,'attack':9,'hit':18,'harvest':19,'cast':20,'die':21,'skeleton':23}
 
 def apply_custom_frames(actors):
     for key,a in actors.items():
@@ -133,7 +146,7 @@ def apply_custom_frames(actors):
 def build(ox=0,oy=0,cw=700,ch=700):
     w,h,getcell=read_map(rawpath('Map/0.map'));validate_crop(ox,oy,cw,ch,w,h)
     actors={k:actor_actions(k,PLAYER_ACTIONS if k.startswith(('armour','weapon','hair')) else MONSTER_ACTIONS if k.startswith('monster') else {'stand':(0,4)}) for k in LIBRARIES if isinstance(k,str) and k!='magic'}
-    for a in actors.values():a['actionFrameMs']={'stand':500,'walk':100,'attack':100,'cast':100,'hit':200,'harvest':300,'die':100}
+    for a in actors.values():a['actionFrameMs']={'stand':500,'walk':100,'run':100,'attack':100,'cast':100,'hit':200,'harvest':300,'die':100}
     apply_custom_frames(actors)
     spell={'cast':[f'magic:{i}' for i in range(10)],'projectile':[[f'magic:{10+d*10+i}' for i in range(6)] for d in range(16)],'hit':[f'magic:{i}' for i in range(170,180)]}
     wanted=set();cells=[]
@@ -214,7 +227,7 @@ def build(ox=0,oy=0,cw=700,ch=700):
         a['atlases']=sorted({f['atlas'] for f in frames.values() if f['library']==key});a['anchor']='cell-top-left-plus-library-offset';a['library']=LIBRARIES[key]
     spell['atlases']=sorted({f['atlas'] for f in frames.values() if f['library']=='magic'})
     player=dict(actors['armour0'],standFrameMs=500,walkFrameMs=100,directions=['N','NE','E','SE','S','SW','W','NW'])
-    manifest=dict(schemaVersion=2,tileWidth=48,tileHeight=32,map=dict(id='0',name='比奇省',format='Crystal-v100-version1',sourceWidth=w,sourceHeight=h,width=cw,height=ch,originX=ox,originY=oy,spawn={'x':288,'y':615},chunkSize=32,chunks=chunks,collisionFile='collision.json'),atlases=atlases,frames=frames,player=player,actors=actors,spellFireBall=spell,emptyFrames=empty,missingReferences=missing_references,missingLibraries=[dict(library=257,path=LIBRARIES[257],reason='Absent from original public Crystal patch Snow directory; original client draws no image')],shadowProcessing='library-scoped-transparent-checker-to-continuous-alpha-v2',sources=json.loads((ROOT/'tools/asset-inputs.json').read_text())['sources'])
+    manifest=dict(schemaVersion=2,tileWidth=48,tileHeight=32,map=dict(id='0',name='比奇省',format='Crystal-v100-version1',sourceWidth=w,sourceHeight=h,width=cw,height=ch,originX=ox,originY=oy,spawn={'x':288,'y':615},chunkSize=32,chunks=chunks,collisionFile='collision.json'),atlases=atlases,frames=frames,player=player,actors=actors,spellFireBall=spell,emptyFrames=empty,missingReferences=missing_references,missingLibraries=[dict(library=257,path=LIBRARIES[257],reason='Absent from original public Crystal patch Snow directory; original client draws no image')],shadowProcessing='library-scoped-transparent-checker-to-continuous-alpha-v3-reflected-edges',sources=json.loads((ROOT/'tools/asset-inputs.json').read_text())['sources'])
     (OUT/'manifest.json').write_text(json.dumps(manifest,separators=(',',':'),ensure_ascii=False)+'\n')
     print(json.dumps(dict(frames=len(frames),atlases=len(atlases),cells=len(cells),chunks=len(chunks),emptyFrames=empty)))
 

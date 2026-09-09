@@ -13,12 +13,12 @@ export function directionTo(from: Point, to: Point): number {
     const result = directions.findIndex(d => d.x === x && d.y === y);
     return result < 0 ? 4 : result;
 }
-type SearchNode = {id:number; cost:number; estimate:number};
+type SearchNode = {id:number; cost:number; estimate:number;deviation:number};
 // Binary min-heap: prefer the node nearer the goal when total costs tie.
 class Frontier {
     private items:SearchNode[]=[];
     private before(a:SearchNode,b:SearchNode):boolean {
-        return a.estimate<b.estimate || (a.estimate===b.estimate && a.cost>b.cost);
+        return a.estimate<b.estimate || (a.estimate===b.estimate && (a.cost>b.cost || a.cost===b.cost&&a.deviation<b.deviation));
     }
     push(node:SearchNode):void {
         let i=this.items.length;this.items.push(node);
@@ -55,7 +55,7 @@ export function findPath(g: Grid, start: Point, goal: Point): Point[] {
     };
     // Every permitted step has equal duration; Chebyshev distance is admissible.
     const distance=(x:number,y:number):number=>Math.max(Math.abs(x-goal.x),Math.abs(y-goal.y));
-    const frontier=new Frontier();frontier.push({id:startId,cost:0,estimate:distance(start.x,start.y)});
+    const frontier=new Frontier();frontier.push({id:startId,cost:0,estimate:distance(start.x,start.y),deviation:0});
     let current:SearchNode|undefined;
     while((current=frontier.pop())){
         if(current.cost!==costs[current.id])continue;
@@ -73,7 +73,7 @@ export function findPath(g: Grid, start: Point, goal: Point): Point[] {
             const id=ny*width+nx;
             if(costs[id]>=0&&costs[id]<=cost)continue;
             costs[id]=cost;previous[id]=current.id;
-            frontier.push({id,cost,estimate:cost+distance(nx,ny)});
+            frontier.push({id,cost,estimate:cost+distance(nx,ny),deviation:Math.abs((nx-start.x)*(goal.y-start.y)-(ny-start.y)*(goal.x-start.x))});
         }
     }
     return [];

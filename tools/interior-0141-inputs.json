@@ -1,0 +1,60 @@
+{
+  "map": "0141",
+  "mapSources": [
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Data/Objects2.wil",
+      "sha256": "ff2730552e57007d0b4853fa18d119af2a6314f6d5404402b15138ab5849fed2"
+    },
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Data/Objects2.WIX",
+      "sha256": "38cdbef3b586e39c66f175183bef5aff480768e5dbec8e08d6b22f6b6deea729"
+    },
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Map/0141.map",
+      "sha256": "b7db75768cdb072cc2a7c3b916f2ec438a8762e396c9f463010d086996723ff2"
+    }
+  ],
+  "exteriorSource": {
+    "local": "raw-assets/client-176/传奇私服1.76客户/Map/0.map",
+    "sha256": "ef70bd5f5425f7f9dc79cb1ea6957f771c7293d55a554b3ba6239aba372fa370"
+  },
+  "portalSource": "https://github.com/mrzhqiang/mirserver-1.76/blob/39e17246a32247a2c43c4cc481e97e88c692fa53/Mir200/Envir/MapInfo.txt#L200-L203",
+  "portals": [
+    [
+      "0",
+      302,
+      622,
+      "0141",
+      2,
+      11
+    ],
+    [
+      "0",
+      311,
+      631,
+      "0141",
+      17,
+      26
+    ],
+    [
+      "0141",
+      2,
+      12,
+      "0",
+      302,
+      623
+    ],
+    [
+      "0141",
+      17,
+      27,
+      "0",
+      311,
+      632
+    ]
+  ],
+  "limitations": [
+    "Source archive directory is labelled private server; not an authenticated official release",
+    "Only door coordinates imported; FIGHT flags, merchant data, prices and NPC scripts not imported"
+  ]
+}

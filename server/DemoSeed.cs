@@ -36,6 +36,13 @@ static class DemoSeed
         Door(map,305,275,jewellery,20,12);Door(map,305,276,jewellery,21,11);
         Door(jewellery,21,12,map,306,276);Door(jewellery,21,13,map,306,277);
         JewellerySeed.Apply(envir,root,jewellery);
+        // Pinned MapInfo.txt 200-203: boundary village jewellery room, both doors.
+        var boundary=envir.MapInfoList.FirstOrDefault(m=>m.FileName=="0141");
+        if(boundary==null){boundary=new MapInfo{Index=++envir.MapIndex,FileName="0141",Title="边界村首饰店",Light=LightSetting.Normal};envir.MapInfoList.Add(boundary);}
+        Door(map,302,622,boundary,2,11);Door(map,311,631,boundary,17,26);
+        Door(boundary,2,12,map,302,623);Door(boundary,17,27,map,311,632);
+        JewellerySeed.Apply(envir,root,boundary);
+
         foreach(var zone in map.SafeZones.Where(z=>z.StartPoint))zone.Size=2;
         ItemInfo AddItem(string name,ItemType type,short shape,ushort image) {
             var item=envir.ItemInfoList.FirstOrDefault(i=>i.Name==name);
