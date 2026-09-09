@@ -471,8 +471,13 @@ export class MirWorld extends Component {
         this.mpOrb=this.nativeImage(bar,'ui:ClassicPrguse:4',85,91);this.mpOrb.spriteFrame=this.mpOrb.spriteFrame!.clone();this.mpOrb.sizeMode=Sprite.SizeMode.CUSTOM;
         this.expBar=this.nativeCrop(bar,'ui:ClassicPrguse:7',666,178,0,0,76,13);this.weightBar=this.nativeCrop(bar,'ui:ClassicPrguse:7',666,211,0,0,76,13);
         this.expBar.node.active=false;this.weightBar.node.active=false;
-        // Old DrawScrn uses (26, SCREENHEIGHT-38) and (88, SCREENHEIGHT-38).
-        this.hpText=this.nativeLabel(bar,'',26,219,12,61,Color.WHITE);this.mpText=this.nativeLabel(bar,'',88,219,12,64,Color.WHITE);
+        // FState.DBotMouseMove exposes HP/MP on hover. The later DrawScrn
+        // white-hint overlay is not an unconditional classic HUD element.
+        this.hpText=this.nativeField(bar,'',26,70,190,18,12,Color.WHITE);this.mpText=this.nativeField(bar,'',26,70,190,18,12,Color.WHITE);
+        for(const [label,x] of [[this.hpText,40],[this.mpText,87]] as const){
+            label.node.active=false;const hit=this.makeNode('血池数值提示',bar);hit.setPosition(x,-91);hit.getComponent(UITransform)!.setAnchorPoint(0,1);hit.getComponent(UITransform)!.setContentSize(45,90);
+            hit.on(Node.EventType.MOUSE_ENTER,()=>{label.node.active=true;});hit.on(Node.EventType.MOUSE_LEAVE,()=>{label.node.active=false;});
+        }
         for(const label of [this.hpText,this.mpText]){const outline=label.node.addComponent(LabelOutline);outline.color=Color.BLACK;outline.width=1;}
 
         this.stats=this.nativeLabel(bar,'',678,154,12,80,Color.WHITE);this.status=this.nativeLabel(bar,this.statusText,208,236,8,384,C.muted);
@@ -536,7 +541,7 @@ export class MirWorld extends Component {
             for(const [sprite,current,max,side,width] of [[this.hpOrb,this.hp,maxHP,0,45],[this.mpOrb,this.mp,maxMP,47,44]] as const){const h=Math.max(1,Math.min(90,Math.round(90*current/Math.max(1,max))));sprite.node.active=current>0&&max>0;sprite.spriteFrame!.texture=frame.sprite.texture;sprite.spriteFrame!.rect=new Rect(meta.x+side,meta.y+90-h,width,h);sprite.spriteFrame!.originalSize=new Size(width,h);sprite.spriteFrame!.offset=new Vec2();sprite.node.getComponent(UITransform)!.setContentSize(width,h);sprite.node.setPosition(40+side,-91-(90-h));}
         }
         this.displayedMaxHP=maxHP;this.displayedMaxMP=maxMP;
-        this.hpText.string=`${this.hp}/${maxHP||'…'}`;this.mpText.string=`${this.mp}/${maxMP||'…'}`;
+        this.hpText.string=`生命值(${this.hp}/${maxHP||'…'})`;this.mpText.string=warrior?this.hpText.string:`魔法值(${this.mp}/${maxMP||'…'})`;
         if(this.bagGold?.isValid)this.bagGold.string=String(this.gold);
         if(this.bagWeights?.isValid)this.bagWeights.string=`背包 ${this.bagWeight}/${this.maxBagWeight} · 穿戴 ${this.wearWeight}/${this.maxWearWeight} · 手持 ${this.handWeight}/${this.maxHandWeight}`;
         this.fillProgress(this.expBar,this.experience,this.maxExperience);this.fillProgress(this.weightBar,this.bagWeight,this.maxBagWeight);
@@ -601,8 +606,11 @@ export class MirWorld extends Component {
         for(const [i,m] of this.magics.slice(this.skillPage*5,this.skillPage*5+5).entries()){
             const icon=this.skillIcon(m.spell);if(icon!==undefined){const sprite=this.nativeImage(character,`ui:MagIcon:${icon}`,46,59+i*37);this.nativeClick(sprite.node,()=>this.showSkillKeys(m.spell));}
             const label=this.nativeField(character,this.skillName(m.spell),85,62+i*37,96,16,12,C.paper);this.nativeClick(label.node,()=>this.showSkillKeys(m.spell));
-            this.nativeField(character,m.key>=1&&m.key<=8?'F'+m.key:'',183,61+i*37,30,16,12,C.gold);
-            this.nativeField(character,`${m.level}级  ${m.level>=3?'—':`${m.experience??0}/${m['need'+(m.level+1)]??'—'}`}`,85,77+i*37,122,16,11,C.paper);
+            if(m.key>=1&&m.key<=8)this.nativeImage(character,`ui:ClassicPrguse:${247+m.key}`,183,61+i*37);
+            this.nativeImage(character,'ui:ClassicPrguse:112',85,77+i*37);
+            this.nativeImage(character,'ui:ClassicPrguse:111',111,77+i*37);
+            this.nativeField(character,String(m.level),103,77+i*37,10,16,11,C.paper);
+            this.nativeField(character,m.level>=3?'—':`${m.experience??0}/${m['need'+(m.level+1)]??'—'}`,133,77+i*37,78,16,11,C.paper);
         }
     }
     private equipmentCell(slot:number):void {
@@ -658,6 +666,8 @@ export class MirWorld extends Component {
     }
     private renderBag(x:number):void {
         const bag=this.nativeWindow(this.menu,'ui:ClassicPrguse:3',x,0);
+        // FState.DGold / MShare.DlgConf: original purse icon, independent of its amount.
+        this.nativeImage(bag,'ui:ClassicPrguse:29',10,190);
         this.closeNative(bag,309,202,()=>{if(this.menuKind==='shop'){this.shopBagOpen=false;this.showShop();}else this.showInventory('bag');if(this.targetText)this.targetText.string='';});this.nativeField(bag,'金币',65,182,32,18,12,C.gold);this.bagGold=this.nativeField(bag,String(this.gold),101,182,100,18,12,Color.WHITE);
         // User-requested Chinese text over the baked USE glyphs; preserve the original frame.
         const useText=this.makeNode('包裹使用中文',bag);useText.setPosition(256,-184);const cover=useText.addComponent(Graphics);cover.fillColor=new Color(10,20,53,255);cover.rect(0,-15,40,15);cover.fill();
