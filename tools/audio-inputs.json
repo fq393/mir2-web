@@ -332,6 +332,48 @@
       "sha256": "aa85a14f3b0a9188210c1d6311406bc52c5aef1dd9ff900d02385979f667ed6d",
       "originalFilename": "107.wav",
       "verification": "Original SoundUtil.pas s_eat_drug=107; successful consumption only"
+    },
+    {
+      "file": "113.wav",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/113.wav",
+      "originalFilename": "113.wav",
+      "bytes": 31610,
+      "sha256": "bee1abe532fda3d35b50765931eab202bb9d96609c536cf80079206e8d8fd6b0"
+    },
+    {
+      "file": "114.wav",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/114.wav",
+      "originalFilename": "114.wav",
+      "bytes": 17848,
+      "sha256": "aef9182e6a47e770d8b7dabd0acb44dfee6001d22dd134b0c66dd659a0bc9a26"
+    },
+    {
+      "file": "115.wav",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/115.wav",
+      "originalFilename": "115.wav",
+      "bytes": 34944,
+      "sha256": "25451110ac4b5f08330db9cc53386e33d5ae58b758e574f214ae22a06c96bcf5"
+    },
+    {
+      "file": "116.wav",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/116.wav",
+      "originalFilename": "116.wav",
+      "bytes": 19058,
+      "sha256": "f259159c6189b538509e3682b156b10ef2b6626654f5cc9dd97695731707634d"
+    },
+    {
+      "file": "117.wav",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/117.wav",
+      "originalFilename": "117.wav",
+      "bytes": 37902,
+      "sha256": "e892152e0249f2fe90bc9f9834f6e7aae3f4b5805eb693b99ee6a45602623078"
+    },
+    {
+      "file": "118.wav",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/118.wav",
+      "originalFilename": "118.wav",
+      "bytes": 10382,
+      "sha256": "2d8c0f9591d487c45f61b0c644d1a83d18c5a8e28f827ac66a3774605a57319e"
     }
   ],
   "missing": [

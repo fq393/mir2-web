@@ -11,6 +11,13 @@ var sandbox=Path.Combine(Path.GetTempPath(),"mir2-content-test-"+Guid.NewGuid())
 Directory.CreateDirectory(sandbox);Directory.SetCurrentDirectory(sandbox);
 try {
     ProfileTests.Run(root);
+    var clothCheck=new ItemInfo();DemoSeed.ApplyStarterArmourStats(clothCheck);
+    foreach(var table in new[]{"reference-server176","reference-delphi"}){
+        using var items=System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(root,"raw-assets",table,"StdItems.json")));
+        var cloth=items.RootElement.EnumerateArray().Single(i=>i.GetProperty("Name").GetString()=="布衣(男)");
+        if(clothCheck.Stats[Stat.MinAC]!=cloth.GetProperty("Ac").GetInt32()||clothCheck.Stats[Stat.MaxAC]!=cloth.GetProperty("Ac2").GetInt32()||clothCheck.Stats[Stat.MinMAC]!=cloth.GetProperty("Mac").GetInt32()||clothCheck.Stats[Stat.MaxMAC]!=cloth.GetProperty("Mac2").GetInt32())throw new Exception("Starter cloth defence differs from pinned candidate table");
+    }
+    Console.WriteLine("PASS starter cloth defence agrees with both pinned tables (AC 0..2, MAC 0..1).");
     Settings.Load();ChineseText.Apply();Packet.IsServer=true;
     var envir=Envir.Main;
     JewellerySeed.Apply(envir,root,new MapInfo{Index=1,FileName="0105"});

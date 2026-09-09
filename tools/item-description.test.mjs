@@ -52,3 +52,8 @@ test('combat requirements use final authoritative maxima and preserve unknown',(
  assert.equal(itemRequirements(info,{attributes:{maxdc:9}})[0].met,true);
  assert.equal(itemRequirements(info,{})[0].met,undefined);
 });
+
+test('compact description retains exceptional bonus instead of silently stripping it',()=>{
+ const rows=compactBagDescription({addedstats:{values:{maxdc:3}}},{type:7,stats:{values:{maxdc:2}}},'戒指',t=>t.length*6);
+ assert.ok(rows[1].includes('(+3)'));assert.ok(rows[1].includes('0-5'));
+});

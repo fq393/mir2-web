@@ -454,3 +454,15 @@ test('continuous movement preserves the 600ms cooldown and running at 30/60 FPS'
   for(let i=1;i<sent.length;i++)assert.ok(sent[i].at-sent[i-1].at>=599.99,'movement sent before cooldown');
  }
 });
+
+test('rejected equip explains known requirements and preserves the original item',()=>{
+ const w=world();w.level=2;const item={uniqueid:'31',itemindex:7,info:{type:6,requiredtype:0,requiredamount:3}};w.inventory=[item];w.equipment=[];let message='';w.notice=s=>message=s;
+ w.packet('EquipItem',{UniqueID:31,To:5,Success:false});assert.equal(w.inventory[0],item);assert.match(message,/所需等级 3/);
+});
+test('equip and takeoff use the same category sound after success, never on rejection',()=>{
+ for(const [type,file] of [[1,'111'],[2,'112'],[5,'115'],[6,'114'],[7,'113']]){
+  const w=world(),heard=[];w.sound.play=s=>heard.push(s);w.notice=()=>{};const item={uniqueid:'31',itemindex:type,info:{type}};w.inventory=[item];w.equipment=[null];
+  w.packet('EquipItem',{UniqueID:31,To:0,Success:false});assert.deepEqual(heard,[]);
+  w.packet('EquipItem',{UniqueID:31,To:0,Success:true});w.packet('RemoveItem',{UniqueID:31,To:0,Success:true});assert.deepEqual(heard,[file,file]);assert.equal(w.inventory[0],item);
+ }
+});

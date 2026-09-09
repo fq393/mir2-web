@@ -5,7 +5,7 @@ import {PartyUI} from './platform/PartyUI';
 import {AccountUI} from './platform/AccountUI';
 import {ChatInput} from './platform/ChatInput';
 import {ATTACK_MODES} from './core/social';
-import {itemDescription,itemHintPosition,itemRequirements,compactBagDescription} from './core/itemStats';
+import {equipmentSound,itemDescription,itemHintPosition,itemRequirements,compactBagDescription} from './core/itemStats';
 import {CLASSIC,worldToScreen,screenToCell,blocksWorld,PanelRect,JEWELLERY_SLOTS} from './core/classicLayout';
 import {gainItem,consumeItem,equipmentTarget} from './core/inventory';
 import {healthWidth,showHealth} from './core/health';
@@ -296,7 +296,7 @@ export class MirWorld extends Component {
         if(this.status)this.status.string=this.statusText;
         this.syncCarriedItem();for(const row of this.characterValues)if(row.label.isValid)row.label.string=row.value();
         if(!this.ready)return;
-        this.miniMap?.update(dt,this.mapId,this.point,this.peers.values(),this.serverReady&&!(this.menu.active&&this.panelRects.some(r=>r.x<800&&r.x+r.w>680&&r.y<120&&r.y+r.h>0)));
+        this.miniMap?.update(dt,this.mapId,this.point,this.peers.values(),this.serverReady&&!(this.menu.active&&this.panelRects.some(r=>r.x<800&&r.x+r.w>680&&r.y<120&&r.y+r.h>0)),[...(this.step?[this.step.to]:[]),...this.path]);
         this.animationClock+=dt;this.worldClock+=dt;
         this.updateCombat(dt);if(!this.step)this.beginStep();
         if(this.step){
@@ -595,7 +595,7 @@ export class MirWorld extends Component {
         if(!this.serverReady){this.notice('正在连接服务器，请稍候');return;}
         if(!this.menu.active||this.menuKind!=='inventory'){this.bagOpen=false;this.characterOpen=false;this.selectedBag=-1;this.selectedEquipment=-1;}
         if(page==='bag')this.bagOpen=!this.bagOpen;
-        if(page==='character')this.characterOpen=!this.characterOpen;
+        if(page==='character'){this.characterOpen=!this.characterOpen;if(this.characterOpen)this.characterPage=0;}
         this.inventoryPage=this.characterOpen?'character':'bag';
         this.windowDrag=null;this.inventoryWindows.clear();this.clearItemTooltip();this.menuKind='inventory';this.menu.children.slice().forEach(c=>c.destroy());this.panelRects=[];
         this.menu.active=this.bagOpen||this.characterOpen;
@@ -949,10 +949,12 @@ export class MirWorld extends Component {
         if(name==='Magic'){if(d.cast){this.sound.play('M31-0');this.sound.play('M31-1',.25);this.ownAction='cast';this.actionTime=.8;this.animationClock=0;this.spellEffect(this.point,d.target??this.point);this.fireTargets.set(d.targetid,Date.now()+1500);this.notice('施放火球术');}else this.notice('施法未成功：检查目标距离、MP 或冷却');}
         if(name==='EquipItem'||name==='RemoveItem'){
             this.equipmentPending=false;this.equipmentPendingAt=0;this.selectedEquipment=-1;
-            if(!d.success){this.notice('装备操作被服务器拒绝');return;}
+            if(!d.success){const item=this.inventory.find(i=>i&&String(i.uniqueid)===String(d.uniqueid));
+                const unmet=name==='EquipItem'?itemRequirements(item?.info??this.itemInfo.get(item?.itemindex),{level:this.level,job:this.job,gender:this.gender,attributes:this.attributes}).filter(r=>r.met===false):[];
+                this.notice(unmet.length?'无法穿戴：'+unmet.map(r=>r.text).join('，'):'未能完成装备操作，请检查位置、负重及物品状态。');return;}
             const from=name==='EquipItem'?this.inventory:this.equipment,to=name==='EquipItem'?this.equipment:this.inventory;
             const index=from.findIndex(i=>i&&String(i.uniqueid)===String(d.uniqueid));
-            if(index>=0){this.sound.play((from[index].info??this.itemInfo.get(from[index].itemindex))?.type===1?'111':'112');const previous=to[d.to];to[d.to]=from[index];from[index]=previous??null;this.notice(name==='EquipItem'?'装备已穿戴':'装备已卸下');}
+            if(index>=0){this.sound.play(equipmentSound((from[index].info??this.itemInfo.get(from[index].itemindex))?.type));const previous=to[d.to];to[d.to]=from[index];from[index]=previous??null;this.notice(name==='EquipItem'?'装备已穿戴':'装备已卸下');}
             this.refreshBelt();if(this.menu.active){if(this.menuKind==='inventory')this.showInventory();else if(this.menuKind==='shop')this.showShop();}
         }
         if(name==='ItemUpgraded'){

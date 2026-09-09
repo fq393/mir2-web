@@ -56,7 +56,7 @@ static class DemoSeed
         weapon.Stats=new Stats {[Stat.MinDC]=2,[Stat.MaxDC]=5};
         weapon.Weight=7;weapon.RequiredAmount=1;
         var armour=AddItem("BichonRobe",ItemType.Armour,1,60);
-        armour.Stats=new Stats {[Stat.MinAC]=2,[Stat.MaxAC]=2,[Stat.MinMAC]=0,[Stat.MaxMAC]=1};
+        ApplyStarterArmourStats(armour);
         armour.Weight=5;armour.RequiredAmount=1;
         // Small potion image identities checked against old item guide pictures.
         foreach(var spec in new[]{(Name:"BichonHealthSmall",Image:(ushort)9,HP:20,MP:0),(Name:"BichonManaSmall",Image:(ushort)11,HP:0,MP:30)}) {
@@ -84,6 +84,9 @@ static class DemoSeed
         envir.SaveAccounts();
         File.WriteAllText(Path.Combine(dataDir,"demo-seed.json"),System.Text.Json.JsonSerializer.Serialize(new {revision=Revision,backup,at=DateTime.UtcNow}));
     }
+    // Both pinned Chinese StdItems tables: cloth AC 0..2, MAC 0..1.
+    public static void ApplyStarterArmourStats(ItemInfo armour) =>
+        armour.Stats=new Stats {[Stat.MinAC]=0,[Stat.MaxAC]=2,[Stat.MinMAC]=0,[Stat.MaxMAC]=1};
     public static void Character(CharacterInfo character)
     {
         var envir=Envir.Main;
