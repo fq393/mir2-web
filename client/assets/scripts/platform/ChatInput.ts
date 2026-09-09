@@ -27,7 +27,7 @@ export class ChatInput {
    if(e.key==='Enter'&&!(e.target instanceof HTMLInputElement)&&!(e.target instanceof HTMLTextAreaElement)){e.preventDefault();e.stopImmediatePropagation();this.input.hidden=false;this.input.focus();}
   };window.addEventListener('keydown',this.key,true);
  }
- add(text:string,type=3):void{const row=document.createElement('div'),style=chatStyle(type);row.textContent=text;row.style.color=style.fg;row.style.backgroundColor=style.bg;this.history.append(row);while(this.history.children.length>200)this.history.firstElementChild!.remove();this.history.scrollTop=this.history.scrollHeight;}
+ add(text:string,type=3):void{const row=document.createElement('div'),style=chatStyle(type);row.textContent=text;row.style.width='fit-content';row.style.maxWidth='100%';row.style.color=style.fg;row.style.backgroundColor=style.bg;this.history.append(row);while(this.history.children.length>200)this.history.firstElementChild!.remove();this.history.scrollTop=this.history.scrollHeight;}
  setActive(active:boolean):void{this.root.hidden=!active;if(!active){this.input.value="";this.input.hidden=true;this.history.replaceChildren();this.input.blur();this.composing=false;}}
  closeEditor():void{this.input.blur();this.input.hidden=true;document.getElementById("GameCanvas")?.focus();}
  destroy():void{this.observer.disconnect();window.removeEventListener('keydown',this.key,true);this.root.remove();}

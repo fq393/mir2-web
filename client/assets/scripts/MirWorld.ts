@@ -60,6 +60,7 @@ export class MirWorld extends Component {
     private keys=new Set<number>();
     private step:{from:Point;to:Point;elapsed:number;seq:number;running:boolean}|null=null;
     private nextSequence=0;
+    private pendingAction:{command:string;seq:number}|null=null;
     private facing=4;
     private animationClock=0;private worldClock=0;
     private lastFrame='';
@@ -148,7 +149,7 @@ export class MirWorld extends Component {
             this.connection=new CrystalConnection(text=>{this.statusText=text;},event=>this.serverEvent(event));
             this.connection.connect();this.updateView();
             // Read-only diagnostics for repeatable browser acceptance.
-            (globalThis as any).__MIRQA={state:()=>({mapId:this.mapId,appearance:{gender:this.gender,hair:this.hairShape},missingActors:Array.from(this.missingActors),layout:CLASSIC,panels:this.menu?.active?this.panelRects:[],menuKind:this.menuKind,audio:this.sound.snapshot(),ready:this.ready,point:{...this.point},visual:{...this.visual},facing:this.facing,moving:!!this.step,queued:this.path.length,status:this.statusText,serverReady:this.serverReady,ownId:this.ownId,peers:Array.from(this.peers.entries()).map(([id,p])=>({id,point:p.point})),frameCount:this.frames.size,tileCount:this.terrain.tiles.size,origin:{x:this.manifest.map.originX,y:this.manifest.map.originY},spawn:this.manifest.map.spawn,map:{width:this.grid.width,height:this.grid.height},blocked:Array.from(this.grid.blocked),experience:this.experience,maxExperience:this.maxExperience,bagWeight:this.bagWeight,maxBagWeight:this.maxBagWeight,handWeight:this.handWeight,maxHandWeight:this.maxHandWeight,wearWeight:this.wearWeight,maxWearWeight:this.maxWearWeight,selectedBag:this.selectedBag,bagMovePending:this.bagMovePending,magics:this.magics,hp:this.hp,mp:this.mp,maxHP:this.displayedMaxHP,maxMP:this.displayedMaxMP,ownHealthVisible:this.ownHealth?.node.active,hpDisplay:this.hpText?.string,mpDisplay:this.mpText?.string,gold:this.gold,selected:this.selected,inventory:this.inventory,equipment:this.equipment,groundItems:Array.from(this.loot.entries()).map(([id,v])=>({id,point:v.point,name:v.name})),entities:Array.from(this.peers.entries()).map(([id,p])=>({id,name:p.name,kind:p.kind,gender:p.gender,hair:p.hairShape,armour:p.armour,weapon:p.weaponShape,hp:p.hp,healthVisible:p.healthBar?.node.active??false,healthUntil:p.healthUntil,dead:p.dead,point:p.point})),logs:this.logs}),screenFor:(x:number,y:number)=>worldToScreen({x,y},this.camera)};
+            (globalThis as any).__MIRQA={state:()=>({connectionErrors:this.connection?.errors.slice()??[],pendingAction:this.pendingAction?{...this.pendingAction}:null,mapId:this.mapId,appearance:{gender:this.gender,hair:this.hairShape},missingActors:Array.from(this.missingActors),layout:CLASSIC,panels:this.menu?.active?this.panelRects:[],menuKind:this.menuKind,audio:this.sound.snapshot(),ready:this.ready,point:{...this.point},visual:{...this.visual},facing:this.facing,moving:!!this.step,queued:this.path.length,status:this.statusText,serverReady:this.serverReady,ownId:this.ownId,peers:Array.from(this.peers.entries()).map(([id,p])=>({id,point:p.point})),frameCount:this.frames.size,tileCount:this.terrain.tiles.size,origin:{x:this.manifest.map.originX,y:this.manifest.map.originY},spawn:this.manifest.map.spawn,map:{width:this.grid.width,height:this.grid.height},blocked:Array.from(this.grid.blocked),experience:this.experience,maxExperience:this.maxExperience,bagWeight:this.bagWeight,maxBagWeight:this.maxBagWeight,handWeight:this.handWeight,maxHandWeight:this.maxHandWeight,wearWeight:this.wearWeight,maxWearWeight:this.maxWearWeight,selectedBag:this.selectedBag,bagMovePending:this.bagMovePending,magics:this.magics,hp:this.hp,mp:this.mp,maxHP:this.displayedMaxHP,maxMP:this.displayedMaxMP,ownHealthVisible:this.ownHealth?.node.active,hpDisplay:this.hpText?.string,mpDisplay:this.mpText?.string,gold:this.gold,selected:this.selected,inventory:this.inventory,equipment:this.equipment,groundItems:Array.from(this.loot.entries()).map(([id,v])=>({id,point:v.point,name:v.name})),entities:Array.from(this.peers.entries()).map(([id,p])=>({id,name:p.name,kind:p.kind,gender:p.gender,hair:p.hairShape,armour:p.armour,weapon:p.weaponShape,hp:p.hp,healthVisible:p.healthBar?.node.active??false,healthUntil:p.healthUntil,dead:p.dead,point:p.point})),logs:this.logs}),screenFor:(x:number,y:number)=>worldToScreen({x,y},this.camera)};
         } catch(error) {
             console.error('Mir2 load failed',error);this.hint.string=`资源加载失败：${String(error)}`;this.statusText='加载失败';
         }
@@ -250,7 +251,7 @@ export class MirWorld extends Component {
         this.loot.set(d.objectid,{node:sprite.node,label,point:d.location,name});
     }
     private pickupAtDestination():void {
-        if(!this.pickupTarget||this.step||!this.serverReady||this.hp<=0)return;
+        if(!this.pickupTarget||this.step||this.pendingAction||!this.serverReady||this.hp<=0)return;
         const item=this.loot.get(this.pickupTarget);if(!item){this.pickupTarget=0;return;}
         if(this.point.x===item.point.x&&this.point.y===item.point.y){this.pickupTarget=0;this.connection?.send({type:'pickup'});}
         else if(!this.path.length)this.pickupTarget=0;
@@ -266,12 +267,12 @@ export class MirWorld extends Component {
         if(this.path.length){this.marker.active=true;this.marker.setPosition(x*48+24,-y*32-16);}
     }
     private clearMovement():void {
-        this.pauseInput();this.lastMoveAcceptedAt=-Infinity;this.step=null;this.confirmed=null;this.visual={...this.point};
+        this.pauseInput();this.pendingAction=null;this.lastMoveAcceptedAt=-Infinity;this.step=null;this.confirmed=null;this.visual={...this.point};
         if(this.marker)this.marker.active=false;
     }
     private beginStep():void {
         if(!this.serverReady){this.clearMovement();return;}
-        if(this.actionTime>0||this.hp<=0)return;
+        if(this.pendingAction||this.actionTime>0||this.hp<=0)return;
         const down=(...codes:number[])=>codes.some(c=>this.keys.has(c));
         const dx=Number(down(KeyCode.KEY_D,KeyCode.ARROW_RIGHT))-Number(down(KeyCode.KEY_A,KeyCode.ARROW_LEFT));
         const dy=Number(down(KeyCode.KEY_S,KeyCode.ARROW_DOWN))-Number(down(KeyCode.KEY_W,KeyCode.ARROW_UP));
@@ -382,6 +383,11 @@ export class MirWorld extends Component {
             if(this.menu.active&&(this.menuKind==='skillKeys'||this.menuKind==='inventory'&&this.characterOpen&&this.characterPage===3))this.showSkills(this.skillPage);
             return;
         }
+        if((event.type==='state'||event.type==='actionRejected')&&this.pendingAction&&event.seq===this.pendingAction.seq&&event.command===this.pendingAction.command){
+            this.pendingAction=null;
+            if(event.type==='actionRejected')this.notice(event.message);
+            return;
+        }
         if(event.type==='targetHealth'){const target=this.peers.get(event.objectId);if(target){target.hp=event.percent;target.healthUntil=Date.now()+2000;}return;}
         if(event.type==='packet'){this.packet(event.packet,event.data);return;}
         if(event.type==='disconnected'){this.windowDrag=null;this.attributes=null;this.characterValues=[];this.skillRequest++;this.skillPending=false;this.selectedEquipment=-1;this.equipmentPending=false;this.selectedBag=-1;this.bagMovePending=false;this.tradeRequest++;this.tradeItem=null;this.tradeQuote=null;this.chatInput?.setActive(false);this.logs=[];if(this.logText)this.logText.string='';if(this.menu)this.menu.active=false;if(this.targetText)this.targetText.string='';this.party?.reset();this.clearLoot();this.pendingUses.clear();this.fireTargets.clear();this.serverReady=false;this.clearMovement();this.peers.forEach(p=>{p.node.destroy();p.label?.node.destroy();p.healthBar?.node.destroy();});this.peers.clear();return;}
@@ -426,24 +432,32 @@ export class MirWorld extends Component {
         routes.sort((a,b)=>a.length-b.length);this.path=routes[0]??[];
         if(!this.path.length){this.autoAttack=false;this.notice('无法靠近目标');}
     }
+    // Animation duration is presentation only. Crystal owns action timing; keep a
+    // single acknowledged action in flight so held attack/cast cannot backlog walks.
+    private sendAction(command:string,payload:Record<string,number>):boolean {
+        if(this.pendingAction||this.step||!this.serverReady)return false;
+        const seq=++this.nextSequence;this.pendingAction={command,seq};
+        if(this.connection?.send({type:command,...payload,seq}))return true;
+        this.pendingAction=null;return false;
+    }
     private attack():void {
-        if(!this.serverReady||this.step||this.hp<=0||this.actionTime>0)return;const p=this.peers.get(this.selected);
+        if(!this.serverReady||this.step||this.pendingAction||this.hp<=0||this.actionTime>0)return;const p=this.peers.get(this.selected);
         if(!p||!['monster','player'].includes(p.kind??'')||p.dead){this.notice('先点击选择一只怪物');return;}
         if(Math.max(Math.abs(p.point.x-this.point.x),Math.abs(p.point.y-this.point.y))>1){return;}
-        this.fireTargets.delete(this.selected);this.facing=directionTo(this.point,p.point);if(this.connection?.send({type:'attack',direction:this.facing})){if(this.equipment[0])this.sound.play('50');this.ownAction='attack';this.actionTime=.8;this.animationClock=0;}
+        this.fireTargets.delete(this.selected);this.facing=directionTo(this.point,p.point);if(this.sendAction('attack',{direction:this.facing})){if(this.equipment[0])this.sound.play('50');this.ownAction='attack';this.actionTime=.8;this.animationClock=0;}
     }
     private harvestAt(screen:Point):void {
-        if(!this.serverReady||this.hp<=0||this.step||this.actionTime>0||blocksWorld(screen.x,screen.y,this.menu.active?this.panelRects:[],this.hudRows))return;
+        if(!this.serverReady||this.hp<=0||this.step||this.pendingAction||this.actionTime>0||blocksWorld(screen.x,screen.y,this.menu.active?this.panelRects:[],this.hudRows))return;
         const target=this.peers.get(this.entityAt(screen,true));if(!target){this.notice('请对准尚未采集的怪物尸体');return;}
         if(Math.max(Math.abs(target.point.x-this.point.x),Math.abs(target.point.y-this.point.y))>2){this.notice('请靠近尸体后按住 Alt 点击采集');return;}
-        this.facing=directionTo(this.point,target.point);if(this.connection?.send({type:'harvest',direction:this.facing})){this.ownAction='harvest';this.actionTime=.6;this.animationClock=0;}
+        this.facing=directionTo(this.point,target.point);if(this.sendAction('harvest',{direction:this.facing})){this.ownAction='harvest';this.actionTime=.6;this.animationClock=0;}
     }
     private cast(spell=31):void {
         if(!this.magics.some(m=>m.spell===spell)){this.notice('尚未学习该技能');return;}
         if(spell!==31){this.notice(`${this.skillName(spell)}的施放尚未接入。`);return;}
-        if(!this.serverReady||this.step||this.hp<=0||this.actionTime>0)return;const p=this.peers.get(this.selected);
+        if(!this.serverReady||this.step||this.pendingAction||this.hp<=0||this.actionTime>0)return;const p=this.peers.get(this.selected);
         if(!p||!['monster','player'].includes(p.kind??'')||p.dead){this.notice('请先选择目标，再按已设置的技能键施放火球');return;}
-        this.facing=directionTo(this.point,p.point);this.connection?.send({type:'cast',spell:31,targetId:this.selected,x:p.point.x,y:p.point.y,direction:this.facing});
+        this.facing=directionTo(this.point,p.point);this.sendAction('cast',{spell:31,targetId:this.selected,x:p.point.x,y:p.point.y,direction:this.facing});
     }
     private talk():void {
         const p=this.peers.get(this.selected);if(!p||p.kind!=='npc')return;

@@ -19,7 +19,7 @@ Cocos Creator **3.8.8**、TypeScript **5.9.3**、Crystal **.NET 8**。先做中�
 - 实际已学技能及熟练度列表、分页、增删同步；主动特效仍只接入部分技能。
 - 原包36个音效；图集分桶索引、场景资源释放与HTTP缓存校验。
 
-75项任务与当前状态：[任务总表](docs/TASKS.md)。
+75项任务与当前状态：[任务总表](docs/TASKS.md)。战斗后捡金币掉线的根因、修复与重启验证见[拾取稳定性](docs/pickup-stability.md)。
 
 当前边界与验收：[系统路线](docs/systems-roadmap.md)、[显示问题核查](docs/health-and-remaining-audit.md)、[性能设计](docs/performance.md)。全技能/技能书、怪物规则与掉落、完整商店与价格校准、任务社交、其他室内、大地图和BGM仍需继续完成与版本核对。
 
@@ -123,6 +123,6 @@ npm test
 
 人物删除流程：原选角按钮与确认框、取消/断线保护、服务端归属检查、删除后角色位复用，详见[人物生命周期验收](docs/character-lifecycle.md)。删除恢复管理仍待做。
 
-后续开发按[执行计划](tasks/plan.md)和[逐项清单](tasks/todo.md)推进；[模块总表](docs/TASKS.md)覆盖74项。新发现先记录证据和前置依赖，已有模块中的缺失分支不重复建项。
+后续开发按[执行计划](tasks/plan.md)和[逐项清单](tasks/todo.md)推进；[模块总表](docs/TASKS.md)覆盖75项。新发现先记录证据和前置依赖，已有模块中的缺失分支不重复建项。
 
 完整性推进方式见[主动查缺与验收矩阵](docs/completeness-audit.md)，人物窗口本批依据与剩余范围见[人物四页](docs/character-pages.md)。

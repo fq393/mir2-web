@@ -399,3 +399,44 @@ test('drag release cannot become ground movement and disconnect cancels capture'
  const w=world();let moved=false;w.destination=()=>moved=true;w.windowDrag={id:'bag',dx:0,dy:0};w.onMouse({getButton:()=>0,getUILocation:()=>({x:500,y:500})});assert.equal(moved,false);
  w.serverEvent({type:'disconnected'});assert.equal(w.windowDrag,null);
 });
+
+test('slow attack acknowledgements cannot accumulate attacks or strand a loot walk',()=>{
+ const w=world(),sent=[];w.serverReady=true;w.notice=()=>{};
+ w.connection.send=p=>{sent.push(p);return true;};w.selected=8;w.autoAttack=true;
+ w.peers.set(8,{kind:'monster',point:{x:3,y:2},visual:{x:3,y:2},from:{x:3,y:2},elapsed:0,dead:false});
+ w.attack();const attack=sent.at(-1);
+ for(let i=0;i<24;i++)w.update(.1);
+ assert.equal(sent.filter(p=>p.type==='attack').length,1,'animation expiry must not queue another unconfirmed attack');
+ w.autoAttack=false;w.path=[{x:3,y:2}];w.beginStep();assert.equal(w.step,null);
+ w.serverEvent({type:'state',command:'attack',seq:attack.seq+1,x:2,y:2});w.beginStep();assert.equal(w.step,null,'stale acknowledgement must not release the action');
+ w.serverEvent({type:'state',command:'attack',seq:attack.seq,x:2,y:2});w.beginStep();assert.equal(w.step.to.x,3);
+ w.serverEvent({type:'state',command:'walk',seq:w.step.seq,x:3,y:2,accepted:true});w.update(.7);
+ assert.equal(w.point.x,3);assert.equal(w.serverReady,true);assert.equal(w.reconnected,undefined);
+});
+test('cast and harvest share the action acknowledgement barrier and rejected cast unlocks it',()=>{
+ for(const kind of ['cast','harvest']){
+  const w=world(),sent=[];w.serverReady=true;w.notice=()=>{};w.magics=[{spell:31}];w.selected=8;
+  w.peers.set(8,{kind:'monster',dead:kind==='harvest',point:{x:3,y:2}});w.entityAt=()=>8;
+  w.connection.send=p=>{sent.push(p);return true;};
+  const invoke=()=>kind==='cast'?w.cast():w.harvestAt({x:400,y:200});
+  invoke();w.actionTime=0;invoke();assert.equal(sent.length,1);
+  w.path=[{x:2,y:3}];w.beginStep();assert.equal(w.step,null);
+  w.serverEvent({type:'actionRejected',command:kind,seq:sent[0].seq,message:'服务器拒绝'});
+  w.actionTime=0;w.beginStep();assert.equal(w.step.to.y,3);
+ }
+});
+test('message handler failures retain bounded metadata without hiding them as invalid JSON',()=>{
+ const sockets=[],statuses=[],logs=[];
+ class Socket{constructor(){sockets.push(this);}close(){}}
+ const {CrystalConnection}=load('../client/assets/scripts/platform/connection.ts',{}, {WebSocket:Socket,setTimeout,clearTimeout,console:{error:(...args)=>logs.push(args)}});
+ const c=new CrystalConnection(s=>statuses.push(s),()=>{throw Error('private payload must not be logged');});c.connect();
+ for(let i=0;i<25;i++)sockets[0].onmessage({data:JSON.stringify({type:'packet',packet:'GainedGold',data:{secret:'never-log'}})});
+ assert.equal(c.errors.length,20);assert.equal(c.errors[0].packet,'GainedGold');assert.match(statuses.at(-1),/消息处理异常/);
+ assert.equal(JSON.stringify(logs).includes('never-log'),false);assert.equal(JSON.stringify(logs).includes('private payload'),false);
+ sockets[0].onmessage({data:'invalid json'});assert.match(statuses.at(-1),/无法识别/);assert.equal(c.errors.length,20);c.close();
+});
+test('disconnect clears an unconfirmed combat action before a later session',()=>{
+ const w=world();w.serverReady=true;w.sendAction('attack',{direction:2});assert.ok(w.pendingAction);
+ w.serverEvent({type:'disconnected'});assert.equal(w.pendingAction,null);
+ w.serverEvent({type:'ready',objectId:1,x:2,y:2,hp:18});assert.equal(w.sendAction('harvest',{direction:2}),true);
+});

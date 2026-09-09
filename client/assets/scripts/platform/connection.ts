@@ -3,14 +3,25 @@ export class CrystalConnection {
     private socket:WebSocket|null=null;
     private stopped=false;
     private retry:ReturnType<typeof setTimeout>|null=null;
+    readonly errors:{time:number;type:string;packet:string;error:string;stack:string}[]=[];
     constructor(private onStatus:(text:string)=>void, private onEvent:(event:any)=>void) {}
     connect():void {
         this.onStatus('连接本地服务…');
         this.socket=new WebSocket('ws://127.0.0.1:17080/ws');
         this.socket.onopen=()=>this.onStatus('接入层已连接');
         this.socket.onmessage=(event)=> {
-            try {this.onEvent(JSON.parse(String(event.data)));}
-            catch {this.onStatus('收到无法识别的服务消息');}
+            let message:any;
+            try {message=JSON.parse(String(event.data));}
+            catch {this.onStatus('收到无法识别的服务消息');return;}
+            try {this.onEvent(message);}
+            catch(error) {
+                // Retain bounded routing/stack evidence, never packet contents or credentials.
+                const diagnostic={time:Date.now(),type:String(message?.type??''),packet:String(message?.packet??''),
+                    error:error instanceof Error?error.name:'Error',stack:error instanceof Error?(error.stack??'').split('\n').slice(1,6).join('\n'):''};
+                this.errors.push(diagnostic);if(this.errors.length>20)this.errors.shift();
+                console.error('Mir2 服务消息处理失败',diagnostic);
+                this.onStatus('游戏消息处理异常 · 请保留现场以便排查');
+            }
         };
         this.socket.onerror=()=>{this.onStatus('本地服务连接失败');this.onEvent({type:'disconnected'});};
         this.socket.onclose=()=> {

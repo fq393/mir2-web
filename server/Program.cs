@@ -360,14 +360,15 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey) : IDisposab
                     _=>null
                 };
                 if(action is C.Attack || action is C.Magic || action is C.Harvest) {
+                    int? actionSeq=r.TryGetProperty("seq",out var actionSequence)?actionSequence.GetInt32():null;
                     if(action is C.Magic magic) {
                         var info=Envir.Main.MagicInfoList.FirstOrDefault(m=>m.Spell==Spell.FireBall);
                         if(magic.Spell!=Spell.FireBall || !learnedSpells.Contains((int)magic.Spell) || currentHP<=0 || info==null ||
                            (magic.Location.X!=0 && magic.Location.Y!=0 && info.Range!=0 && !Functions.InRange(lastLocation,magic.Location,info.Range))) {
-                            await Send(new {type="error",command,message="无法施法：请检查已学习技能、生命状态与目标距离。"},ct);continue;
+                            await Send(new {type="actionRejected",command,seq=actionSeq,message="无法施法：请检查已学习技能、生命状态与目标距离。"},ct);continue;
                         }
                     }
-                    await LocationAction(action,command!,Num("direction"),null,ct);continue;
+                    await LocationAction(action,command!,Num("direction"),actionSeq,ct);continue;
                 }
                 if(action!=null) { await Write(action,ct);continue; }
             }
