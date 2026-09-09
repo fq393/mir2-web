@@ -123,7 +123,7 @@ export class MirWorld extends Component {
             const collect=(v:any):void=>{if(typeof v==='string'&&this.manifest.frames[v])actorKeys.push(v);else if(Array.isArray(v))v.forEach(collect);else if(v&&typeof v==='object')Object.values(v).forEach(collect);};
             collect(this.manifest.player);collect(this.manifest.actors);collect(this.manifest.spellFireBall);actorKeys.push(...Object.keys(nativeUI.frames));await this.store.keys(actorKeys);this.createNativeHUD();
             const worldMaps=[this.manifest.map];
-            for(const roomId of ['0105','0141']){
+            for(const roomId of ['0105','0141','0132']){
             const room=(await resource<JsonAsset>(`mir/maps/${roomId}/manifest`,JsonAsset)).json as any;
             const roomBase=this.manifest.atlases.length;
             Object.values(room.frames).forEach((f:any)=>f.atlas+=roomBase);

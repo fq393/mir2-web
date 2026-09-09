@@ -74,13 +74,14 @@ def build():
  (OUT/'cells.json').write_text(json.dumps(dict(cells=cells),separators=(',',':'))+'\n')
  (OUT/'collision.json').write_text(json.dumps(dict(rows=[''.join('1' if cells[y*w+x]['blocked'] else '0' for x in range(w)) for y in range(h)]),separators=(',',':'))+'\n')
  source=SOURCE/f'Map/{MAP_ID}.map';sources.append(dict(path=str(source.relative_to(ROOT)),sha256=hashlib.sha256(source.read_bytes()).hexdigest()))
- data=dict(map=dict(id=MAP_ID,name='首饰店',width=w,height=h,originX=0,originY=0,spawn=dict(x=8,y=24) if MAP_ID=='0105' else dict(x=2,y=11),collisionFile=f'maps/{MAP_ID}/collision.json',chunks=[dict(x=0,y=0,width=w,height=h,file=f'maps/{MAP_ID}/cells.json',atlases=list(range(len(atlases))))]),frames=frames,atlases=atlases,sources=sources,portals=PORTALS,portalSource=pin['portalSource'])
+ data=dict(map=dict(id=MAP_ID,name='边界书店' if MAP_ID=='0132' else '首饰店',width=w,height=h,originX=0,originY=0,spawn=dict(x=8,y=24) if MAP_ID=='0105' else (dict(x=13,y=15) if MAP_ID=='0132' else dict(x=2,y=11)),collisionFile=f'maps/{MAP_ID}/collision.json',chunks=[dict(x=0,y=0,width=w,height=h,file=f'maps/{MAP_ID}/cells.json',atlases=list(range(len(atlases))))]),frames=frames,atlases=atlases,sources=sources,portals=PORTALS,portalSource=pin['portalSource'])
  (OUT/'manifest.json').write_text(json.dumps(data,ensure_ascii=False,separators=(',',':'))+'\n')
  print(json.dumps(dict(map=MAP_ID,frames=len(frames),atlases=len(atlases),cells=len(cells))))
 if __name__=='__main__':
  if len(sys.argv)>1:
   MAP_ID=sys.argv[1]
-  if MAP_ID not in ['0105','0141']:raise ValueError('Unsupported pinned interior')
+  if MAP_ID not in ['0105','0141','0132']:raise ValueError('Unsupported pinned interior')
   OUT=ROOT/f'client/assets/resources/mir/maps/{MAP_ID}'
   if MAP_ID=='0141':PORTALS=[('0',302,622,'0141',2,11),('0',311,631,'0141',17,26),('0141',2,12,'0',302,623),('0141',17,27,'0',311,632)]
+  if MAP_ID=='0132':PORTALS=[('0', 282, 636, '0132', 13, 15), ('0', 282, 635, '0132', 14, 15), ('0', 283, 635, '0132', 15, 14), ('0132', 14, 16, '0', 283, 637), ('0132', 15, 15, '0', 283, 636), ('0132', 16, 14, '0', 284, 636)]
  build()

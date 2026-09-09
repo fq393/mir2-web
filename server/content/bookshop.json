@@ -61,5 +61,13 @@
       "image": 0,
       "legacyShape": 0
     }
-  ]
+  ],
+  "boundaryMerchant": {
+    "file": "BoundaryBookshop",
+    "name": "边界村书店老板",
+    "map": "0132",
+    "x": 5,
+    "y": 18,
+    "image": 2
+  }
 }

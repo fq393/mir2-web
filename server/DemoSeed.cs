@@ -66,7 +66,12 @@ static class DemoSeed
             potion.Stats=new Stats {[Stat.HP]=spec.HP,[Stat.MP]=spec.MP};
         }
         if(!envir.MagicInfoList.Any(m=>m.Spell==Spell.FireBall)) envir.MagicInfoList.Add(new MagicInfo {Name="FireBall",Spell=Spell.FireBall,BaseCost=1,Level1=1,Level2=2,Level3=3,Need1=100,Need2=100,Need3=100,PowerBase=12,PowerBonus=2,MPowerBase=12,MPowerBonus=2,Range=9});
+        var bookroom=envir.MapInfoList.FirstOrDefault(m=>m.FileName=="0132");
+        if(bookroom==null){bookroom=new MapInfo{Index=++envir.MapIndex,FileName="0132",Title="边界书店",Light=LightSetting.Normal};envir.MapInfoList.Add(bookroom);}
+        Door(map,282,636,bookroom,13,15);Door(map,282,635,bookroom,14,15);Door(map,283,635,bookroom,15,14);
+        Door(bookroom,14,16,map,283,637);Door(bookroom,15,15,map,283,636);Door(bookroom,16,14,map,284,636);
         BookshopSeed.Apply(envir,root,map);
+        BookshopSeed.Apply(envir,root,bookroom);
         WildlifeSeed.Apply(envir,root,map);
         MerchantSeed.Apply(envir,root,map);
         var guide=envir.NPCInfoList.FirstOrDefault(n=>n.FileName=="BichonGuide");

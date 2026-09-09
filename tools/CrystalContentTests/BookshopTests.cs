@@ -13,6 +13,13 @@ static class BookshopTests {
   Check(items==envir.ItemInfoList.Count&&npcs==envir.NPCInfoList.Count,"book seed duplicated content");
   var npc=envir.NPCInfoList.Single(n=>n.FileName=="BichonBookshop");
   Check(npc.Location==new System.Drawing.Point(325,250)&&npc.Image==2,"bookshop differs from candidate merchant row");
+  var room=new MapInfo{Index=102,FileName="0132"};BookshopSeed.Apply(envir,root,room);
+  int withBoundary=envir.NPCInfoList.Count;BookshopSeed.Apply(envir,root,room);
+  var boundary=envir.NPCInfoList.Single(n=>n.FileName=="BoundaryBookshop");
+  Check(envir.NPCInfoList.Count==withBoundary&&boundary.MapIndex==102&&boundary.Location==new System.Drawing.Point(5,18)&&boundary.Image==2,"boundary bookshop missing, duplicated or misplaced");
+  Check(npc.MapIndex==101&&npc.Location==new System.Drawing.Point(325,250),"boundary seed moved the city bookseller");
+  var boundaryScript=NPCScript.GetOrAdd(0,boundary.FileName,NPCScriptType.Normal);
+  Check(boundaryScript.Goods.Count==3,"boundary bookshop goods missing");
   var script=NPCScript.GetOrAdd(0,npc.FileName,NPCScriptType.Normal);
   Check(script.Goods.Count==3,"initial bookshop stock is not exactly three books");
   foreach(var goods in script.Goods){

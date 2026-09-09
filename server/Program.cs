@@ -53,7 +53,7 @@ if (!File.Exists(Envir.DatabasePath))
     envir.MapIndex = 1;
     envir.SaveDB();
 }
-foreach(var roomId in new[]{"0105","0141"}) {
+foreach(var roomId in new[]{"0105","0141","0132"}) {
  var roomPath=Path.Combine(repoRoot,$"raw-assets/client-176/传奇私服1.76客户/Map/{roomId}.map");
  using var roomPin=JsonDocument.Parse(File.ReadAllText(Path.Combine(repoRoot,roomId=="0105"?"tools/interior-inputs.json":$"tools/interior-{roomId}-inputs.json")));
  var expected=roomPin.RootElement.GetProperty("mapSources").EnumerateArray().Single(s=>s.GetProperty("path").GetString()!.EndsWith($"Map/{roomId}.map")).GetProperty("sha256").GetString();
@@ -65,6 +65,18 @@ var logTask = Task.Run(async () => {
     while (true) { while (MessageQueue.Instance.MessageLog.TryDequeue(out var message)) Console.WriteLine("Crystal " + message.Trim()); await Task.Delay(100); }
 });
 envir.Start();
+// Immutable door locations: movement still goes through Crystal's door and collision checks.
+var doorTiles=new Dictionary<(string,int,int),byte>();
+foreach(var id in new[]{"0","0105","0141","0132"}){
+ var bytes=File.ReadAllBytes(Path.Combine(Settings.MapPath,id+".map"));
+ bool crystal=id=="0";int header=crystal?8:52,stride=crystal?26:12;
+ int width=BitConverter.ToInt16(bytes,crystal?4:0),height=BitConverter.ToInt16(bytes,crystal?6:2);
+ if(bytes.Length!=header+width*height*stride)throw new InvalidDataException("Door map format mismatch: "+id);
+ for(int x=0;x<width;x++)for(int y=0;y<height;y++){
+  byte index=(byte)(bytes[header+(x*height+y)*stride+(crystal?14:6)]&127);
+  if(index!=0)doorTiles[(id,x,y)]=index;
+ }
+}
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseUrls("http://127.0.0.1:17080");
 var app = builder.Build();
@@ -78,13 +90,13 @@ app.Map("/ws", async context => {
         (!Uri.TryCreate(origins.ToString(), UriKind.Absolute, out var origin) || !(origin.Host == "localhost" || IPAddress.TryParse(origin.Host, out var ip) && IPAddress.IsLoopback(ip))))
     { context.Response.StatusCode = 403; return; }
     using var ws = await context.WebSockets.AcceptWebSocketAsync();
-    using var session = new BridgeSession(ws, crystalPort, bridgeKey);
+    using var session = new BridgeSession(ws, crystalPort, bridgeKey, doorTiles);
     await session.Run(context.RequestAborted);
 });
 app.Lifetime.ApplicationStopping.Register(() => envir.Stop());
 await app.RunAsync();
 
-sealed class BridgeSession(WebSocket ws, int port, string bridgeKey) : IDisposable
+sealed class BridgeSession(WebSocket ws, int port, string bridgeKey, IReadOnlyDictionary<(string,int,int),byte> doorTiles) : IDisposable
 {
     const int classicCharacterLimit = 2; // Native ChrArr[0..1], no web pagination.
     readonly TcpClient tcp = new();
@@ -128,6 +140,16 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey) : IDisposab
         var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         locationReply = completion;
         pending.Enqueue((type,direction,seq));
+        // Crystal client CheckDoorOpen requests C.Opendoor before entering a door cell.
+        // Restrict requests to cells crossed by this move; never open arbitrary distant doors.
+        if(type is "walk" or "run"){
+            var opened=new HashSet<byte>();
+            for(int distance=1;distance<=(type=="run"?2:1);distance++){
+                var target=Functions.PointMove(lastLocation,(MirDirection)direction,distance);
+                if(doorTiles.TryGetValue((currentMap,target.X,target.Y),out var door)&&opened.Add(door))
+                    await Write(new C.Opendoor{DoorIndex=door},ct);
+            }
+        }
         await Write(packet,ct);
         // Never reuse an ambiguous stream after a silent upstream rejection or timeout.
         // Closing this session is safer than attributing a late reply to the next input.

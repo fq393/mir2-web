@@ -20,7 +20,7 @@ static class BookshopSeed {
    item.Weight=row.GetProperty("weight").GetByte();item.Price=row.GetProperty("price").GetUInt32();
    item.Durability=0;item.StackSize=1;item.StartItem=false;item.Stats=new Stats();
   }
-  var merchant=source.GetProperty("merchant");var file=merchant.GetProperty("file").GetString()!;
+  var merchant=source.GetProperty(map.FileName=="0132"?"boundaryMerchant":"merchant");var file=merchant.GetProperty("file").GetString()!;
   var npc=envir.NPCInfoList.FirstOrDefault(n=>n.FileName==file);
   if(npc==null){npc=new NPCInfo{Index=++envir.NPCIndex,FileName=file};envir.NPCInfoList.Add(npc);}
   npc.Name=merchant.GetProperty("name").GetString()!;npc.Image=merchant.GetProperty("image").GetUInt16();npc.MapIndex=map.Index;
