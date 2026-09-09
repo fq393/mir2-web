@@ -1,11 +1,12 @@
+import {CLASSIC_FONT_FAMILY} from '../core/typography';
 /** Native Prguse:120 group window; roster changes only on server packets. */
 export class PartyUI {
  private root:HTMLDivElement;private panel:HTMLDivElement;private input:HTMLInputElement;private roster:HTMLDivElement;private check:HTMLInputElement;private observer:ResizeObserver;
  private names:string[]=[];private inviter='';private allow=false;
  constructor(private send:(v:any)=>boolean,private ownName:()=>string){
   const host=document.getElementById('GameDiv')!;this.root=document.createElement('div');this.root.style.cssText='position:absolute;inset:0;pointer-events:none;z-index:15;';this.root.hidden=true;host.append(this.root);
-  this.panel=document.createElement('div');this.panel.style.cssText='position:absolute;left:262px;top:179px;width:276px;height:242px;background:url(webui/120.png);pointer-events:auto;color:#ddd;font:12px SimSun,"Songti SC",serif;';this.root.append(this.panel);
-  const field=(label:string,x:number,y:number,w:number)=>{const e=document.createElement('input');e.setAttribute('aria-label',label);e.style.cssText=`position:absolute;left:${x}px;top:${y}px;width:${w}px;height:18px;background:#100c0a;color:white;border:0;font:12px SimSun,"Songti SC",serif`;this.panel.append(e);return e;};
+  this.panel=document.createElement('div');this.panel.style.cssText=`position:absolute;left:262px;top:179px;width:276px;height:242px;background:url(webui/120.png);pointer-events:auto;color:#ddd;font:12px ${CLASSIC_FONT_FAMILY};`;this.root.append(this.panel);
+  const field=(label:string,x:number,y:number,w:number)=>{const e=document.createElement('input');e.setAttribute('aria-label',label);e.style.cssText=`position:absolute;left:${x}px;top:${y}px;width:${w}px;height:18px;background:#100c0a;color:white;border:0;font:12px ${CLASSIC_FONT_FAMILY}`;this.panel.append(e);return e;};
   this.input=field('队友角色名',28,53,185);this.input.maxLength=15;this.input.placeholder='输入角色名';
   this.check=field('允许组队',20,18,20);this.check.type='checkbox';this.check.onchange=()=>{this.check.checked=this.allow;this.send({type:'groupSwitch',allow:!this.allow});};
   this.roster=document.createElement('div');this.roster.style.cssText='position:absolute;left:28px;top:80px;width:226px;height:113px;white-space:pre-wrap;overflow:auto;';this.panel.append(this.roster);

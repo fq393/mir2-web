@@ -1,3 +1,4 @@
+import {CLASSIC_FONT_FAMILY} from '../core/typography';
 /** Native Prguse 360 / 363–368; FState.DMessageDlg, IntroScn.SelChrEraseChrClick.
  * Source: pangliang/MirServer-Delphi@f829679d24acb3a097d396d737ab067db2c88ca2.
  * Inert input isolation: https://html.spec.whatwg.org/multipage/interaction.html#inert-subtrees
@@ -14,7 +15,7 @@ export class NativeConfirm {
   this.overlay=document.createElement('div');this.overlay.style.cssText='position:absolute;inset:0;z-index:25;';parent.append(this.overlay);
   const panel=document.createElement('div');panel.setAttribute('role','alertdialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-label',text);panel.tabIndex=-1;
   panel.style.cssText='position:absolute;left:174px;top:210px;width:452px;height:179px;background:url(webui/360.png);';this.overlay.append(panel);
-  const label=document.createElement('div');label.textContent=text;label.style.cssText='position:absolute;left:39px;top:38px;width:374px;color:white;font:12px SimSun,"Songti SC",serif;line-height:18px;overflow-wrap:anywhere;';panel.append(label);
+  const label=document.createElement('div');label.textContent=text;label.style.cssText=`position:absolute;left:39px;top:38px;width:374px;color:white;font:12px ${CLASSIC_FONT_FAMILY};line-height:18px;overflow-wrap:anywhere;`;panel.append(label);
   const buttons:HTMLButtonElement[]=[];
   const choices:readonly (readonly [string,number,number,boolean])[]=mode==='alert'?[['确定',361,324,true]]:[['确认删除',363,104,true],['不删除',367,214,false],['取消删除',365,324,false]];
   for(const [name,image,x,accepted] of choices){

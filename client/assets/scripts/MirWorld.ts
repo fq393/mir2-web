@@ -1,3 +1,4 @@
+import {CLASSIC_FONT_FAMILY,classicFont} from './core/typography';
 import {playerLayers,equippedShape,actorFrame} from './core/appearance';
 import {MiniMap} from './platform/MiniMap';
 import {PartyUI} from './platform/PartyUI';
@@ -152,7 +153,7 @@ export class MirWorld extends Component {
     }
     private text(parent:Node,value:string,x:number,y:number,size=16,color=C.paper,width=400):Label {
         const n=this.makeNode(value,parent);n.setPosition(x,y);n.getComponent(UITransform)!.setContentSize(width,size+10);
-        const label=n.addComponent(Label);label.string=value;label.fontFamily='"NSimSun","SimSun","Songti SC",serif';label.fontSize=size;label.lineHeight=size+2;
+        const label=n.addComponent(Label);label.string=value;label.fontFamily=CLASSIC_FONT_FAMILY;label.fontSize=size;label.lineHeight=size+2;
         label.color=color;label.horizontalAlign=Label.HorizontalAlign.LEFT;label.overflow=Label.Overflow.CLAMP;
         n.getComponent(UITransform)!.setAnchorPoint(0,0.5);return label;
     }
@@ -605,12 +606,12 @@ export class MirWorld extends Component {
         this.nativeButton(character,'ui:ClassicPrguse:396',213,143,()=>this.changeSkillPage(1));
         for(const [i,m] of this.magics.slice(this.skillPage*5,this.skillPage*5+5).entries()){
             const icon=this.skillIcon(m.spell);if(icon!==undefined){const sprite=this.nativeImage(character,`ui:MagIcon:${icon}`,46,59+i*37);this.nativeClick(sprite.node,()=>this.showSkillKeys(m.spell));}
-            const label=this.nativeField(character,this.skillName(m.spell),85,62+i*37,96,16,12,C.paper);this.nativeClick(label.node,()=>this.showSkillKeys(m.spell));
+            const label=this.nativeField(character,this.skillName(m.spell),85,62+i*37,96,16,12,new Color(192,192,192));this.nativeClick(label.node,()=>this.showSkillKeys(m.spell));
             if(m.key>=1&&m.key<=8)this.nativeImage(character,`ui:ClassicPrguse:${247+m.key}`,183,61+i*37);
             this.nativeImage(character,'ui:ClassicPrguse:112',85,77+i*37);
             this.nativeImage(character,'ui:ClassicPrguse:111',111,77+i*37);
-            this.nativeField(character,String(m.level),103,77+i*37,10,16,11,C.paper);
-            this.nativeField(character,m.level>=3?'—':`${m.experience??0}/${m['need'+(m.level+1)]??'—'}`,133,77+i*37,78,16,11,C.paper);
+            this.nativeField(character,String(m.level),103,77+i*37,10,16,12,new Color(192,192,192));
+            this.nativeField(character,m.level>=3?'—':`${m.experience??0}/${m['need'+(m.level+1)]??'—'}`,133,77+i*37,78,16,12,new Color(192,192,192));
         }
     }
     private equipmentCell(slot:number):void {
@@ -706,7 +707,7 @@ export class MirWorld extends Component {
             const lines=itemDescription(item,info,name);
             // Measure with the same system font as nativeField; never shrink the font to squeeze long items.
             const context=typeof document==='undefined'?null:document.createElement('canvas').getContext('2d');
-            if(context)context.font='12px "NSimSun","SimSun","Songti SC",serif';
+            if(context)context.font=classicFont();
             const measure=(text:string)=>context?context.measureText(text).width:Array.from(text).length*12;
             const dockWidth=dockKind==='character'?186:252;
             const compact=bag?compactBagDescription(item,info,name,measure,dockWidth):null;
