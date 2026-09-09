@@ -31,7 +31,11 @@ static class MerchantTests {
   p.Account.Gold=1000;var sale=MerchantTrades.Quote(p,ring.UniqueID,"sell");p.CurrentLocation=new Point(35,35);Reject(()=>MerchantTrades.Commit(p,sale));p.CurrentLocation=new Point(5,6);p.Dead=true;Reject(()=>MerchantTrades.Commit(p,sale));p.Dead=false;
   p.NPCPage=new NPCPage(NPCScript.BuyKey);Reject(()=>MerchantTrades.Commit(p,sale));p.NPCPage=new NPCPage(NPCScript.SellKey);
   MerchantTrades.Commit(p,sale);Check(p.Info.Inventory[6]==null&&p.Account.Gold==1000+sale.Gold,"sale transfer mismatch");Reject(()=>MerchantTrades.Commit(p,sale));Check(p.Packets.OfType<ServerPackets.SellItem>().Count(x=>x.Success)==1,"duplicate sale");
-  MerchantSeed.Apply(envir,root,map.Info);var count=envir.NPCInfoList.Count;MerchantSeed.Apply(envir,root,map.Info);Check(envir.NPCInfoList.Count==count,"butcher seed duplicated NPCs");
+  MerchantSeed.Apply(envir,root,map.Info);var count=envir.NPCInfoList.Count;MerchantSeed.Apply(envir,root,map.Info);Check(envir.NPCInfoList.Count==count,"merchant seed duplicated NPCs");
+  var smith=envir.NPCInfoList.Single(n=>n.FileName=="BoundarySmith");
+  Check(smith.Name=="边界村铁匠铺"&&smith.MapIndex==map.Info.Index&&smith.Location==new Point(297,612)&&smith.Image==0,"boundary smith identity/map/location/image mismatch");
+  var smithScript=File.ReadAllText(Path.Combine(Settings.NPCPath,"BoundarySmith.txt"));
+  Check(smithScript.Contains("[@REPAIR]")&&smithScript.Contains("[@SREPAIR]")&&smithScript.Contains("[TYPES]\n1\n")&&!smithScript.Contains("BichonSword"),"smith script mixed with demo stock");
   var butcherInfo=envir.NPCInfoList.First(n=>n.FileName=="BichonButcherBorder");butcherInfo.Location=new Point(5,5);var butcher=new NPCObject(butcherInfo){CurrentMap=map};map.NPCs.Add(butcher);p.NPCObjectID=butcher.ObjectID;p.NPCScriptID=butcher.ScriptID;
   p.Info.Inventory[6]=ring;Reject(()=>MerchantTrades.Quote(p,ring.UniqueID,"sell"));
   var meat=envir.CreateFreshItem(envir.ItemInfoList.Single(i=>i.Name=="肉"));meat.CurrentDura=7756;p.Info.Inventory[6]=meat;var meatQuote=MerchantTrades.Quote(p,meat.UniqueID,"sell");before=p.Account.Gold;MerchantTrades.Commit(p,meatQuote);Check(p.Info.Inventory[6]==null&&p.Account.Gold==before+meatQuote.Gold,"meat did not sell");
