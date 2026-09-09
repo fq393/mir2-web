@@ -27,6 +27,7 @@ if(!File.Exists(keyPath)) {
 var bridgeKey=File.ReadAllText(keyPath).Trim();
 Packet.IsServer = true;
 Settings.Load();
+ContentProfiles.ApplyGroundItemTimers(repoRoot);
 ChineseText.Apply();
 Settings.IPAddress = "127.0.0.1";
 Settings.Port = crystalPort;
@@ -69,7 +70,7 @@ builder.WebHost.UseUrls("http://127.0.0.1:17080");
 var app = builder.Build();
 AdminUI.Map(app,repoRoot);
 app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSeconds(20) });
-app.MapGet("/health", () => Results.Json(new { engine = "Suprcode/Crystal", upstreamCommit = "0e315fe327192afe52c3d7357ddd1f5b7e26c5b8", running = envir.Running, tcp = "127.0.0.1:17000", maps = envir.MapList.Count, players = envir.PlayerCount, monsters = envir.MonsterCount, websocket = "/ws", gameplay = "Crystal authoritative Bichon demo: equipment, shop, monsters, FireBall", demo = DemoSeed.Manifest(envir) }));
+app.MapGet("/health", () => Results.Json(new { engine = "Suprcode/Crystal", upstreamCommit = "0e315fe327192afe52c3d7357ddd1f5b7e26c5b8", running = envir.Running, groundItems = new { ordinaryMinutes=Settings.ItemTimeOut, playerDeathMinutes=Settings.PlayerDiedItemTimeOut }, tcp = "127.0.0.1:17000", maps = envir.MapList.Count, players = envir.PlayerCount, monsters = envir.MonsterCount, websocket = "/ws", gameplay = "Crystal authoritative Bichon demo: equipment, shop, monsters, FireBall", demo = DemoSeed.Manifest(envir) }));
 app.Map("/ws", async context => {
     if (!context.WebSockets.IsWebSocketRequest) { context.Response.StatusCode = 400; return; }
     // Only local browser development pages may connect to this loopback service.

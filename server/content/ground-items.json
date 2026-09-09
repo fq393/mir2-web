@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "status": "Crystal默认运行值；尚未认证为国服1.76原值",
+  "source": "https://github.com/Suprcode/Crystal/blob/0e315fe327192afe52c3d7357ddd1f5b7e26c5b8/Server/Settings.cs",
+  "semantics": "单位分钟；普通掉落含金币。死亡掉落仅指玩家死亡掉出的物品；不等于怪物死亡。拾取归属时间另行核对。",
+  "timers": {
+    "ordinaryMinutes": 30,
+    "playerDeathMinutes": 120
+  }
+}

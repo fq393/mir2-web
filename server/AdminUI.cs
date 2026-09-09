@@ -7,10 +7,10 @@ static class AdminUI {
   app.MapGet("/admin",()=>Results.Content(File.ReadAllText(Path.Combine(root,"server/admin.html")).Replace("__CSRF__",nonce),"text/html; charset=utf-8"));
   app.MapGet("/admin/config/{name}",(string name)=>{
    if(!ContentProfiles.Names.Contains(name))return Results.NotFound();var text=ContentProfiles.Read(root,name);
-   return Results.Json(new{name,etag=ContentProfiles.Hash(text),pending=started[name]!=ContentProfiles.Hash(text),custom=File.Exists(ContentProfiles.PathFor(root,name)),content=JsonSerializer.Deserialize<JsonElement>(text)});
+   return Results.Json(new{name,csrf=nonce,etag=ContentProfiles.Hash(text),pending=started[name]!=ContentProfiles.Hash(text),custom=File.Exists(ContentProfiles.PathFor(root,name)),content=JsonSerializer.Deserialize<JsonElement>(text)});
   });
   app.MapPost("/admin/config/{name}",async(HttpRequest request,string name)=>{
-   if(request.Headers["X-Mir-CSRF"]!=nonce||request.Headers.Origin!=$"{request.Scheme}://{request.Host}"||!new[]{"127.0.0.1","localhost","[::1]"}.Contains(request.Host.Host))return Results.StatusCode(403);
+   if(request.Headers["X-Mir-CSRF"]!=nonce||request.Headers.Origin!=$"{request.Scheme}://{request.Host}"||!new[]{"127.0.0.1","localhost","[::1]"}.Contains(request.Host.Host))return Results.Json(new{message="管理页面校验已失效，请重新载入配置后再保存。"},statusCode:403);
    if(!ContentProfiles.Names.Contains(name))return Results.NotFound();
    if(request.ContentLength is null or >131072)return Results.BadRequest(new{message="配置超过大小限制。"});
    try{using var body=await JsonDocument.ParseAsync(request.Body);bool restore=body.RootElement.TryGetProperty("restore",out var reset)&&reset.ValueKind==JsonValueKind.True;var json=restore?File.ReadAllText(ContentProfiles.PathFor(root,name,true)):ContentProfiles.Validate(root,name,body.RootElement.GetProperty("content").GetRawText());

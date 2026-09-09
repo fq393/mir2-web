@@ -5,6 +5,11 @@ static class ProfileTests {
   void Reject(string name,Action<JsonNode> edit){var v=JsonNode.Parse(File.ReadAllText(ContentProfiles.PathFor(root,name,true)))!;edit(v);try{ContentProfiles.Validate(root,name,v.ToJsonString());throw new Exception("Accepted invalid profile "+name);}catch(InvalidDataException){}}
   foreach(var name in ContentProfiles.Names){var original=File.ReadAllText(ContentProfiles.PathFor(root,name,true));Check(JsonNode.DeepEquals(JsonNode.Parse(original),JsonNode.Parse(ContentProfiles.Validate(root,name,original))),"baseline changed");}
   var xp=JsonNode.Parse(File.ReadAllText(ContentProfiles.PathFor(root,"experience",true)))!;xp["requiredExperience"]![0]=123;Check(JsonNode.Parse(ContentProfiles.Validate(root,"experience",xp.ToJsonString()))!["requiredExperience"]![0]!.GetValue<int>()==123,"valid xp rejected");
+  Reject("ground-items",v=>v["timers"]!["ordinaryMinutes"]=0);
+  Reject("ground-items",v=>v["timers"]!["playerDeathMinutes"]=-1);
+  Reject("ground-items",v=>v["timers"]!["ordinaryMinutes"]=1.5);
+  Reject("ground-items",v=>v["timers"]!["playerDeathMinutes"]=10081);
+  Reject("ground-items",v=>v["source"]="invented official rule");
   Reject("experience",v=>v["requiredExperience"]![0]=0);Reject("experience",v=>v["requiredExperience"]![0]=1.5);Reject("experience",v=>v["invented"]=1);
   Reject("jewellery",v=>v["items"]![0]!["level"]=256);Reject("jewellery",v=>v["items"]![0]!["image"]=0);
   Reject("bichon-wildlife",v=>v["respawns"]![0]!["x"]=700);Reject("bichon-wildlife",v=>v["monsters"]![0]!["minDC"]=65000);

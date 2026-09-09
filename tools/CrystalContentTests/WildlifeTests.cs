@@ -28,6 +28,23 @@ static class WildlifeTests {
   owner.Report=new Reporting(owner);owner.Info.Mount=new MountInfo(owner);owner.Node=envir.Objects.AddLast(owner);map.AddObject(owner);
   var other=new RecordingPlayer{Info=new CharacterInfo{Level=1},Stats=new Stats(),Account=new AccountInfo(),Connection=connection,CurrentMap=map,CurrentLocation=owner.CurrentLocation};other.Report=new Reporting(other);other.Node=envir.Objects.AddLast(other);map.AddObject(other);
   var item=envir.CreateFreshItem(envir.ItemInfoList.First());
+  // Admin profile -> engine deadlines -> actual expiry/removal. Synthetic minute values only.
+  var timerRoot=Path.Combine(Path.GetTempPath(),"mir-timers-"+Guid.NewGuid());
+  var oldOrdinary=Settings.ItemTimeOut;var oldDeath=Settings.PlayerDiedItemTimeOut;var oldTime=envir.Time;
+  Directory.CreateDirectory(Path.Combine(timerRoot,"server/content"));Directory.CreateDirectory(Path.Combine(timerRoot,"server/data/overrides"));
+  try{
+   File.Copy(ContentProfiles.PathFor(root,"ground-items",true),ContentProfiles.PathFor(timerRoot,"ground-items",true));
+   var config=System.Text.Json.Nodes.JsonNode.Parse(ContentProfiles.Read(timerRoot,"ground-items"))!;
+   config["timers"]!["ordinaryMinutes"]=1;config["timers"]!["playerDeathMinutes"]=2;
+   File.WriteAllText(ContentProfiles.PathFor(timerRoot,"ground-items"),config.ToJsonString());ContentProfiles.ApplyGroundItemTimers(timerRoot);Time(1000);
+   var ordinary=new ItemObject(owner,item);var money=new ItemObject(owner,7u);var deathItem=new ItemObject(owner,item,true);
+   Check(ordinary.ExpireTime==61000&&money.ExpireTime==61000&&deathItem.ExpireTime==121000,"admin minute settings did not reach real item constructors");
+   Check(money.Drop(1),"timed gold fixture drop failed");Time(61000);money.Process();Check(money.Node!=null,"expiry boundary removed too early");
+   Time(61001);money.Process();Check(money.Node==null,"configured expiry did not remove real gold");
+   File.Delete(ContentProfiles.PathFor(timerRoot,"ground-items"));ContentProfiles.ApplyGroundItemTimers(timerRoot);
+   Check(Settings.ItemTimeOut==30&&Settings.PlayerDiedItemTimeOut==120,"restore did not recover baseline timers");
+  }finally{Settings.ItemTimeOut=oldOrdinary;Settings.PlayerDiedItemTimeOut=oldDeath;Time(oldTime);Directory.Delete(timerRoot,true);}
+  Console.WriteLine("PASS admin ground timers: override -> real item/gold/death deadlines, expiry boundary, baseline restore.");
   var floor=new ItemObject(owner,item){Owner=owner,OwnerTime=1000,ExpireTime=10000};Check(floor.Drop(1),"floor drop failed");
   map.RemoveObject(other);other.CurrentLocation=floor.CurrentLocation;map.AddObject(other);map.RemoveObject(owner);owner.CurrentLocation=floor.CurrentLocation;map.AddObject(owner);
   other.PickUp();Check(floor.Node!=null&&other.Info.Inventory.All(v=>v==null),"nonowner stole protected drop");
