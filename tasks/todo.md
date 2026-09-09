@@ -1,5 +1,7 @@
 # 按项执行队列
 
+最新：[衣服店/武器库存与完整度盘点](../docs/equipment-shops-and-completeness.md)。NPC/怪物尚未完整；十种候选普通生物仅两种完成来源化刷新，守卫另列。旧货与双方交易保持未完成。
+
 本轮：[边界村书店接入](../docs/boundary-bookshop.md)。原图、六个门与独立老板已接入；衣服店、武器库存及死亡实景继续保持待办。
 
 最新P0：[NPC缺失、布衣防御与死亡流程](../docs/equipment-npc-combat-audit.md)。NPC/门/伤害死亡优先，旧任务不清空；已修正与仍待实景分别记录。

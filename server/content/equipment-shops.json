@@ -1,0 +1,428 @@
+{
+  "status": "Historical candidate baseline, not authenticated official 1.76",
+  "numericSource": "pangliang/MirServer-Delphi f829679d24acb3a097d396d737ab067db2c88ca2 StdItems.json",
+  "sources": [
+    {
+      "path": "raw-assets/reference-delphi/StdItems.json",
+      "sha256": "351635636d2f6325fcae502e0fe2fb3e0f002df09b55978bd88133f869ad51b5"
+    },
+    {
+      "path": "raw-assets/reference-server176/StdItems.json",
+      "sha256": "bb222ee1b9112a234cd1ced7c25fb722ce2b48237f1022dc14c56bd461ff01e9"
+    },
+    {
+      "path": "raw-assets/reference-server176/MerChant.txt",
+      "sha256": "4dc310f4594b717ed9dcf7b82eee589a04fb7ebcc2b8e17cb77c64299db41f9a"
+    },
+    {
+      "path": "raw-assets/reference-server176/武器店.txt",
+      "sha256": "ce64c0b46c564c4eff291ec39bc929d6486ce18655fdacbb154abb91aaa7d867"
+    },
+    {
+      "path": "raw-assets/reference-server176/服装店.txt",
+      "sha256": "3869bdfcabd3dcf55c8797790e8b1f26ca43670a24104f23fc75759754940289"
+    },
+    {
+      "path": "raw-assets/reference-server176/白家服装老板-0.txt",
+      "sha256": "4b2999f1d104611df7661fe813d406d08be8e0bfd4f724115baab42493964903"
+    }
+  ],
+  "conflictsServer176VsBaseline": {
+    "乌木剑": {
+      "NeedLevel": [
+        1,
+        7
+      ],
+      "Price": [
+        3636,
+        4000
+      ]
+    },
+    "铁剑": {
+      "Price": [
+        1000,
+        1200
+      ]
+    },
+    "八荒": {
+      "Price": [
+        4545,
+        5000
+      ]
+    },
+    "半月": {
+      "Price": [
+        3000,
+        4000
+      ]
+    },
+    "中型盔甲(男)": {
+      "Weight": [
+        18,
+        12
+      ],
+      "Price": [
+        5500,
+        6000
+      ]
+    },
+    "中型盔甲(女)": {
+      "Weight": [
+        18,
+        12
+      ],
+      "Price": [
+        5500,
+        6000
+      ]
+    },
+    "青铜头盔": {
+      "Price": [
+        909,
+        1000
+      ]
+    },
+    "魔法头盔": {
+      "Price": [
+        1818,
+        2000
+      ]
+    }
+  },
+  "items": [
+    {
+      "Name": "鹤嘴锄",
+      "Stdmode": 6,
+      "Shape": 19,
+      "Weight": 10,
+      "Looks": 50,
+      "DuraMax": 10000,
+      "Ac": 0,
+      "Ac2": 0,
+      "Mac": 0,
+      "Mac2": 0,
+      "Dc": 0,
+      "Dc2": 8,
+      "Mc": 0,
+      "Mc2": 0,
+      "Sc": 0,
+      "Sc2": 0,
+      "Need": 0,
+      "NeedLevel": 11,
+      "Price": 700
+    },
+    {
+      "Name": "乌木剑",
+      "Stdmode": 5,
+      "Shape": 1,
+      "Weight": 8,
+      "Looks": 43,
+      "DuraMax": 7000,
+      "Ac": 0,
+      "Ac2": 0,
+      "Mac": 0,
+      "Mac2": 0,
+      "Dc": 4,
+      "Dc2": 8,
+      "Mc": 0,
+      "Mc2": 1,
+      "Sc": 0,
+      "Sc2": 0,
+      "Need": 0,
+      "NeedLevel": 7,
+      "Price": 4000
+    },
+    {
+      "Name": "青铜剑",
+      "Stdmode": 5,
+      "Shape": 2,
+      "Weight": 9,
+      "Looks": 31,
+      "DuraMax": 6000,
+      "Ac": 0,
+      "Ac2": 0,
+      "Mac": 0,
+      "Mac2": 0,
+      "Dc": 3,
+      "Dc2": 7,
+      "Mc": 0,
+      "Mc2": 0,
+      "Sc": 0,
+      "Sc2": 0,
+      "Need": 0,
+      "NeedLevel": 5,
+      "Price": 900
+    },
+    {
+      "Name": "铁剑",
+      "Stdmode": 5,
+      "Shape": 2,
+      "Weight": 10,
+      "Looks": 36,
+      "DuraMax": 10000,
+      "Ac": 0,
+      "Ac2": 0,
+      "Mac": 0,
+      "Mac2": 0,
+      "Dc": 5,
+      "Dc2": 9,
+      "Mc": 0,
+      "Mc2": 0,
+      "Sc": 0,
+      "Sc2": 0,
+      "Need": 0,
+      "NeedLevel": 10,
+      "Price": 1200
+    },
+    {
+      "Name": "短剑",
+      "Stdmode": 5,
+      "Shape": 4,
+      "Weight": 9,
+      "Looks": 33,
+      "DuraMax": 8000,
+      "Ac": 0,
+      "Ac2": 0,
+      "Mac": 0,
+      "Mac2": 0,
+      "Dc": 3,
+      "Dc2": 11,
+      "Mc": 0,
+      "Mc2": 0,
+      "Sc": 0,
+      "Sc2": 0,
+      "Need": 0,
+      "NeedLevel": 10,
+      "Price": 1000
+    },
+    {
+      "Name": "青铜斧",
+      "Stdmode": 5,
+      "Shape": 3,
+      "Weight": 10,
+      "Looks": 32,
+      "DuraMax": 10000,
+      "Ac": 0,
+      "Ac2": 0,
+      "Mac": 0,
+      "Mac2": 0,
+      "Dc": 0,
+      "Dc2": 15,
+      "Mc": 0,
+      "Mc2": 0,
+      "Sc": 0,
+      "Sc2": 0,
+      "Need": 0,
+      "NeedLevel": 13,
+      "Price": 1500
+    },
+    {
+      "Name": "八荒",
+      "Stdmode": 5,
+      "Shape": 15,
+      "Weight": 25,
+      "Looks": 44,
+      "DuraMax": 18000,
+      "Ac": 0,
+      "Ac2": 0,
+      "Mac": 0,
+      "Mac2": 0,
+      "Dc": 4,
+      "Dc2": 12,
+      "Mc": 0,
+      "Mc2": 0,
+      "Sc": 0,
+      "Sc2": 0,
+      "Need": 0,
+      "NeedLevel": 15,
+      "Price": 5000
+    },
+    {
+      "Name": "海魂",
+      "Stdmode": 6,
+      "Shape": 8,
+      "Weight": 12,
+      "Looks": 39,
+      "DuraMax": 12000,
+      "Ac": 0,
+      "Ac2": 0,
+      "Mac": 0,
+      "Mac2": 0,
+      "Dc": 3,
+      "Dc2": 10,
+      "Mc": 1,
+      "Mc2": 2,
+      "Sc": 0,
+      "Sc2": 0,
+      "Need": 0,
+      "NeedLevel": 15,
+      "Price": 3000
+    },
+    {
+      "Name": "半月",
+      "Stdmode": 5,
+      "Shape": 16,
+      "Weight": 16,
+      "Looks": 46,
+      "DuraMax": 14000,
+      "Ac": 0,
+      "Ac2": 0,
+      "Mac": 0,
+      "Mac2": 0,
+      "Dc": 5,
+      "Dc2": 10,
+      "Mc": 0,
+      "Mc2": 1,
+      "Sc": 1,
+      "Sc2": 1,
+      "Need": 0,
+      "NeedLevel": 15,
+      "Price": 4000
+    },
+    {
+      "Name": "轻型盔甲(男)",
+      "Stdmode": 10,
+      "Shape": 2,
+      "Weight": 8,
+      "Looks": 61,
+      "DuraMax": 8000,
+      "Ac": 3,
+      "Ac2": 3,
+      "Mac": 1,
+      "Mac2": 2,
+      "Dc": 0,
+      "Dc2": 0,
+      "Mc": 0,
+      "Mc2": 0,
+      "Sc": 0,
+      "Sc2": 0,
+      "Need": 0,
+      "NeedLevel": 11,
+      "Price": 3000
+    },
+    {
+      "Name": "轻型盔甲(女)",
+      "Stdmode": 11,
+      "Shape": 2,
+      "Weight": 8,
+      "Looks": 81,
+      "DuraMax": 8000,
+      "Ac": 3,
+      "Ac2": 3,
+      "Mac": 1,
+      "Mac2": 2,
+      "Dc": 0,
+      "Dc2": 0,
+      "Mc": 0,
+      "Mc2": 0,
+      "Sc": 0,
+      "Sc2": 0,
+      "Need": 0,
+      "NeedLevel": 11,
+      "Price": 3000
+    },
+    {
+      "Name": "中型盔甲(男)",
+      "Stdmode": 10,
+      "Shape": 2,
+      "Weight": 12,
+      "Looks": 61,
+      "DuraMax": 12000,
+      "Ac": 3,
+      "Ac2": 5,
+      "Mac": 1,
+      "Mac2": 2,
+      "Dc": 0,
+      "Dc2": 0,
+      "Mc": 0,
+      "Mc2": 0,
+      "Sc": 0,
+      "Sc2": 0,
+      "Need": 0,
+      "NeedLevel": 16,
+      "Price": 6000
+    },
+    {
+      "Name": "中型盔甲(女)",
+      "Stdmode": 11,
+      "Shape": 2,
+      "Weight": 12,
+      "Looks": 81,
+      "DuraMax": 12000,
+      "Ac": 3,
+      "Ac2": 5,
+      "Mac": 1,
+      "Mac2": 2,
+      "Dc": 0,
+      "Dc2": 0,
+      "Mc": 0,
+      "Mc2": 0,
+      "Sc": 0,
+      "Sc2": 0,
+      "Need": 0,
+      "NeedLevel": 16,
+      "Price": 6000
+    },
+    {
+      "Name": "青铜头盔",
+      "Stdmode": 15,
+      "Shape": 0,
+      "Weight": 4,
+      "Looks": 100,
+      "DuraMax": 8000,
+      "Ac": 0,
+      "Ac2": 1,
+      "Mac": 0,
+      "Mac2": 0,
+      "Dc": 0,
+      "Dc2": 0,
+      "Mc": 0,
+      "Mc2": 0,
+      "Sc": 0,
+      "Sc2": 0,
+      "Need": 0,
+      "NeedLevel": 10,
+      "Price": 1000
+    },
+    {
+      "Name": "魔法头盔",
+      "Stdmode": 15,
+      "Shape": 0,
+      "Weight": 4,
+      "Looks": 100,
+      "DuraMax": 8000,
+      "Ac": 0,
+      "Ac2": 1,
+      "Mac": 1,
+      "Mac2": 1,
+      "Dc": 0,
+      "Dc2": 0,
+      "Mc": 0,
+      "Mc2": 0,
+      "Sc": 0,
+      "Sc2": 0,
+      "Need": 0,
+      "NeedLevel": 14,
+      "Price": 2000
+    }
+  ],
+  "weapons": [
+    "鹤嘴锄",
+    "乌木剑",
+    "青铜剑",
+    "铁剑",
+    "短剑",
+    "青铜斧",
+    "八荒",
+    "海魂",
+    "半月"
+  ],
+  "clothes": [
+    "轻型盔甲(男)",
+    "轻型盔甲(女)",
+    "中型盔甲(男)",
+    "中型盔甲(女)",
+    "青铜头盔",
+    "魔法头盔"
+  ]
+}

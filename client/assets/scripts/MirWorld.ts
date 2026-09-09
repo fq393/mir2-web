@@ -185,7 +185,7 @@ export class MirWorld extends Component {
         if(e.keyCode===KeyCode.ENTER){this.saveSkillKey();return;}
         if(!this.skillPending&&e.keyCode>=KeyCode.F1&&e.keyCode<=KeyCode.F8){this.bindingKey=e.keyCode-KeyCode.F1+1;this.showSkillKeys(this.bindingSpell,false);}
         return;
-    }if(e.keyCode===KeyCode.KEY_G){this.party?.toggle();return;}if(e.keyCode===KeyCode.KEY_H&&(this.keys.has(KeyCode.CTRL_LEFT)||this.keys.has(KeyCode.CTRL_RIGHT))){this.connection?.send({type:"attackMode",mode:(this.attackMode+1)%6});return;}this.sound.unlock();if(e.keyCode===KeyCode.KEY_B||e.keyCode===KeyCode.F9){this.showInventory('bag');return;}if(e.keyCode===KeyCode.F10){this.showInventory('character');return;}if(e.keyCode===KeyCode.F11){this.toggleSkills();return;}if(e.keyCode>=KeyCode.DIGIT_1&&e.keyCode<=KeyCode.DIGIT_6){this.usePotion(this.inventory[e.keyCode-KeyCode.DIGIT_1]);return;}if(e.keyCode>=KeyCode.F1&&e.keyCode<=KeyCode.F8){this.castKey(e.keyCode-KeyCode.F1+1);return;}if(e.keyCode===KeyCode.SPACE){this.autoAttack=true;this.attack();return;}if(e.keyCode===KeyCode.KEY_M){this.miniMap?.toggle();return;}if(e.keyCode===KeyCode.ESCAPE){this.miniMap?.close();if(this.selectedBag>=6||this.selectedEquipment>=0){this.selectedBag=-1;this.selectedEquipment=-1;return;}this.menu.active=false;if(this.targetText)this.targetText.string='';this.selected=0;this.autoAttack=false;return;}this.pickupTarget=0;this.autoAttack=false;this.keys.add(e.keyCode);this.path=[];if(this.ready&&!this.step)this.beginStep();}
+    }if(e.keyCode===KeyCode.KEY_G){this.party?.toggle();return;}if(e.keyCode===KeyCode.KEY_H&&(this.keys.has(KeyCode.CTRL_LEFT)||this.keys.has(KeyCode.CTRL_RIGHT))){this.connection?.send({type:"attackMode",mode:(this.attackMode+1)%6});return;}if(e.keyCode===KeyCode.KEY_X&&(this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT))){this.clearMovement();this.connection?.send({type:'restart'});return;}this.sound.unlock();if(e.keyCode===KeyCode.KEY_B||e.keyCode===KeyCode.F9){this.showInventory('bag');return;}if(e.keyCode===KeyCode.F10){this.showInventory('character');return;}if(e.keyCode===KeyCode.F11){this.toggleSkills();return;}if(e.keyCode>=KeyCode.DIGIT_1&&e.keyCode<=KeyCode.DIGIT_6){this.usePotion(this.inventory[e.keyCode-KeyCode.DIGIT_1]);return;}if(e.keyCode>=KeyCode.F1&&e.keyCode<=KeyCode.F8){this.castKey(e.keyCode-KeyCode.F1+1);return;}if(e.keyCode===KeyCode.SPACE){this.autoAttack=true;this.attack();return;}if(e.keyCode===KeyCode.KEY_M){this.miniMap?.toggle();return;}if(e.keyCode===KeyCode.ESCAPE){this.miniMap?.close();if(this.selectedBag>=6||this.selectedEquipment>=0){this.selectedBag=-1;this.selectedEquipment=-1;return;}this.menu.active=false;if(this.targetText)this.targetText.string='';this.selected=0;this.autoAttack=false;return;}this.pickupTarget=0;this.autoAttack=false;this.keys.add(e.keyCode);this.path=[];if(this.ready&&!this.step)this.beginStep();}
     // Keep pointer coordinates available across Cocos UI hit regions. Capture them
     // before dispatch, using the same 800x600 transform as rendering.
     private trackPointer=(event:PointerEvent):void=>{
@@ -374,6 +374,9 @@ export class MirWorld extends Component {
         this.notice(`进入${target.map.name??'比奇省'}`);this.updateView();return true;
     }
     private serverEvent(event:any):void {this.accounts?.event(event);
+        if(event.type==='restartRejected'){this.notice(event.message);return;}
+        if(event.type==='auth'&&event.stage==='characters'&&this.serverReady){this.serverReady=false;this.clearMovement();this.menu.active=false;this.clearLoot();return;}
+
         if(event.type==='tradeQuote'&&event.request===this.tradeRequest&&this.menu.active&&this.menuKind==='merchant'){this.tradeQuote={token:event.token,quote:this.normalize(event.quote)};this.showMerchant();return;}
         if(event.type==='tradeResult'&&event.request===this.tradeRequest){this.tradeQuote=null;if(event.success)this.tradeItem=null;this.notice(event.message);if(this.menu.active&&this.menuKind==='merchant')this.showMerchant();return;}
 
@@ -622,7 +625,7 @@ export class MirWorld extends Component {
             const hit=this.makeNode('装备格 '+slot,character);hit.setPosition(x,-y);
             hit.getComponent(UITransform)!.setAnchorPoint(0,1);hit.getComponent(UITransform)!.setContentSize(w,h);this.nativeClick(hit,()=>this.equipmentCell(slot));if(item)this.bindItemTooltip(hit,item,character,'character');
         }
-        if(this.hp<=0){const action=this.nativeLabel(character,'回城复活',37,300,11,195,C.paper);this.nativeClick(action.node,()=>this.connection?.send({type:'revive'}));}
+        if(this.hp<=0){const action=this.nativeLabel(character,'重新开始',37,300,11,195,C.paper);this.nativeClick(action.node,()=>this.connection?.send({type:'restart'}));}
     }
     private changeCharacterPage(direction:number):void {
         const now=Date.now();if(now-this.characterNavAt<250)return;this.characterNavAt=now;
@@ -932,7 +935,7 @@ export class MirWorld extends Component {
         if(['ObjectWalk','ObjectRun','ObjectTurn'].includes(name)&&p){p.running=name==='ObjectRun';if(d.location){p.from={...p.visual};p.point=d.location;p.elapsed=0;}p.direction=d.direction??p.direction;}
         if(name==='ObjectRemove'){const loot=this.loot.get(id);loot?.node.destroy();loot?.label.node.destroy();this.loot.delete(id);if(this.pickupTarget===id)this.pickupTarget=0;p?.node.destroy();p?.label?.node.destroy();p?.healthBar?.node.destroy();this.peers.delete(id);}
         if(name==='ObjectHealth'&&p){p.hp=d.percent;p.healthUntil=Date.now()+Math.max(0,d.expire??0)*1000;}
-        if(name==='HealthChanged'){if(this.hp>0&&d.hp<=0)this.animationClock=0;this.hp=d.hp;this.mp=d.mp;}if(name==='Struck'){this.sound.play('138');this.ownAction='hit';this.actionTime=.4;this.animationClock=0;}if(name==='Death'){this.sound.play('144');this.hp=0;if(this.menu.active){if(this.menuKind==='inventory')this.showInventory();else if(this.menuKind==='shop')this.showShop();}this.notice('你已倒下，打开人物装备栏选择回城复活');}
+        if(name==='HealthChanged'){if(this.hp>0&&d.hp<=0)this.animationClock=0;this.hp=d.hp;this.mp=d.mp;}if(name==='Struck'){this.sound.play(this.gender===1?'139':'138');this.ownAction='hit';this.actionTime=.4;this.animationClock=0;}if(name==='Death'){this.clearMovement();this.actionTime=0;this.animationClock=0;this.sound.play(this.gender===1?'145':'144');this.hp=0;if(this.menu.active){if(this.menuKind==='inventory')this.showInventory();else if(this.menuKind==='shop')this.showShop();}this.notice('你已死亡，按 Alt+X 重新开始游戏。');}
         if(name==='MapInformation'||name==='MapChanged'){this.changeMap(d.filename,d.location,d.direction);return;}
         if(name==='Revived'){this.clearMovement();this.menu.active=false;if(this.targetText)this.targetText.string='';this.notice('已回城复活');}
         if(name==='GainExperience'){this.experience+=d.amount;this.notice(`获得 ${d.amount} 点经验`);}

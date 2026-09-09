@@ -13,7 +13,7 @@ def build():
  for source in pin['sources']:
   if hashlib.sha256((ROOT/source['path']).read_bytes()).hexdigest()!=source['sha256']:raise ValueError('Original actor source hash mismatch')
  actors={};images={};sources=[]
- for library,kind,shapes in [('Hum','armour',[0,1]),('Weapon','weapon',[1]),('Hair','hair',[0])]:
+ for library,kind,shapes in [('Hum','armour',[0,1,2]),('Weapon','weapon',[1,2,3,4,8,15,16,19]),('Hair','hair',[0])]:
   path=next(p for p in SOURCE.iterdir() if p.name.lower()==library.lower()+'.wil')
   for p in SOURCE.iterdir():
    if p.stem.lower()==library.lower() and p.suffix.lower() in ['.wil','.wix']:sources.append({'path':str(p.relative_to(ROOT)),'sha256':hashlib.sha256(p.read_bytes()).hexdigest()})

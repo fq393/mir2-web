@@ -225,6 +225,13 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey, IReadOnlyDi
                 case S.DeleteCharacterSuccess deleted:
                     authBusy=false;characters.RemoveAll(c=>c.Index==deleted.CharacterIndex);
                     await Send(new{type="auth",stage="characters",deletedIndex=deleted.CharacterIndex,characterLimit=classicCharacterLimit,characters=JsonSerializer.SerializeToElement(characters,packetJson)},ct);break;
+                case S.LogOutSuccess logout:
+                    objectId=0;currentHP=0;lastVitals=null;authBusy=false;tradeQuote=null;tradeToken="";peers.Clear();learnedSpells.Clear();
+                    while(pending.TryDequeue(out _)){}locationReply?.TrySetResult();locationReply=null;
+                    characters.Clear();characters.AddRange(logout.Characters);
+                    await Send(new{type="auth",stage="characters",characterLimit=classicCharacterLimit,characters=JsonSerializer.SerializeToElement(characters,packetJson)},ct);break;
+                case S.LogOutFailed:
+                    await Send(new{type="restartRejected",message="当前不能重新开始，请稍候再试。"},ct);break;
                 case S.StartGame started:
                     await Send(new {type="protocol",packet="StartGame",result=started.Result},ct);
                     if(started.Result != 4){authBusy=false;await Send(new{type="auth",stage="characters",message=started.Result switch{0=>"当前暂不允许进入游戏。",1=>"登录状态已失效，请退出后重新登录。",2=>"该角色已不存在，请重新登录刷新列表。",3=>"没有可用出生地图，请检查本地地图配置。",_=>"暂时无法进入游戏，请稍后重试。"},characterLimit=classicCharacterLimit,characters=JsonSerializer.SerializeToElement(characters,packetJson)},ct);}break;
@@ -317,6 +324,7 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey, IReadOnlyDi
                 int Num(string k,int fallback=0)=>r.TryGetProperty(k,out var v)?v.GetInt32():fallback;
                 ulong Id(string k)=>r.GetProperty(k).ValueKind==JsonValueKind.String?ulong.Parse(r.GetProperty(k).GetString()!):r.GetProperty(k).GetUInt64();
                 if(command is "attack" or "cast" or "harvest" && (Num("direction")<0 || Num("direction")>7)) throw new InvalidDataException("direction must be 0..7");
+                if(command=="restart"){await Write(new C.LogOut(),ct);continue;}
                 if(command=="skillKey"){
                     int request=Num("request");
                     try{

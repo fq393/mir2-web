@@ -10,7 +10,7 @@ def build():
  pin=json.loads(PIN.read_text())
  for s in pin['sources']:
   if hashlib.sha256((ROOT/s['path']).read_bytes()).hexdigest()!=s['sha256']:raise ValueError('NPC library hash mismatch')
- actors={f'npc{i}':dict(stand=[[f'classicnpc:{i*60+d*10+f}' for f in range(4)] for d in range(3)],actionFrameMs=dict(stand=200)) for i in [2,4,5,6,11]}
+ actors={f'npc{i}':dict(stand=[[f'classicnpc:{i*60+d*10+f}' for f in range(4)] for d in range(3)],actionFrameMs=dict(stand=200)) for i in [2,4,5,6,7,11]}
  indices={int(k.split(':')[-1]) for a in actors.values() for direction in a['stand'] for k in direction}
  images=wil.read_library(ROOT/pin['sources'][0]['path'],indices)
  if set(images)!=indices:raise ValueError('NPC animation frame missing')

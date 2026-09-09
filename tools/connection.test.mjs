@@ -466,3 +466,11 @@ test('equip and takeoff use the same category sound after success, never on reje
   w.packet('EquipItem',{UniqueID:31,To:0,Success:true});w.packet('RemoveItem',{UniqueID:31,To:0,Success:true});assert.deepEqual(heard,[file,file]);assert.equal(w.inventory[0],item);
  }
 });
+test('death cancels queued movement and combat, resets death animation and uses gender sound',()=>{
+ for(const gender of [0,1]){
+  const w=world(),heard=[];w.gender=gender;w.serverReady=true;w.sound={stop(){},play:file=>heard.push(file)};w.notice=message=>w.deathNotice=message;
+  w.autoAttack=true;w.path=[{x:3,y:2}];w.keys.add(68);w.actionTime=.6;w.animationClock=9;w.pendingAction={seq:3};
+  w.packet('Death',{});
+  assert.equal(w.hp,0);assert.equal(w.autoAttack,false);assert.equal(w.path.length,0);assert.equal(w.keys.size,0);assert.equal(w.pendingAction,null);assert.equal(w.actionTime,0);assert.equal(w.animationClock,0);assert.deepEqual(heard,[gender?'145':'144']);assert.match(w.deathNotice,/Alt\+X/);
+ }
+});

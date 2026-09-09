@@ -16,8 +16,31 @@ static class MerchantSeed {
   var smith=envir.NPCInfoList.FirstOrDefault(n=>n.FileName=="BoundarySmith");
   if(smith==null){smith=new NPCInfo{Index=++envir.NPCIndex,FileName="BoundarySmith"};envir.NPCInfoList.Add(smith);}
   smith.Name="边界村铁匠铺";smith.MapIndex=map.Index;smith.Location=new Point(297,612);smith.Image=0;smith.Rate=100;smith.Colour=Color.Lime;
-  // Enable only the already audited repair paths. Candidate weapon stock awaits
-  // template/appearance/price validation; do not sell the demo wooden sword here.
-  File.WriteAllText(Path.Combine(Settings.NPCPath,"BoundarySmith.txt"),"[@MAIN]\n#SAY\n欢迎光临铁匠铺。\\\n<修理装备/@REPAIR>\\\n<特修装备/@SREPAIR>\\\n<关闭/@EXIT>\n\n[@REPAIR]\n#SAY\n请选择需要修理的武器。\n\n[@SREPAIR]\n#SAY\n请选择需要特殊修理的武器。\n\n[TYPES]\n"+(int)ItemType.Weapon+"\n");
+  ApplyEquipmentShops(envir,root,map);
+ }
+ static void ApplyEquipmentShops(Envir envir,string root,MapInfo map){
+  using var document=JsonDocument.Parse(File.ReadAllText(Path.Combine(root,"server/content/equipment-shops.json")));
+  var source=document.RootElement;
+  foreach(var row in source.GetProperty("items").EnumerateArray()){
+   string name=row.GetProperty("Name").GetString()!;int mode=row.GetProperty("Stdmode").GetInt32();
+   var item=envir.ItemInfoList.FirstOrDefault(i=>i.Name==name);
+   if(item==null){item=new ItemInfo{Index=++envir.ItemIndex,Name=name};envir.ItemInfoList.Add(item);}
+   item.Type=mode is 5 or 6?ItemType.Weapon:mode==15?ItemType.Helmet:ItemType.Armour;
+   item.Shape=row.GetProperty("Shape").GetInt16();item.Image=row.GetProperty("Looks").GetUInt16();
+   item.Weight=row.GetProperty("Weight").GetByte();item.Durability=row.GetProperty("DuraMax").GetUInt16();
+   item.Price=row.GetProperty("Price").GetUInt32();item.StackSize=1;item.StartItem=false;
+   item.RequiredType=RequiredType.Level;item.RequiredAmount=row.GetProperty("NeedLevel").GetByte();item.RequiredClass=RequiredClass.None;
+   item.RequiredGender=mode==10?RequiredGender.Male:mode==11?RequiredGender.Female:RequiredGender.None;
+   item.Stats=new Stats();
+   foreach(var field in new[]{("Ac",Stat.MinAC),("Ac2",Stat.MaxAC),("Mac",Stat.MinMAC),("Mac2",Stat.MaxMAC),("Dc",Stat.MinDC),("Dc2",Stat.MaxDC),("Mc",Stat.MinMC),("Mc2",Stat.MaxMC),("Sc",Stat.MinSC),("Sc2",Stat.MaxSC)})item.Stats[field.Item2]=row.GetProperty(field.Item1).GetInt32();
+  }
+  var tailor=envir.NPCInfoList.FirstOrDefault(n=>n.FileName=="BoundaryTailor");
+  if(tailor==null){tailor=new NPCInfo{Index=++envir.NPCIndex,FileName="BoundaryTailor"};envir.NPCInfoList.Add(tailor);}
+  tailor.Name="白家服装老板";tailor.MapIndex=map.Index;tailor.Location=new Point(305,607);tailor.Image=7;tailor.Rate=100;tailor.Colour=Color.Lime;
+  foreach(var shop in new[]{(File:"BoundarySmith",Stock:"weapons",Name:"武器",Types:new[]{ItemType.Weapon}),(File:"BoundaryTailor",Stock:"clothes",Name:"衣服",Types:new[]{ItemType.Armour,ItemType.Helmet})}){
+   var goods=string.Join("\n",source.GetProperty(shop.Stock).EnumerateArray().Select(v=>v.GetString()+" 1"));
+   var types=string.Join("\n",shop.Types.Select(v=>(int)v));
+   File.WriteAllText(Path.Combine(Settings.NPCPath,shop.File+".txt"),"[@MAIN]\n#SAY\n欢迎光临，你需要点什么？\\\n<购买"+shop.Name+"/@BUY>\\\n<出售"+shop.Name+"/@SELL>\\\n<修理装备/@REPAIR>\\\n<特殊修理/@SREPAIR>\\\n<关闭/@EXIT>\n\n[@BUY]\n#SAY\n请选择物品。\n\n[@SELL]\n#SAY\n请选择要出售的物品。\n\n[@REPAIR]\n#SAY\n请选择需要修理的装备。\n\n[@SREPAIR]\n#SAY\n请选择需要特殊修理的装备。\n\n[TYPES]\n"+types+"\n\n[TRADE]\n"+goods+"\n");
+  }
  }
 }

@@ -374,6 +374,22 @@
       "originalFilename": "118.wav",
       "bytes": 10382,
       "sha256": "2d8c0f9591d487c45f61b0c644d1a83d18c5a8e28f827ac66a3774605a57319e"
+    },
+    {
+      "file": "139.wav",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/139.wav",
+      "originalFilename": "139.wav",
+      "bytes": 57004,
+      "sha256": "aaf891b18f6b06684fa1040c267de16ed3646de54908470c70cc5a9304ff3586",
+      "verification": "Original gender-specific hurt/death sound, SoundUtil.pas"
+    },
+    {
+      "file": "145.wav",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/145.wav",
+      "originalFilename": "145.wav",
+      "bytes": 85414,
+      "sha256": "adddb2edbb636d9099f76e06bb0f430b746fb3f8e0e5d5bca1835cef27a3e11a",
+      "verification": "Original gender-specific hurt/death sound, SoundUtil.pas"
     }
   ],
   "missing": [

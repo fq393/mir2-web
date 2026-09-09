@@ -110,6 +110,7 @@ try {
     PlayerTradeTests.Run(envir,connection);
     SkillBindingTests.Run();
     BookshopTests.Run(root,envir,connection);
+    EquipmentShopTests.Run(root,envir,connection);
     var observed=new RecordingPlayer {Stats=new Stats {[Stat.HP]=120,[Stat.MP]=45,[Stat.BagWeight]=50},Info=new CharacterInfo(),Account=new AccountInfo(),CurrentBagWeight=9};
     envir.Players.Add(observed);Mir2.WebHost.WorldSnapshots.Publish(envir);
     var snapshot=Mir2.WebHost.WorldSnapshots.Read(observed.ObjectID);

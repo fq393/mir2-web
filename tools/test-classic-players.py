@@ -15,6 +15,7 @@ for library in ['Hum','Weapon','Hair']:
   if i not in original:assert image.getbbox() is None;continue
   im,meta=original[i];assert image.tobytes()==im.tobytes();assert f['offsetX']==meta['offsetX'] and f['offsetY']==meta['offsetY']
 for gender,suffix in [(0,''),(1,'f')]:
- for action,(start,count,stride) in m.ACTIONS.items():
-  for direction,frames in enumerate(d['actors']['weapon1'+suffix][action]):assert frames==[f'classicplayer:Weapon:{(2+gender)*600+start+direction*stride+f}' for f in range(count)]
-print('2368 native actor frames pixel-exact; male/female wooden sword uses HA 600-frame indices in all 8 directions and actions')
+ for shape in [1,2,3,4,8,15,16,19]:
+  for action,(start,count,stride) in m.ACTIONS.items():
+   for direction,frames in enumerate(d['actors'][f'weapon{shape}'+suffix][action]):assert frames==[f'classicplayer:Weapon:{(shape*2+gender)*600+start+direction*stride+f}' for f in range(count)]
+print(f'{len(d["frames"])} native actor frames pixel-exact; all exported equipment identities use HA indices')
