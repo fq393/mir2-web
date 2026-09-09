@@ -18,9 +18,10 @@ function load(file, mocks = {}, globals = {}) {
 }
 const cc = {Node:{EventType:{TOUCH_END:'touch',MOUSE_UP:'mouse'}},_decorator: {ccclass: () => cls => cls}, Component: class {}, Color: class {constructor(r,g,b,a){Object.assign(this,{r,g,b,a});}},
   KeyCode: {F1:112,F8:119,F11:122,ESCAPE:27,ENTER:13,KEY_D: 68, ARROW_RIGHT: 39, KEY_A: 65, ARROW_LEFT: 37, KEY_S: 83, ARROW_DOWN: 40, KEY_W: 87, ARROW_UP: 38}};
+let movementNow=1000;
 const {MirWorld} = load('../client/assets/scripts/MirWorld.ts', {
   cc, './core/itemStats':itemStats, './core/classicLayout':classicLayout, './core/inventory':inventory, './platform/MirAudio':{MirAudio:class{stop(){}play(){}unlock(){}}}, './core/stepSound':{stepSound:()=>1}, './core/grid': grid, './platform/connection': {}, './renderer/MirSprite': {}, './renderer/TerrainStream':{TerrainStream:class{constructor(){this.newTerrain=true;}destroy(){}}},
-});
+}, {performance:{now:()=>movementNow}});
 function world() {
   const w = new MirWorld();
   w.menu={active:false};w.ready = true; w.hp = 18; w.grid = {width: 10, height: 10, blocked: new Set()};
@@ -439,4 +440,17 @@ test('disconnect clears an unconfirmed combat action before a later session',()=
  const w=world();w.serverReady=true;w.sendAction('attack',{direction:2});assert.ok(w.pendingAction);
  w.serverEvent({type:'disconnected'});assert.equal(w.pendingAction,null);
  w.serverEvent({type:'ready',objectId:1,x:2,y:2,hp:18});assert.equal(w.sendAction('harvest',{direction:2}),true);
+});
+
+test('continuous movement preserves the 600ms cooldown and running at 30/60 FPS', () => {
+ for(const fps of [30,60]){
+  movementNow=1000;const w=world();w.serverReady=true;w.grid={width:100,height:100,blocked:new Set()};w.runRequested=true;w.keys.add(68);
+  const sent=[];w.connection.send=m=>{sent.push({type:m.type,at:movementNow});return true;};let ack=0;
+  for(let i=0;i<fps*6;i++){
+   movementNow+=1000/fps;w.update(1/fps);
+   if(w.step&&w.step.seq!==ack){ack=w.step.seq;w.serverEvent({type:'state',seq:ack,x:w.step.to.x,y:w.step.to.y,accepted:true});}
+  }
+  assert.equal(sent[0].type,'walk');assert.ok(sent.filter(m=>m.type==='run').length>=7,JSON.stringify(sent));
+  for(let i=1;i<sent.length;i++)assert.ok(sent[i].at-sent[i-1].at>=599.99,'movement sent before cooldown');
+ }
 });

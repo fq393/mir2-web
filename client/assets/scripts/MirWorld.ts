@@ -102,8 +102,7 @@ export class MirWorld extends Component {
         this.objects=this.makeNode('Objects',this.world);
         this.effects=this.makeNode('Effects',this.world);this.labels=this.makeNode('Names',this.world);
         this.marker=this.makeNode('Destination',this.world);
-        const mark=this.marker.addComponent(Graphics);mark.lineWidth=2;mark.strokeColor=C.gold;
-        mark.moveTo(0,10);mark.lineTo(16,0);mark.lineTo(0,-10);mark.lineTo(-16,0);mark.close();mark.stroke();this.marker.active=false;
+        this.marker.active=false; // No destination diamond in the requested classic view.
         this.createHUD();
         try {
             this.manifest=(await this.load<JsonAsset>('mir/manifest',JsonAsset)).json as Manifest;this.manifest.map.name='比奇省';
@@ -186,7 +185,7 @@ export class MirWorld extends Component {
         if(e.keyCode===KeyCode.ENTER){this.saveSkillKey();return;}
         if(!this.skillPending&&e.keyCode>=KeyCode.F1&&e.keyCode<=KeyCode.F8){this.bindingKey=e.keyCode-KeyCode.F1+1;this.showSkillKeys(this.bindingSpell,false);}
         return;
-    }if(e.keyCode===KeyCode.KEY_G){this.party?.toggle();return;}if(e.keyCode===KeyCode.KEY_H&&(this.keys.has(KeyCode.CTRL_LEFT)||this.keys.has(KeyCode.CTRL_RIGHT))){this.connection?.send({type:"attackMode",mode:(this.attackMode+1)%6});return;}this.sound.unlock();if(e.keyCode===KeyCode.KEY_B||e.keyCode===KeyCode.F9){this.showInventory('bag');return;}if(e.keyCode===KeyCode.F10){this.showInventory('character');return;}if(e.keyCode===KeyCode.F11){this.showSkills();return;}if(e.keyCode>=KeyCode.DIGIT_1&&e.keyCode<=KeyCode.DIGIT_6){this.usePotion(this.inventory[e.keyCode-KeyCode.DIGIT_1]);return;}if(e.keyCode>=KeyCode.F1&&e.keyCode<=KeyCode.F8){this.castKey(e.keyCode-KeyCode.F1+1);return;}if(e.keyCode===KeyCode.SPACE){this.autoAttack=true;this.attack();return;}if(e.keyCode===KeyCode.KEY_M){this.miniMap?.toggle();return;}if(e.keyCode===KeyCode.ESCAPE){this.miniMap?.close();if(this.selectedBag>=6||this.selectedEquipment>=0){this.selectedBag=-1;this.selectedEquipment=-1;return;}this.menu.active=false;if(this.targetText)this.targetText.string='';this.selected=0;this.autoAttack=false;return;}this.pickupTarget=0;this.autoAttack=false;this.keys.add(e.keyCode);this.path=[];if(this.ready&&!this.step)this.beginStep();}
+    }if(e.keyCode===KeyCode.KEY_G){this.party?.toggle();return;}if(e.keyCode===KeyCode.KEY_H&&(this.keys.has(KeyCode.CTRL_LEFT)||this.keys.has(KeyCode.CTRL_RIGHT))){this.connection?.send({type:"attackMode",mode:(this.attackMode+1)%6});return;}this.sound.unlock();if(e.keyCode===KeyCode.KEY_B||e.keyCode===KeyCode.F9){this.showInventory('bag');return;}if(e.keyCode===KeyCode.F10){this.showInventory('character');return;}if(e.keyCode===KeyCode.F11){this.toggleSkills();return;}if(e.keyCode>=KeyCode.DIGIT_1&&e.keyCode<=KeyCode.DIGIT_6){this.usePotion(this.inventory[e.keyCode-KeyCode.DIGIT_1]);return;}if(e.keyCode>=KeyCode.F1&&e.keyCode<=KeyCode.F8){this.castKey(e.keyCode-KeyCode.F1+1);return;}if(e.keyCode===KeyCode.SPACE){this.autoAttack=true;this.attack();return;}if(e.keyCode===KeyCode.KEY_M){this.miniMap?.toggle();return;}if(e.keyCode===KeyCode.ESCAPE){this.miniMap?.close();if(this.selectedBag>=6||this.selectedEquipment>=0){this.selectedBag=-1;this.selectedEquipment=-1;return;}this.menu.active=false;if(this.targetText)this.targetText.string='';this.selected=0;this.autoAttack=false;return;}this.pickupTarget=0;this.autoAttack=false;this.keys.add(e.keyCode);this.path=[];if(this.ready&&!this.step)this.beginStep();}
     // Keep pointer coordinates available across Cocos UI hit regions. Capture them
     // before dispatch, using the same 800x600 transform as rendering.
     private trackPointer=(event:PointerEvent):void=>{
@@ -264,7 +263,7 @@ export class MirWorld extends Component {
         this.selected=0;this.autoAttack=false;this.pickupTarget=Array.from(this.loot.entries()).find(([,v])=>v.point.x===x&&v.point.y===y)?.[0]??0;
         const from=this.step?.to??this.point;
         this.pathFailures=0;this.path=this.pathFor(from,{x,y});
-        if(this.path.length){this.marker.active=true;this.marker.setPosition(x*48+24,-y*32-16);}
+        this.marker.active=false;
     }
     private clearMovement():void {
         this.pauseInput();this.pendingAction=null;this.lastMoveAcceptedAt=-Infinity;this.step=null;this.confirmed=null;this.visual={...this.point};
@@ -273,6 +272,10 @@ export class MirWorld extends Component {
     private beginStep():void {
         if(!this.serverReady){this.clearMovement();return;}
         if(this.pendingAction||this.actionTime>0||this.hp<=0)return;
+        // Match the authoritative 600ms movement cooldown; leave the 700ms
+        // run-start window intact instead of consuming it with render delay.
+        const sinceMove=performance.now()/1000-this.lastMoveAcceptedAt;
+        if(sinceMove<.6)return;
         const down=(...codes:number[])=>codes.some(c=>this.keys.has(c));
         const dx=Number(down(KeyCode.KEY_D,KeyCode.ARROW_RIGHT))-Number(down(KeyCode.KEY_A,KeyCode.ARROW_LEFT));
         const dy=Number(down(KeyCode.KEY_S,KeyCode.ARROW_DOWN))-Number(down(KeyCode.KEY_W,KeyCode.ARROW_UP));
@@ -281,7 +284,7 @@ export class MirWorld extends Component {
         else next=this.path.shift();
         if(!next || !canStep(this.grid,this.point,next)){if(!next)this.marker.active=false;return;}
         let running=false;const direction=directionTo(this.point,next),seq=++this.nextSequence;
-        if(this.worldClock-this.lastMoveAcceptedAt<.7&&(this.runRequested||this.keys.has(KeyCode.SHIFT_LEFT)||this.keys.has(KeyCode.SHIFT_RIGHT))){
+        if(sinceMove<.7&&(this.runRequested||this.keys.has(KeyCode.SHIFT_LEFT)||this.keys.has(KeyCode.SHIFT_RIGHT))){
             const second=(dx||dy)?{x:next.x+dx,y:next.y+dy}:this.path[0];
             if(second&&directionTo(next,second)===direction&&canStep(this.grid,next,second)&&!Array.from(this.peers.values()).some(p=>!p.dead&&[next!,second].some(c=>c.x===p.point.x&&c.y===p.point.y))){next=second;running=true;if(!dx&&!dy)this.path.shift();}
         }
@@ -297,9 +300,9 @@ export class MirWorld extends Component {
         this.animationClock+=dt;this.worldClock+=dt;
         this.updateCombat(dt);if(!this.step)this.beginStep();
         if(this.step){
-            this.step.elapsed+=dt;if(this.confirmed&&this.stepSoundPhase<2&&this.step.elapsed>=(this.stepSoundPhase===0?.1:.4)){const code=stepSound(this.terrain.cell(this.step.to.x,this.step.to.y));if(code)this.sound.play(String(code+this.stepSoundPhase));this.stepSoundPhase++;}const t=Math.min(1,this.step.elapsed/0.65);
+            this.step.elapsed+=dt;if(this.confirmed&&this.stepSoundPhase<2&&this.step.elapsed>=(this.stepSoundPhase===0?.1:.4)){const code=stepSound(this.terrain.cell(this.step.to.x,this.step.to.y));if(code)this.sound.play(String(code+this.stepSoundPhase));this.stepSoundPhase++;}const t=Math.min(1,this.step.elapsed/0.6);
             this.visual={x:this.step.from.x+(this.step.to.x-this.step.from.x)*t,y:this.step.from.y+(this.step.to.y-this.step.from.y)*t};
-            if(t===1&&this.confirmed){this.point=this.confirmed;this.visual={...this.point};this.confirmed=null;this.step=null;}
+            if(t===1&&this.confirmed){this.point=this.confirmed;this.visual={...this.point};this.confirmed=null;this.step=null;this.beginStep();}
             else if(this.step&&this.step.elapsed>3){this.serverReady=false;this.clearMovement();this.connection?.reconnect();this.statusText='移动未获服务器确认 · 正在重新连接';}
         }
         this.pickupAtDestination();
@@ -403,7 +406,7 @@ export class MirWorld extends Component {
             const p={x:event.x-this.manifest.map.originX,y:event.y-this.manifest.map.originY};
             if(event.type==='state'){
                 if(!this.step||event.seq!==this.step.seq)return;
-                this.confirmed=p;this.lastMoveAcceptedAt=event.accepted===true?this.worldClock:-Infinity;
+                this.confirmed=p;this.lastMoveAcceptedAt=event.accepted===true?performance.now()/1000:-Infinity;
             } else {this.clearMovement();this.point=p;this.visual={...p};}
             if(event.accepted===false){this.stepSoundPhase=2;const goal=this.path[this.path.length-1],avoid=this.step?.to;this.path=goal&&this.pathFailures++<3?this.pathFor(p,goal,avoid):[];this.keys.clear();}
         }
@@ -524,7 +527,7 @@ export class MirWorld extends Component {
         this.stats=this.nativeLabel(bar,'',678,154,12,80,Color.WHITE);this.status=this.nativeLabel(bar,this.statusText,208,236,8,384,C.muted);this.status.node.active=false;
         this.logText=this.nativeLabel(bar,'',212,162,11,377);this.logText.node.getComponent(UITransform)!.setContentSize(377,88);
         this.hint=this.nativeLabel(bar,'1–6 用药  F1–F8 技能  F11 设置  B 背包',212,219,9,377,C.muted);
-        for(const [x,y,action] of [[634,49,()=>this.showInventory('character')],[674,28,()=>this.showInventory('bag')],[714,8,()=>this.showSkills()]] as const){const hit=this.makeNode('Original round button',bar);hit.getComponent(UITransform)!.setAnchorPoint(0,1);hit.getComponent(UITransform)!.setContentSize(40,40);hit.setPosition(x,-y);this.nativeClick(hit,action);}
+        for(const [x,y,action] of [[634,49,()=>this.showInventory('character')],[674,28,()=>this.showInventory('bag')],[714,8,()=>this.toggleSkills()]] as const){const hit=this.makeNode('Original round button',bar);hit.getComponent(UITransform)!.setAnchorPoint(0,1);hit.getComponent(UITransform)!.setContentSize(40,40);hit.setPosition(x,-y);this.nativeClick(hit,action);}
         this.belt=this.makeNode('Six original item slots',bar);this.refreshBelt();
         const mute=this.makeNode('Sound toggle',bar);mute.getComponent(UITransform)!.setAnchorPoint(0,1);mute.getComponent(UITransform)!.setContentSize(40,40);mute.setPosition(754,0);this.nativeClick(mute,()=>this.notice(this.sound.toggle()?'音效已开启':'音效已静音'));
         this.coord=this.nativeLabel(bar,'比奇省',29,235,12,175,Color.WHITE);this.targetText=this.nativeField(bar,'',214,124,374,16,11,Color.WHITE);
@@ -885,6 +888,12 @@ export class MirWorld extends Component {
         const occupied=this.magics.find(m=>m.spell!==spell&&m.key===this.bindingKey&&this.bindingKey>0);
         this.nativeLabel(dialog,this.skillPending?'正在保存…':occupied?`将替换${this.skillName(occupied.spell)}的键位`:'选择快捷键，确认保存；Esc 取消。',32,122,10,310,C.muted);
         this.nativeButton(dialog,'ui:ClassicPrguse:62',222,131,()=>this.saveSkillKey());
+    }
+    private toggleSkills():void {
+        if(this.menu.active&&this.menuKind==='inventory'&&this.characterOpen&&this.characterPage===3){
+            this.showInventory('character');return;
+        }
+        this.showSkills();
     }
     private showSkills(page=0):void {
         const bag=this.menu.active&&this.menuKind==='inventory'?this.bagOpen:this.menuKind==='skillKeys'?this.skillReturnBag:false;
