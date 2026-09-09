@@ -16,3 +16,59 @@ assert text.count(idle)==1, 'Upstream loop changed; review scheduler yield'
 text=text.replace(idle,'                        Thread.Sleep(1); // Web host: bounded scheduler yield, no timer scaling.')
 out=root/'server/engine/generated/Envir.cs';out.parent.mkdir(parents=True,exist_ok=True)
 if not out.exists() or out.read_text()!=text: out.write_text(text)
+
+# Safety corrections to the pinned trading implementation. Keep upstream intact;
+# exact anchors fail the build if its implementation changes.
+player=(root/'vendor/Crystal/Server/MirObjects/PlayerObject.cs').read_text(encoding='utf-8-sig')
+def replace_player(old,new,count=1):
+    global player
+    assert player.count(old)==count, 'Upstream trade changed; review patch: '+old[:80]
+    player=player.replace(old,new)
+replace_player('''        public void DepositTradeItem(int from, int to)
+''','''        // Revalidate the original adjacent, facing-player requirement at acceptance.
+        private bool WebTradePeerValid(PlayerObject other)
+        {
+            return other != null && other != this && !Dead && !other.Dead &&
+                CurrentMap != null && CurrentMap == other.CurrentMap &&
+                Functions.InRange(CurrentLocation, other.CurrentLocation, 1) &&
+                Functions.FacingEachOther(Direction, CurrentLocation, other.Direction, other.CurrentLocation);
+        }
+
+        public void DepositTradeItem(int from, int to)
+''')
+replace_player('''            S.DepositTradeItem p = new S.DepositTradeItem { From = from, To = to, Success = false };
+''','''            S.DepositTradeItem p = new S.DepositTradeItem { From = from, To = to, Success = false };
+
+            if (!WebTradePeerValid(TradePartner) || TradePartner.TradePartner != this)
+            {
+                Enqueue(p);
+                return;
+            }
+''')
+replace_player('''            TradePartner = TradeInvitation;
+            TradeInvitation.TradePartner = this;''','''            if (!AllowTrade || !WebTradePeerValid(TradeInvitation))
+            {
+                TradeInvitation = null;
+                return;
+            }
+
+            TradePartner = TradeInvitation;
+            TradeInvitation.TradePartner = this;''')
+replace_player('''            if (!Functions.InRange(TradePartner.CurrentLocation, CurrentLocation, Globals.DataRange) || TradePartner.CurrentMap != CurrentMap ||
+                !Functions.FacingEachOther(Direction, CurrentLocation, TradePartner.Direction, TradePartner.CurrentLocation))''','''            if (!WebTradePeerValid(TradePartner) || TradePartner.TradePartner != this)''')
+replace_player('''        public void TradeGold(uint amount)
+        {
+            TradeUnlock();
+
+            if (TradePartner == null) return;''','''        public void TradeGold(uint amount)
+        {
+            if (!WebTradePeerValid(TradePartner) || TradePartner.TradePartner != this) return;
+            TradeUnlock();''')
+# Both item capacity and wallet capacity failures tell clients to unlock. The
+# authoritative flags must agree so one later click cannot commit both parties.
+replace_player('''                    CanTrade = false;
+                    TradePair[p].ReceiveChat''','''                    CanTrade = false;
+                    TradeUnlock();
+                    TradePair[p].ReceiveChat''',2)
+out=root/'server/engine/generated/PlayerObject.cs'
+if not out.exists() or out.read_text()!=player: out.write_text(player)
