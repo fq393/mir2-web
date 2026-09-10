@@ -373,7 +373,9 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey, IReadOnlyDi
                 }
                 if(command=="attackMode"&&(Num("mode")<0||Num("mode")>5)){await Send(new{type="error",message="无效的攻击模式。"},ct);continue;}
                 if(command=="moveItem"&&(Num("from")<6||Num("from")>45||Num("to")<6||Num("to")>45)){await Send(new{type="error",message="背包格超出范围。"},ct);continue;}
+                if(command=="dropItem"&&Num("count")!=1){await Send(new{type="error",message="当前仅支持丢弃单件物品。"},ct);continue;}
                 Packet? action=command switch {
+                    "dropItem"=>new C.DropItem {UniqueID=Id("uniqueId"),Count=1,HeroInventory=false},
                     "moveItem"=>new C.MoveItem {Grid=MirGridType.Inventory,From=Num("from"),To=Num("to")},
                     "attackMode"=>new C.ChangeAMode {Mode=(AttackMode)Num("mode")},
                     "groupSwitch"=>new C.SwitchGroup {AllowGroup=r.GetProperty("allow").GetBoolean()},

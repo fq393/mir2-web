@@ -117,6 +117,7 @@ try {
     WildlifeTests.Run(root,envir,connection);
     MerchantTests.Run(root,envir,connection);
     PlayerTradeTests.Run(envir,connection);
+    PlayerDropTests.Run(envir,connection);
     SkillBindingTests.Run();
     BookshopTests.Run(root,envir,connection);
     EquipmentShopTests.Run(root,envir,connection);

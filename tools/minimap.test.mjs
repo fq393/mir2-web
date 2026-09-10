@@ -15,7 +15,7 @@ test('expanded map clicks round-trip native pixel coordinates and its bounds shi
   const m=new MiniMap(p=>routes.push(p));m.toggle();m.update(1,'0',{x:288,y:615},[],true);
   assert.equal(m.blocksWorld(100,48),true);assert.equal(m.blocksWorld(699,447),true);assert.equal(m.blocksWorld(700,448),false);
   const canvas=nodes[1];canvas.events.click({stopPropagation(){},clientX:100+(302.5*1.5/1052)*600,clientY:48+(623.5/700)*400});
-  assert.deepEqual(routes,[{x:302,y:623}]);assert.equal(m.blocksWorld(400,300),false);assert.equal(m.blocksWorld(700,50),true);
+  assert.deepEqual(routes,[{x:302,y:623}]);assert.equal(m.blocksWorld(400,300),true);assert.equal(nodes[2].hidden,false);nodes[2].events.click({stopPropagation(){}});assert.equal(m.blocksWorld(400,300),false);assert.equal(nodes[2].hidden,true);assert.equal(m.blocksWorld(700,50),true);
   m.update(1,'0141',{x:2,y:11},[],true);assert.equal(m.blocksWorld(700,50),false);m.destroy();
  }finally{Object.assign(globalThis,saved);}
 });

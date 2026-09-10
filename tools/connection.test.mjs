@@ -488,3 +488,27 @@ test('pointer Alt still harvests when keyboard modifier state was lost, and next
  w.windowPointerDown({altKey:true,button:2});w.onMouse({getButton:()=>0,getUILocation:()=>({x:400,y:300})});assert.equal(harvested,1);assert.equal(moved,0);
  w.windowPointerDown({altKey:false,button:2});w.onMouse({getButton:()=>0,getUILocation:()=>({x:400,y:300})});assert.equal(moved,1);assert.equal(w.pointerAlt,false);
 });
+
+test('closing a native panel consumes the same mouse/touch release before navigation',()=>{
+ const w=world();w.sound={unlock(){},play(){}};let moves=0;w.destination=()=>moves++;const events={};
+ w.nativeClick({on:(name,fn)=>events[name]=fn},()=>{w.menu.active=false;});w.menu.active=true;
+ events.mouse({propagationStopped:false});w.onMouse({getButton:()=>0,getUILocation:()=>({x:300,y:400})});w.onTouch({getUILocation:()=>({x:300,y:400})});
+ assert.equal(moves,0);w.uiGesture=false;w.onMouse({getButton:()=>0,getUILocation:()=>({x:300,y:400})});assert.equal(moves,1);
+});
+test('round HUD button transparent edges still block world navigation',()=>{
+ for(const r of classicLayout.HUD_CONTROLS)for(const [x,y] of [[r.x,r.y],[r.x+r.w-1,r.y+r.h-1]])assert.equal(classicLayout.blocksWorld(x,y,[],[]),true);
+ assert.equal(classicLayout.blocksWorld(600,350,[],[]),false);
+});
+
+test('carried equipment drop waits for matching success and failure keeps item',()=>{
+ const w=world();w.serverReady=true;w.inventory=Array(46).fill(null);const item={uniqueid:'99',count:1};w.inventory[6]=item;w.selectedBag=6;let sent=[];w.connection.send=c=>{sent.push(c);return true;};w.notice=()=>{};w.refreshBelt=()=>{};
+ assert.equal(w.dropCarried({x:400,y:300}),true);assert.equal(w.inventory[6],item);assert.equal(sent[0].type,'dropItem');w.dropCarried({x:400,y:300});assert.equal(sent.length,1);
+ w.packet('DropItem',{UniqueID:'wrong',Success:true});assert.equal(w.inventory[6],item);
+ w.packet('DropItem',{UniqueID:'99',Success:false});assert.equal(w.inventory[6],item);assert.equal(w.bagMovePending,false);
+ w.dropCarried({x:400,y:300});w.packet('DropItem',{UniqueID:'99',Success:true});assert.equal(w.inventory[6],null);assert.equal(w.selectedBag,-1);
+});
+
+test('lost drop reply reconnects to authoritative inventory instead of retrying removal',()=>{
+ const w=world();w.notice=()=>{};w.serverReady=true;w.inventory[6]={uniqueid:'keep',count:1};w.pendingDrop='keep';w.pendingDropAt=Date.now()-6000;w.bagMovePending=true;w.syncCarriedItem();
+ assert.equal(w.reconnected,true);assert.equal(w.inventory[6].uniqueid,'keep');assert.equal(w.pendingDrop,null);
+});
