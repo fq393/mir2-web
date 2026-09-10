@@ -1,3 +1,4 @@
+import {shopRows,shopPrice} from './core/shop';
 import {CLASSIC_FONT_FAMILY,classicFont} from './core/typography';
 import {playerLayers,equippedShape,actorFrame} from './core/appearance';
 import {MiniMap} from './platform/MiniMap';
@@ -114,6 +115,8 @@ export class MirWorld extends Component {
             Object.values(classicNPC.frames).forEach((f:any)=>f.atlas+=npcAtlasBase);
             Object.assign(this.manifest.frames,classicNPC.frames);this.store.registerFrames(classicNPC.frames);this.manifest.atlases.push(...classicNPC.atlases);
             this.manifest.actors={...this.manifest.actors,...classicNPC.actors};
+            const chicken=(await resource<JsonAsset>('mir/actors/classic-chicken',JsonAsset)).json as any;
+            const chickenBase=this.manifest.atlases.length;Object.values(chicken.frames).forEach((f:any)=>f.atlas+=chickenBase);Object.assign(this.manifest.frames,chicken.frames);this.store.registerFrames(chicken.frames);this.manifest.atlases.push(...chicken.atlases);this.manifest.actors={...this.manifest.actors,...chicken.actors};
             const classicPlayer=(await resource<JsonAsset>('mir/actors/classic-player',JsonAsset)).json as any;
             const playerAtlasBase=this.manifest.atlases.length;
             Object.values(classicPlayer.frames).forEach((f:any)=>f.atlas+=playerAtlasBase);
@@ -200,7 +203,9 @@ export class MirWorld extends Component {
         this.moveInventoryWindow();this.positionCarriedItem();this.positionItemTooltip();
     };
     private blockDragMouse=(event:MouseEvent):void=>{if(this.windowDrag||Date.now()<this.dragMouseUntil){event.preventDefault();event.stopImmediatePropagation();}};
+    private pointerAlt=false;
     private windowPointerDown=(event:PointerEvent):void=>{
+        this.pointerAlt=event.altKey;
         if(event.button!==0||event.target!==document.querySelector('canvas')||this.accounts?.active||!this.menu.active||this.menuKind!=='inventory')return;
         this.trackPointer(event);const p=this.mousePoint;
         const id=[...this.windowOrder].reverse().find(id=>{const r=this.inventoryWindows.get(id)?.rect;return r&&p.x>=r.x&&p.x<r.x+r.w&&p.y>=r.y&&p.y<r.y+r.h;});if(!id)return;
@@ -229,9 +234,9 @@ export class MirWorld extends Component {
     }
     private preventContext=(e:Event):void=>{e.preventDefault();if(!this.bagMovePending&&!this.equipmentPending){this.selectedBag=-1;this.selectedEquipment=-1;this.clearItemTooltip();}};
     private onKeyUp(e:EventKeyboard):void {this.keys.delete(e.keyCode);}
-    private pauseInput():void {this.autoAttack=false;this.runRequested=false;this.windowDrag=null;this.sound.stop();this.keys.clear();this.path=[];}
-    private onMouse(e:EventMouse):void {if(this.accounts?.active||this.selectedBag>=6||this.selectedEquipment>=0||this.equipmentPending||this.windowDrag||Date.now()<this.dragMouseUntil)return;this.sound.unlock();if(e.getButton()!==0&&e.getButton()!==2)return;this.runRequested=e.getButton()===2;const p=e.getUILocation();if(this.miniMap?.blocksWorld(p.x,600-p.y))return;if(this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT)){this.harvestAt({x:p.x,y:600-p.y});return;}this.destination(p);}
-    private onTouch(e:EventTouch):void {if(this.accounts?.active||this.selectedBag>=6||this.selectedEquipment>=0||this.equipmentPending||this.windowDrag||Date.now()<this.dragMouseUntil)return;this.sound.unlock();const p=e.getUILocation();if(this.miniMap?.blocksWorld(p.x,600-p.y))return;if(this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT)){this.harvestAt({x:p.x,y:600-p.y});return;}this.destination(p);}
+    private pauseInput():void {this.pointerAlt=false;this.autoAttack=false;this.runRequested=false;this.windowDrag=null;this.sound.stop();this.keys.clear();this.path=[];}
+    private onMouse(e:EventMouse):void {if(this.accounts?.active||this.selectedBag>=6||this.selectedEquipment>=0||this.equipmentPending||this.windowDrag||Date.now()<this.dragMouseUntil)return;this.sound.unlock();if(e.getButton()!==0&&e.getButton()!==2)return;this.runRequested=e.getButton()===2;const p=e.getUILocation();if(this.miniMap?.blocksWorld(p.x,600-p.y))return;if(this.pointerAlt||this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT)){this.harvestAt({x:p.x,y:600-p.y});return;}this.destination(p);}
+    private onTouch(e:EventTouch):void {if(this.accounts?.active||this.selectedBag>=6||this.selectedEquipment>=0||this.equipmentPending||this.windowDrag||Date.now()<this.dragMouseUntil)return;this.sound.unlock();const p=e.getUILocation();if(this.miniMap?.blocksWorld(p.x,600-p.y))return;if(this.pointerAlt||this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT)){this.harvestAt({x:p.x,y:600-p.y});return;}this.destination(p);}
     private onHover(e:EventMouse):void {
         if(!this.ready)return;const p=e.getUILocation(),screen={x:p.x,y:600-p.y};
         this.mousePoint=screen;this.positionItemTooltip();this.positionCarriedItem();
@@ -346,7 +351,7 @@ export class MirWorld extends Component {
         sorted.push({node:this.feet,sort:actorOrder((this.step?.to??this.point).y,this.ownId)});
         this.peers.forEach((p,id)=>{
             p.node.setPosition(p.visual.x*48,-p.visual.y*32);
-            const action=p.dead?(p.harvested&&p.image===4?'skeleton':'die'):(p.actionTime??0)>0?p.action!:(p.elapsed<0.6?(p.running?'run':'walk'):'stand');
+            const action=p.dead?(p.harvested&&(p.image===4||p.image===3)?'skeleton':'die'):(p.actionTime??0)>0?p.action!:(p.elapsed<0.6?(p.running?'run':'walk'):'stand');
             const layers=playerLayers(p.gender??0,p.hairShape??0,p.armour??0,p.weaponShape??-1);
             const actor=p.kind==='monster'?`monster${p.image}`:p.kind==='npc'?`npc${p.image}`:layers.body;
             this.drawActor(p.body,actor,action,p.direction,p.elapsed);
@@ -478,7 +483,7 @@ export class MirWorld extends Component {
         this.npcId=this.selected;this.connection?.send({type:'npc',id:this.npcId,key:'[@MAIN]'});
     }
     private belt!:Node;private pendingUses=new Set<string>();private lastUse=0;
-    private nativeLayer!:Node;private hpOrb!:Sprite;private mpOrb!:Sprite;private hpText!:Label;private mpText!:Label;private baseStats:any[]=[];private selectedGood:any=null;private shopRate=1;
+    private nativeLayer!:Node;private hpOrb!:Sprite;private mpOrb!:Sprite;private hpText!:Label;private mpText!:Label;private baseStats:any[]=[];private selectedGood:any=null;private shopRate=1;private shopDetail:number|null=null;
     private nativeImage(parent:Node,key:string,x:number,y:number,offset=false):Sprite {
         const f=this.frames.get(key);if(!f)throw Error('Missing original UI sprite '+key);
         const s=this.sprite(parent,key);s.spriteFrame=f.sprite;s.node.setPosition(x+(offset?f.meta.offsetX:0),-y-(offset?f.meta.offsetY:0));return s;
@@ -823,11 +828,7 @@ export class MirWorld extends Component {
         if(this.tradeQuote){this.nativeClick(button.node,()=>{const token=this.tradeQuote?.token;if(!token)return;this.tradeQuote=null;this.connection?.send({type:'tradeCommit',request:this.tradeRequest,token});this.showMerchant();});}
         else button.color=new Color(130,130,130,255);
     }
-    private shopPrice(item:any):number {
-        const info=this.itemInfo.get(item.itemindex);if(!info)return 0;let p=info.price;
-        if(info.durability>0){p=Math.floor((item.maxdura??0)*(info.price/2/info.durability));const ratio=item.maxdura>0?item.currentdura/item.maxdura:0;p=Math.floor(p/2+p/2*ratio+info.price/2);}
-        return Math.floor(p*(1+(item.addedstats?.count??0)*.1)*(item.count??1)*this.shopRate);
-    }
+    private shopPrice(item:any):number {return shopPrice(item,this.itemInfo.get(item.itemindex),this.shopRate);}
     private showShop():void {
         this.menuKind='shop';this.menu.children.slice().forEach(c=>c.destroy());this.panelRects=[];this.menu.active=true;
         // FState.ShowShopItems keeps the merchant conversation above its item list.
@@ -838,25 +839,27 @@ export class MirWorld extends Component {
         // FState.Init/DMenuDlgDirectPaint: original 385 frame, 10 rows at 13px.
         const dialog=this.nativeWindow(this.menu,'ui:ClassicPrguse:385',0,176);
         for(const [text,x,width] of [['物品列表',19,127],['费用(金币)',156,77],['持久',245,38]] as const)this.nativeField(dialog,text,x,9,width,16,12,Color.WHITE);
-        this.goods.slice(this.shopTop,this.shopTop+10).forEach((item,i)=>{
+        const rows=shopRows(this.goods,this.shopDetail);
+        rows.slice(this.shopTop,this.shopTop+10).forEach((item,i)=>{
             const selected=String(this.selectedGood?.uniqueid)===String(item.uniqueid),color=selected?Color.RED:Color.WHITE,y=38+i*13;
             if(selected)this.nativeLabel(dialog,'•',10,y,12,10,Color.RED);
             const row=this.makeNode('商品 '+this.itemName(item),dialog);row.setPosition(14,-(32+i*13));row.getComponent(UITransform)!.setAnchorPoint(0,1);row.getComponent(UITransform)!.setContentSize(265,13);
-            this.nativeClick(row,()=>{this.selectedGood=item;this.showShop();this.targetText.string=this.itemHint(item);});
-            this.bindItemTooltip(row,item);
+            this.nativeClick(row,()=>{this.selectedGood=item;this.showShop();this.targetText.string=item.shopGroup?this.itemName(item):this.itemHint(item);});
+            if(!item.shopGroup)this.bindItemTooltip(row,item);
             this.nativeField(dialog,this.itemName(item),19,y-6,127,13,12,color);
-            this.nativeField(dialog,String(this.shopPrice(item)),156,y-6,77,13,12,color,Label.HorizontalAlign.RIGHT);
-            this.nativeField(dialog,item.maxdura?String(Math.ceil(item.maxdura/1000)):'-',245,y-6,38,13,12,color,Label.HorizontalAlign.CENTER);
+            this.nativeField(dialog,item.shopGroup?"":String(this.shopPrice(item)),156,y-6,77,13,12,color,Label.HorizontalAlign.RIGHT);
+            this.nativeField(dialog,item.shopGroup?"":item.maxdura?String(Math.ceil(item.maxdura/1000)):'-',245,y-6,38,13,12,color,Label.HorizontalAlign.CENTER);
         });
         this.nativeButton(dialog,'ui:ClassicPrguse:388',43,175,()=>{this.shopTop=Math.max(0,this.shopTop-9);this.showShop();});
-        this.nativeButton(dialog,'ui:ClassicPrguse:387',90,175,()=>{if(this.shopTop+10<this.goods.length)this.shopTop+=9;this.showShop();});
+        this.nativeButton(dialog,'ui:ClassicPrguse:387',90,175,()=>{if(this.shopTop+10<rows.length)this.shopTop+=9;this.showShop();});
         this.nativeButton(dialog,'ui:ClassicPrguse:386',215,171,()=>{
             if(!this.selectedGood){this.notice('请先选择物品。');return;}
+            if(this.selectedGood.shopGroup){this.shopDetail=this.selectedGood.itemindex;this.selectedGood=null;this.shopTop=0;this.clearItemTooltip();this.showShop();return;}
             if(this.gold<this.shopPrice(this.selectedGood)){this.notice('金币不足。');return;}
             if(!this.inventory.some(i=>!i)){this.notice('背包空间不足。');return;}
-            this.connection?.send({type:'buy',itemIndex:Number(this.selectedGood.uniqueid),count:1});
+            this.connection?.send({type:'buy',itemIndex:String(this.selectedGood.uniqueid),count:1});
         });
-        this.nativeButton(dialog,'ui:ClassicPrguse:64',291,0,()=>{this.clearItemTooltip();this.connection?.send({type:'npc',id:this.npcId,key:'[@MAIN]'});});
+        this.nativeButton(dialog,'ui:ClassicPrguse:64',291,0,()=>{this.clearItemTooltip();if(this.shopDetail!==null){this.shopDetail=null;this.selectedGood=null;this.shopTop=0;this.showShop();return;}this.connection?.send({type:'npc',id:this.npcId,key:'[@MAIN]'});});
     }
     private skillRequest=0;private skillPending=false;private skillPage=0;private bindingSpell=0;private bindingKey=0;
     private skillName(spell:number):string {
@@ -914,7 +917,7 @@ export class MirWorld extends Component {
         if(d.objectid===this.ownId||!d.location)return;let p=this.peers.get(d.objectid);
         if(!p){const node=this.makeNode(`Entity${d.objectid}`,this.objects),body=this.sprite(node,'Body'),label=this.text(this.labels,'',0,0,12,Color.WHITE,160);
             this.outlineName(label);p={node,body,label,point:d.location,visual:{...d.location},from:{...d.location},direction:d.direction??4,elapsed:1};this.peers.set(d.objectid,p);}
-        const names:Record<string,string>={BichonTrader:'比奇商人',BichonDeer:'鹿',BichonScarecrow:'稻草人'};
+        const names:Record<string,string>={BichonTrader:'比奇商人',BichonChicken:'鸡',BichonDeer:'鹿',BichonScarecrow:'稻草人'};
         if(kind==='player'&&!p.weapon){p.weapon=this.sprite(p.node,'Weapon');p.hair=this.sprite(p.node,'Hair');}
         if(d.namecolour&&p.label)p.label.color=this.nameColor(d.namecolour);
         Object.assign(p,{kind,name:names[d.name]??d.name??kind,image:d.image??0,armour:d.armour??0,weaponShape:d.weapon??-1,hairShape:d.hair??0,gender:d.gender??0,dead:d.dead??false,harvested:d.skeleton??false});
@@ -998,7 +1001,7 @@ export class MirWorld extends Component {
         if(name==='NPCSell')this.showMerchant('sell');
         if(name==='NPCRepair')this.showMerchant('repair');
         if(name==='NPCSRepair')this.showMerchant('special');
-        if(name==='NPCGoods'){this.shopBagOpen=true;this.goods=d.list??[];this.shopRate=d.rate??1;this.selectedGood=null;this.shopTop=0;this.showShop();}
+        if(name==='NPCGoods'){this.shopBagOpen=true;const wasShop=this.menuKind==='shop';this.goods=d.list??[];if(!wasShop||!this.goods.some(i=>i.itemindex===this.shopDetail))this.shopDetail=null;this.shopRate=d.rate??1;this.selectedGood=null;this.shopTop=0;this.showShop();}
         if(name==='Chat'&&d.message)this.notice(d.message,d.type??0);
         if(name==='ObjectChat'&&d.text)this.notice(d.text,d.type??0);
         if(['SwitchGroup','AddMember','DeleteMember','DeleteGroup','GroupInvite'].includes(name))this.party?.event(name,d);

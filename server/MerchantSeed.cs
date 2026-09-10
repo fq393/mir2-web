@@ -37,7 +37,13 @@ static class MerchantSeed {
   var tailor=envir.NPCInfoList.FirstOrDefault(n=>n.FileName=="BoundaryTailor");
   if(tailor==null){tailor=new NPCInfo{Index=++envir.NPCIndex,FileName="BoundaryTailor"};envir.NPCInfoList.Add(tailor);}
   tailor.Name="白家服装老板";tailor.MapIndex=map.Index;tailor.Location=new Point(305,607);tailor.Image=7;tailor.Rate=100;tailor.Colour=Color.Lime;
-  foreach(var shop in new[]{(File:"BoundarySmith",Stock:"weapons",Name:"武器",Types:new[]{ItemType.Weapon}),(File:"BoundaryTailor",Stock:"clothes",Name:"衣服",Types:new[]{ItemType.Armour,ItemType.Helmet})}){
+  // Each pinned merchant script calls the same stock file as its boundary counterpart.
+  foreach(var spec in new[]{(File:"BichonCitySmith",Name:"比奇铁匠铺老板",X:302,Y:219,Image:0),(File:"GinkgoSmith",Name:"精武馆老板",X:649,Y:602,Image:0),(File:"GinkgoTailor",Name:"高家店老板",X:643,Y:601,Image:7)}){
+   var npc=envir.NPCInfoList.FirstOrDefault(n=>n.FileName==spec.File);
+   if(npc==null){npc=new NPCInfo{Index=++envir.NPCIndex,FileName=spec.File};envir.NPCInfoList.Add(npc);}
+   npc.Name=spec.Name;npc.MapIndex=map.Index;npc.Location=new Point(spec.X,spec.Y);npc.Image=(ushort)spec.Image;npc.Rate=100;npc.Colour=Color.Lime;
+  }
+  foreach(var shop in new[]{(File:"BoundarySmith",Stock:"weapons",Name:"武器",Types:new[]{ItemType.Weapon}),(File:"BichonCitySmith",Stock:"weapons",Name:"武器",Types:new[]{ItemType.Weapon}),(File:"GinkgoSmith",Stock:"weapons",Name:"武器",Types:new[]{ItemType.Weapon}),(File:"BoundaryTailor",Stock:"clothes",Name:"衣服",Types:new[]{ItemType.Armour,ItemType.Helmet}),(File:"GinkgoTailor",Stock:"clothes",Name:"衣服",Types:new[]{ItemType.Armour,ItemType.Helmet})}){
    var goods=string.Join("\n",source.GetProperty(shop.Stock).EnumerateArray().Select(v=>v.GetString()+" 1"));
    var types=string.Join("\n",shop.Types.Select(v=>(int)v));
    File.WriteAllText(Path.Combine(Settings.NPCPath,shop.File+".txt"),"[@MAIN]\n#SAY\n欢迎光临，你需要点什么？\\\n<购买"+shop.Name+"/@BUY>\\\n<出售"+shop.Name+"/@SELL>\\\n<修理装备/@REPAIR>\\\n<特殊修理/@SREPAIR>\\\n<关闭/@EXIT>\n\n[@BUY]\n#SAY\n请选择物品。\n\n[@SELL]\n#SAY\n请选择要出售的物品。\n\n[@REPAIR]\n#SAY\n请选择需要修理的装备。\n\n[@SREPAIR]\n#SAY\n请选择需要特殊修理的装备。\n\n[TYPES]\n"+types+"\n\n[TRADE]\n"+goods+"\n");

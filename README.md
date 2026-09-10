@@ -56,6 +56,7 @@ bash tools/setup-assets.sh
 .runtime/assets-venv/bin/python tools/convert-ui.py
 .runtime/assets-venv/bin/python tools/convert-classic-npcs.py
 .runtime/assets-venv/bin/python tools/convert-classic-players.py
+.runtime/assets-venv/bin/python tools/convert-classic-chicken.py
 .runtime/assets-venv/bin/python tools/convert-interiors.py
 .runtime/assets-venv/bin/python tools/convert-interiors.py 0141
 .runtime/assets-venv/bin/python tools/fetch-audio.py

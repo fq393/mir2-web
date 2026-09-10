@@ -390,6 +390,30 @@
       "bytes": 85414,
       "sha256": "adddb2edbb636d9099f76e06bb0f430b746fb3f8e0e5d5bca1835cef27a3e11a",
       "verification": "Original gender-specific hurt/death sound, SoundUtil.pas"
+    },
+    {
+      "file": "003-1.wav",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/1800-2.wav",
+      "bytes": 84180,
+      "sha256": "02d5ae2406694be106a1b73a9d61a519ab3a40219135589396fb8a5361bd42cb",
+      "originalFilename": "1800-2.wav",
+      "verification": "Original sound.lst 1802; chicken Appr 160"
+    },
+    {
+      "file": "003-2.wav",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/1800-4.wav",
+      "bytes": 88306,
+      "sha256": "3d76f878c53c8613eddccbb1fea4b2f6800d6921014a35e491be0af7bb0169f9",
+      "originalFilename": "1800-4.wav",
+      "verification": "Original sound.lst 1804; chicken Appr 160"
+    },
+    {
+      "file": "003-3.wav",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/1800-5.wav",
+      "bytes": 164650,
+      "sha256": "0e122f5e380bc0e11cd1055815462ef8cdd4fae147a71ec7a3bef15871295890",
+      "originalFilename": "1800-5.wav",
+      "verification": "Original sound.lst 1805; chicken Appr 160"
     }
   ],
   "missing": [

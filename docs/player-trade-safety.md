@@ -40,3 +40,7 @@ DOTNET_ROOT="$PWD/.runtime/dotnet" DOTNET_CLI_HOME="$PWD/.runtime/dotnet/home" N
 ```
 
 引擎回归通过不能替代网页双人实测；本批不提供不存在的浏览器验收截图。
+
+## 2026-09-10 补充
+
+反复存入金币时，原 `TradeGoldAmount += amount` 会发生 uint 溢出。新增真实引擎回归先复现托管归零/钱包扣款，再加 `amount > uint.MaxValue - TradeGoldAmount` 拒绝条件，保持两处余额不变。此修复仅覆盖存入溢出，**不代表取消返还容量和整个交易闭环已完成**。基线内容回归改用临时复制的配置，排除线上管理员自定义数值干扰，未修改主账号或后台配置。

@@ -28,6 +28,9 @@ static class WildlifeSeed
         var meat=envir.ItemInfoList.FirstOrDefault(i=>i.Name=="肉");
         if(meat==null){meat=new ItemInfo{Index=++envir.ItemIndex,Name="肉"};envir.ItemInfoList.Add(meat);}
         meat.Type=ItemType.Meat;meat.Image=1;meat.Weight=3;meat.Durability=10000;meat.Price=200;meat.StackSize=1;meat.RequiredAmount=0;meat.StartItem=false;
+        var chickenMeat=envir.ItemInfoList.FirstOrDefault(i=>i.Name=="鸡肉");
+        if(chickenMeat==null){chickenMeat=new ItemInfo{Index=++envir.ItemIndex,Name="鸡肉"};envir.ItemInfoList.Add(chickenMeat);}
+        chickenMeat.Type=ItemType.Meat;chickenMeat.Image=13;chickenMeat.Weight=1;chickenMeat.Durability=4000;chickenMeat.Price=80;chickenMeat.StackSize=1;chickenMeat.RequiredAmount=0;chickenMeat.StartItem=false;
         foreach(var row in profile.GetProperty("monsters").EnumerateArray()){
             string key=row.GetProperty("key").GetString()!;
             var m=envir.MonsterInfoList.FirstOrDefault(m=>m.Name==key);

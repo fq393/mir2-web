@@ -27,6 +27,8 @@ if(!File.Exists(keyPath)) {
 var bridgeKey=File.ReadAllText(keyPath).Trim();
 Packet.IsServer = true;
 Settings.Load();
+// User-requested visible old-goods attributes; do not hide per-instance bonuses.
+Settings.GoodsHideAddedStats=false;
 ContentProfiles.ApplyGroundItemTimers(repoRoot);
 ChineseText.Apply();
 Settings.IPAddress = "127.0.0.1";

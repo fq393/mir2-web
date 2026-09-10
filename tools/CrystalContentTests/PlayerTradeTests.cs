@@ -50,6 +50,12 @@ static class PlayerTradeTests
         a.TradeGold(10);
         Check(a.Account.Gold == 1000 && a.TradeGoldAmount == 0, "stale session accepted gold deposit");
         b.CurrentLocation = new Point(6, 5);
+        // Incoming earnings while gold is escrowed must not wrap a repeated deposit.
+        a.TradeGoldAmount = uint.MaxValue - 5;
+        a.TradeGold(10);
+        Check(a.TradeGoldAmount == uint.MaxValue - 5 && a.Account.Gold == 1000,
+            "repeated gold deposit overflowed escrow or debited wallet");
+        a.TradeGoldAmount = 0; a.Account.Gold = 1000;
         a.DepositTradeItem(6, 0);
         Check(a.Info.Inventory[6] == null && a.Info.Trade[0] == item, "valid deposit failed");
         for (var i = 0; i < b.Info.Inventory.Length; i++) b.Info.Inventory[i] = envir.CreateFreshItem(definition);

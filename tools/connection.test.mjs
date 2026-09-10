@@ -481,3 +481,10 @@ test('death scene changes world sprites once, preserves HUD and restores after r
  w.hp=0;w.syncDeathScene();w.syncDeathScene();assert.equal(traversals,1);assert.ok(actors.every(s=>s.grayscale));assert.equal(hud.grayscale,false);
  w.hp=18;w.syncDeathScene();assert.equal(traversals,2);assert.ok(actors.every(s=>!s.grayscale));assert.deepEqual(terrain,[true,true,false]);
 });
+
+test('pointer Alt still harvests when keyboard modifier state was lost, and next click clears it',()=>{
+ const w=world();w.sound={unlock(){}};let harvested=0,moved=0;w.harvestAt=()=>harvested++;w.destination=()=>moved++;
+ // Non-left pointer exits the inventory drag path, but modifier state must still be captured.
+ w.windowPointerDown({altKey:true,button:2});w.onMouse({getButton:()=>0,getUILocation:()=>({x:400,y:300})});assert.equal(harvested,1);assert.equal(moved,0);
+ w.windowPointerDown({altKey:false,button:2});w.onMouse({getButton:()=>0,getUILocation:()=>({x:400,y:300})});assert.equal(moved,1);assert.equal(w.pointerAlt,false);
+});

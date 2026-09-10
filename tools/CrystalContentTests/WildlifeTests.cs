@@ -13,7 +13,7 @@ static class WildlifeTests {
   Settings.Multithreaded=false;Settings.MonsterRarityEnabled=false;Settings.DropRate=1;
   foreach(var name in new[]{"BichonHealthSmall","BichonManaSmall"})envir.ItemInfoList.Add(new ItemInfo{Index=++envir.ItemIndex,Name=name,Type=ItemType.Potion,StackSize=1});
   var content=new MapInfo{Index=800,FileName="test"};WildlifeSeed.Apply(envir,root,content);
-  Check(content.Respawns.Count==52&&content.Respawns.Sum(r=>r.Count)==2650,"candidate spawn rows changed");
+  Check(content.Respawns.Count==68&&content.Respawns.Sum(r=>r.Count)==3455,"candidate spawn rows changed");
   var indices=content.Respawns.Select(r=>r.RespawnIndex).ToArray();WildlifeSeed.Apply(envir,root,content);
   Check(indices.SequenceEqual(content.Respawns.Select(r=>r.RespawnIndex)),"spawn migration not idempotent");
   var deer=envir.MonsterInfoList.Single(m=>m.Name=="BichonDeer");var straw=envir.MonsterInfoList.Single(m=>m.Name=="BichonScarecrow");
@@ -67,6 +67,11 @@ static class WildlifeTests {
   owner.Info.Inventory[7]=null;carcass.Harvest(owner);
   Check(carcass.Harvested&&owner.Info.Inventory[7]?.Info.Name=="肉","harvest retry did not transfer meat");
   Check(owner.Info.Inventory.Count(i=>i?.Info.Type==ItemType.Meat)==1,"harvest duplicated meat");
+  var chicken=envir.MonsterInfoList.Single(m=>m.Name=="BichonChicken");
+  Check(chicken.Image==Monster.Hen&&chicken.AI==1&&chicken.Stats[Stat.HP]==5&&chicken.Experience==5,"chicken source mapping mismatch");
+  chicken.Drops.Clear();chicken.Drops.Add(DropInfo.FromLine("1/1 鸡肉"));var hen=MonsterObject.GetMonster(chicken);Check(hen.Spawn(map,new Point(10,10)),"chicken spawn failed");hen.Die();
+  owner.Info.Inventory[7]=null;for(int i=0;i<3;i++)hen.Harvest(owner);
+  var meatItem=owner.Info.Inventory[7];Check(hen.Harvested&&meatItem?.Info.Name=="鸡肉"&&meatItem.Info.Image==13&&meatItem.Info.Weight==1&&meatItem.Info.Durability==4000&&meatItem.Info.Price==80,"chicken harvest did not deliver sourced meat");
   // Production profile gives independent DC/MC/SC trials; shop creation stays plain.
   var ring=envir.ItemInfoList.Single(i=>i.Name=="牛角戒指");
   Check(ring.RandomStats.MaxDcChance==30&&ring.RandomStats.MaxDcMaxStat==7,"candidate bonus profile differs");

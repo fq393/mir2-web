@@ -64,6 +64,8 @@ replace_player('''        public void TradeGold(uint amount)
         {
             if (!WebTradePeerValid(TradePartner) || TradePartner.TradePartner != this) return;
             TradeUnlock();''')
+# Repeated deposits must retain the full unsigned balance instead of wrapping.
+replace_player("            if (amount < 1 || Account.Gold < amount)\n", "            if (amount < 1 || Account.Gold < amount || amount > uint.MaxValue - TradeGoldAmount)\n")
 # Both item capacity and wallet capacity failures tell clients to unlock. The
 # authoritative flags must agree so one later click cannot commit both parties.
 replace_player('''                    CanTrade = false;

@@ -6,10 +6,19 @@ using Server.MirEnvir;
 using Server.MirNetwork;
 using Server.MirObjects;
 
-var root=Path.GetFullPath(args[0]);
+var sourceRoot=Path.GetFullPath(args[0]);
 var sandbox=Path.Combine(Path.GetTempPath(),"mir2-content-test-"+Guid.NewGuid());
 Directory.CreateDirectory(sandbox);Directory.SetCurrentDirectory(sandbox);
 try {
+    // Baseline tests must not consume live admin overrides, which users can edit.
+    var root=Path.Combine(sandbox,"fixtures");
+    Directory.CreateDirectory(Path.Combine(root,"server/content"));
+    foreach(var file in Directory.GetFiles(Path.Combine(sourceRoot,"server/content"),"*.json"))
+        File.Copy(file,Path.Combine(root,"server/content",Path.GetFileName(file)));
+    foreach(var table in new[]{"reference-server176","reference-delphi"}) {
+        Directory.CreateDirectory(Path.Combine(root,"raw-assets",table));
+        File.Copy(Path.Combine(sourceRoot,"raw-assets",table,"StdItems.json"),Path.Combine(root,"raw-assets",table,"StdItems.json"));
+    }
     ProfileTests.Run(root);
     var clothCheck=new ItemInfo();DemoSeed.ApplyStarterArmourStats(clothCheck);
     foreach(var table in new[]{"reference-server176","reference-delphi"}){
@@ -122,7 +131,7 @@ try {
     Console.WriteLine("PASS immutable game-thread vitals, final HP/MP/weight, disconnect cleanup.");
     Check(checkedGoods==11,"missing stock");
     Console.WriteLine("PASS 11 real Crystal purchases: exact gold/durability/bag slot/replies; level/slot gates; insufficient gold, full bag and unknown stock do not mutate inventory or gold.");
-} finally {Directory.SetCurrentDirectory(root);Directory.Delete(sandbox,true);}
+} finally {Directory.SetCurrentDirectory(sourceRoot);Directory.Delete(sandbox,true);}
 static void Check(bool ok,string message){if(!ok)throw new Exception(message);}
 class RecordingPlayer:PlayerObject {
     public readonly List<Packet> Packets=new();

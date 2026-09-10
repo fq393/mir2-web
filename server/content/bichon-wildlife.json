@@ -9,7 +9,8 @@
     "Monster.DB numeric fields agree in both pinned candidates. AI numbers are mapped to Crystal behavior, never copied from Delphi Race.",
     "MonGen map 0 deer/scarecrow rows retained verbatim. Density is candidate-only and must be profiled.",
     "Scarecrow drops only include currently verified item definitions. Duplicate ebony sword and private-server special potions excluded. Deer drop file has corrupted item names; reconstruction is separately disclosed below.",
-    "Reconstructed candidate: deer first line keeps its readable 1/1 token; item identity 肉 inferred from old harvest guides and two agreeing StdItems databases. Corrupted extra entries, deer blood and any extra meat roll remain excluded. Not authenticated original probability."
+    "Reconstructed candidate: deer first line keeps its readable 1/1 token; item identity 肉 inferred from old harvest guides and two agreeing StdItems databases. Corrupted extra entries, deer blood and any extra meat roll remain excluded. Not authenticated original probability.",
+    "Chicken reconstructed drop: original file preserves 1/1 but item name is corrupted. 鸡肉 identity supported by mir.17173.com/monster/monster.htm and item/item.htm; properties agree in both pinned StdItems tables. Candidate probability, not authenticated official rate."
   ],
   "monsters": [
     {
@@ -43,6 +44,22 @@
       "moveMs": 1500,
       "attackMs": 2500,
       "undead": true
+    },
+    {
+      "name": "鸡",
+      "key": "BichonChicken",
+      "image": "Hen",
+      "ai": 1,
+      "level": 5,
+      "experience": 5,
+      "hp": 5,
+      "minDC": 1,
+      "maxDC": 1,
+      "accuracy": 3,
+      "agility": 10,
+      "moveMs": 1400,
+      "attackMs": 3000,
+      "undead": false
     }
   ],
   "respawns": [
@@ -513,6 +530,150 @@
       "spread": 60,
       "count": 80,
       "minutes": 4
+    },
+    {
+      "sourceLine": 117,
+      "name": "鸡",
+      "x": 350,
+      "y": 200,
+      "spread": 25,
+      "count": 20,
+      "minutes": 2
+    },
+    {
+      "sourceLine": 118,
+      "name": "鸡",
+      "x": 280,
+      "y": 260,
+      "spread": 25,
+      "count": 20,
+      "minutes": 2
+    },
+    {
+      "sourceLine": 119,
+      "name": "鸡",
+      "x": 405,
+      "y": 240,
+      "spread": 25,
+      "count": 20,
+      "minutes": 2
+    },
+    {
+      "sourceLine": 120,
+      "name": "鸡",
+      "x": 340,
+      "y": 310,
+      "spread": 25,
+      "count": 20,
+      "minutes": 2
+    },
+    {
+      "sourceLine": 163,
+      "name": "鸡",
+      "x": 663,
+      "y": 661,
+      "spread": 20,
+      "count": 30,
+      "minutes": 3
+    },
+    {
+      "sourceLine": 177,
+      "name": "鸡",
+      "x": 332,
+      "y": 252,
+      "spread": 160,
+      "count": 45,
+      "minutes": 5
+    },
+    {
+      "sourceLine": 179,
+      "name": "鸡",
+      "x": 317,
+      "y": 291,
+      "spread": 160,
+      "count": 45,
+      "minutes": 5
+    },
+    {
+      "sourceLine": 180,
+      "name": "鸡",
+      "x": 317,
+      "y": 249,
+      "spread": 160,
+      "count": 45,
+      "minutes": 5
+    },
+    {
+      "sourceLine": 230,
+      "name": "鸡",
+      "x": 350,
+      "y": 200,
+      "spread": 125,
+      "count": 80,
+      "minutes": 5
+    },
+    {
+      "sourceLine": 231,
+      "name": "鸡",
+      "x": 280,
+      "y": 260,
+      "spread": 125,
+      "count": 80,
+      "minutes": 5
+    },
+    {
+      "sourceLine": 232,
+      "name": "鸡",
+      "x": 405,
+      "y": 240,
+      "spread": 125,
+      "count": 80,
+      "minutes": 5
+    },
+    {
+      "sourceLine": 233,
+      "name": "鸡",
+      "x": 340,
+      "y": 310,
+      "spread": 125,
+      "count": 80,
+      "minutes": 5
+    },
+    {
+      "sourceLine": 290,
+      "name": "鸡",
+      "x": 295,
+      "y": 625,
+      "spread": 150,
+      "count": 80,
+      "minutes": 5
+    },
+    {
+      "sourceLine": 291,
+      "name": "鸡",
+      "x": 645,
+      "y": 625,
+      "spread": 40,
+      "count": 80,
+      "minutes": 5
+    },
+    {
+      "sourceLine": 295,
+      "name": "鸡",
+      "x": 295,
+      "y": 625,
+      "spread": 50,
+      "count": 50,
+      "minutes": 3
+    },
+    {
+      "sourceLine": 299,
+      "name": "鸡",
+      "x": 645,
+      "y": 625,
+      "spread": 40,
+      "count": 30,
+      "minutes": 3
     }
   ],
   "drops": {
@@ -528,6 +689,9 @@
     ],
     "BichonDeer": [
       "1/1 肉"
+    ],
+    "BichonChicken": [
+      "1/1 鸡肉"
     ]
   }
 }

@@ -1,0 +1,13 @@
+{
+  "sources": [
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Data/Mon17.wil",
+      "sha256": "a7622886f172213ae1ec68950e28732d5d6e65444e246d8f1eecebd0f8b02846"
+    },
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Data/Mon17.WIX",
+      "sha256": "12a763939ca90fad510ff95d01e12f90bd8fe29cca9988dff7693a52c30eb1b0"
+    }
+  ],
+  "reference": "pangliang/MirServer-Delphi@f829679d24acb3a097d396d737ab067db2c88ca2 Actor.pas MA11/GetMonImg/GetOffset"
+}
