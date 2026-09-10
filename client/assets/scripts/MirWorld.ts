@@ -6,7 +6,7 @@ import {PartyUI} from './platform/PartyUI';
 import {AccountUI} from './platform/AccountUI';
 import {ChatInput} from './platform/ChatInput';
 import {ATTACK_MODES} from './core/social';
-import {equipmentSound,itemDescription,itemHintPosition,itemRequirements,compactBagDescription} from './core/itemStats';
+import {weaponAttackSound,equipmentSound,itemDescription,itemHintPosition,itemRequirements,compactBagDescription} from './core/itemStats';
 import {CLASSIC,worldToScreen,screenToCell,blocksWorld,PanelRect,JEWELLERY_SLOTS} from './core/classicLayout';
 import {gainItem,consumeItem,equipmentTarget} from './core/inventory';
 import {healthWidth,showHealth} from './core/health';
@@ -203,13 +203,15 @@ export class MirWorld extends Component {
         this.moveInventoryWindow();this.positionCarriedItem();this.positionItemTooltip();
     };
     private blockDragMouse=(event:MouseEvent):void=>{if(this.windowDrag||Date.now()<this.dragMouseUntil){event.preventDefault();event.stopImmediatePropagation();}};
+    private heldButton:number|null=null;private heldTick=0;
     private pointerAlt=false;private uiGesture=false;private pendingDrop:string|null=null;private pendingDropAt=0;private exitToLogin=false;
     private windowPointerDown=(event:PointerEvent):void=>{
-        this.pointerAlt=event.altKey;this.uiGesture=false;
+        this.heldButton=null;this.pointerAlt=event.altKey;this.uiGesture=false;
         const canvas=typeof document!=='undefined'?document.querySelector('canvas'):null,rect=canvas?.getBoundingClientRect();
         if(rect?.width&&rect.height){const x=(event.clientX-rect.left)*800/rect.width,y=(event.clientY-rect.top)*600/rect.height;
             this.uiGesture=event.target!==canvas||blocksWorld(x,y,this.menu?.active?this.panelRects:[],this.hudRows)||(this.miniMap?.blocksWorld(x,y)??false);
         }
+        if(!this.uiGesture&&!event.altKey&&!this.accounts?.active&&this.selectedBag<6&&this.selectedEquipment<0&&(event.button===0||event.button===2)&&rect){this.mousePoint={x:(event.clientX-rect.left)*800/rect.width,y:(event.clientY-rect.top)*600/rect.height};this.heldButton=event.button;this.heldTick=0;}
         if(event.button!==0||event.target!==document.querySelector('canvas')||this.accounts?.active||!this.menu.active||this.menuKind!=='inventory')return;
         this.trackPointer(event);const p=this.mousePoint;
         const id=[...this.windowOrder].reverse().find(id=>{const r=this.inventoryWindows.get(id)?.rect;return r&&p.x>=r.x&&p.x<r.x+r.w&&p.y>=r.y&&p.y<r.y+r.h;});if(!id)return;
@@ -223,6 +225,7 @@ export class MirWorld extends Component {
         }
     };
     private windowPointerUp=(event:PointerEvent):void=>{
+        this.heldButton=null;
         if(!this.windowDrag)return;this.trackPointer(event);this.windowDrag=null;this.dragMouseUntil=Date.now()+200;event.preventDefault();event.stopImmediatePropagation();
     };
     private focusInventoryWindow(id:string):void {
@@ -238,7 +241,7 @@ export class MirWorld extends Component {
     }
     private preventContext=(e:Event):void=>{e.preventDefault();if(!this.bagMovePending&&!this.equipmentPending){this.selectedBag=-1;this.selectedEquipment=-1;this.clearItemTooltip();}};
     private onKeyUp(e:EventKeyboard):void {this.keys.delete(e.keyCode);}
-    private pauseInput():void {this.pointerAlt=false;this.autoAttack=false;this.runRequested=false;this.windowDrag=null;this.sound.stop();this.keys.clear();this.path=[];}
+    private pauseInput():void {this.heldButton=null;this.pointerAlt=false;this.autoAttack=false;this.runRequested=false;this.windowDrag=null;this.sound.stop();this.keys.clear();this.path=[];}
     private onMouse(e:EventMouse):void {if(e.getButton()===0&&!this.uiGesture&&this.selectedBag>=6){const p=e.getUILocation();if(this.dropCarried({x:p.x,y:600-p.y}))return;}if(this.uiGesture||this.accounts?.active||this.selectedBag>=6||this.selectedEquipment>=0||this.equipmentPending||this.windowDrag||Date.now()<this.dragMouseUntil)return;this.sound.unlock();if(e.getButton()!==0&&e.getButton()!==2)return;this.runRequested=e.getButton()===2;const p=e.getUILocation();if(this.miniMap?.blocksWorld(p.x,600-p.y))return;if(this.pointerAlt||this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT)){this.harvestAt({x:p.x,y:600-p.y});return;}this.destination(p);}
     private onTouch(e:EventTouch):void {if(this.uiGesture||this.accounts?.active||this.selectedBag>=6||this.selectedEquipment>=0||this.equipmentPending||this.windowDrag||Date.now()<this.dragMouseUntil)return;this.sound.unlock();const p=e.getUILocation();if(this.miniMap?.blocksWorld(p.x,600-p.y))return;if(this.pointerAlt||this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT)){this.harvestAt({x:p.x,y:600-p.y});return;}this.destination(p);}
     private dropCarried(screen:Point):boolean {
@@ -248,6 +251,11 @@ export class MirWorld extends Component {
         if(item.count!==1){this.notice('叠放物品的丢弃数量选择尚未接入。');return true;}
         const id=String(item.uniqueid);if(this.connection?.send({type:'dropItem',uniqueId:id,count:1})){this.pendingDrop=id;this.pendingDropAt=Date.now();this.bagMovePending=true;}
         return true;
+    }
+    private updateHeldPointer(dt:number):void {
+        if(this.heldButton===null)return;this.heldTick-=dt;if(this.heldTick>0)return;this.heldTick=.15;
+        if(!this.serverReady||this.hp<=0||this.accounts?.active||this.pendingDrop||this.equipmentPending||this.bagMovePending||this.selectedBag>=6||this.selectedEquipment>=0||blocksWorld(this.mousePoint.x,this.mousePoint.y,this.menu.active?this.panelRects:[],this.hudRows)||this.miniMap?.blocksWorld(this.mousePoint.x,this.mousePoint.y))return;
+        this.runRequested=this.heldButton===2;this.destination({x:this.mousePoint.x,y:600-this.mousePoint.y});
     }
     private onHover(e:EventMouse):void {
         if(!this.ready)return;const p=e.getUILocation(),screen={x:p.x,y:600-p.y};
@@ -321,7 +329,7 @@ export class MirWorld extends Component {
         if(!this.ready)return;
         this.miniMap?.update(dt,this.mapId,this.point,this.peers.values(),this.serverReady&&!(this.menu.active&&this.panelRects.some(r=>r.x<800&&r.x+r.w>680&&r.y<120&&r.y+r.h>0)),[...(this.step?[this.step.to]:[]),...this.path]);
         this.animationClock+=dt;this.worldClock+=dt;
-        this.updateCombat(dt);if(!this.step)this.beginStep();
+        this.updateHeldPointer(dt);this.updateCombat(dt);if(!this.step)this.beginStep();
         if(this.step){
             this.step.elapsed+=dt;if(this.confirmed&&this.stepSoundPhase<2&&this.step.elapsed>=(this.stepSoundPhase===0?.1:.4)){const code=stepSound(this.terrain.cell(this.step.to.x,this.step.to.y));if(code)this.sound.play(String(code+this.stepSoundPhase));this.stepSoundPhase++;}const t=Math.min(1,this.step.elapsed/0.6);
             this.visual={x:this.step.from.x+(this.step.to.x-this.step.from.x)*t,y:this.step.from.y+(this.step.to.y-this.step.from.y)*t};
@@ -474,7 +482,7 @@ export class MirWorld extends Component {
         if(!this.serverReady||this.step||this.pendingAction||this.hp<=0||this.actionTime>0)return;const p=this.peers.get(this.selected);
         if(!p||!['monster','player'].includes(p.kind??'')||p.dead){this.notice('先点击选择一只怪物');return;}
         if(Math.max(Math.abs(p.point.x-this.point.x),Math.abs(p.point.y-this.point.y))>1){return;}
-        this.fireTargets.delete(this.selected);this.facing=directionTo(this.point,p.point);if(this.sendAction('attack',{direction:this.facing})){if(this.equipment[0])this.sound.play('50');this.ownAction='attack';this.actionTime=.8;this.animationClock=0;}
+        this.fireTargets.delete(this.selected);this.facing=directionTo(this.point,p.point);if(this.sendAction('attack',{direction:this.facing})){const item=this.equipment[0],info=item?.info??this.itemInfo.get(item?.itemindex);this.sound.play(weaponAttackSound(equippedShape(item,info,-1)));this.ownAction='attack';this.actionTime=.8;this.animationClock=0;}
     }
     private harvestAt(screen:Point):void {
         if(!this.serverReady||this.hp<=0||this.step||this.pendingAction||this.actionTime>0||blocksWorld(screen.x,screen.y,this.menu.active?this.panelRects:[],this.hudRows))return;
@@ -485,9 +493,9 @@ export class MirWorld extends Component {
     private cast(spell=31):void {
         if(!this.magics.some(m=>m.spell===spell)){this.notice('尚未学习该技能');return;}
         if(spell!==31){this.notice(`${this.skillName(spell)}的施放尚未接入。`);return;}
-        if(!this.serverReady||this.step||this.pendingAction||this.hp<=0||this.actionTime>0)return;const p=this.peers.get(this.selected);
-        if(!p||!['monster','player'].includes(p.kind??'')||p.dead){this.notice('请先选择目标，再按已设置的技能键施放火球');return;}
-        this.facing=directionTo(this.point,p.point);this.sendAction('cast',{spell:31,targetId:this.selected,x:p.point.x,y:p.point.y,direction:this.facing});
+        if(!this.serverReady||this.step||this.pendingAction||this.hp<=0||this.actionTime>0)return;const targetId=this.hovered||this.selected,p=this.peers.get(targetId);
+        if(!p||!['monster','player'].includes(p.kind??'')||p.dead){this.notice('请将鼠标移到目标上，再按技能快捷键');return;}
+        this.autoAttack=false;this.path=[];this.heldButton=null;this.facing=directionTo(this.point,p.point);this.sendAction('cast',{spell:31,targetId,x:p.point.x,y:p.point.y,direction:this.facing});
     }
     private talk():void {
         const p=this.peers.get(this.selected);if(!p||p.kind!=='npc')return;
@@ -500,8 +508,8 @@ export class MirWorld extends Component {
         const f=this.frames.get(key);if(!f)throw Error('Missing original UI sprite '+key);
         const s=this.sprite(parent,key);s.spriteFrame=f.sprite;s.node.setPosition(x+(offset?f.meta.offsetX:0),-y-(offset?f.meta.offsetY:0));return s;
     }
-    private nativeClick(node:Node,action:()=>void):void {
-        let last=0;const run=(event:EventMouse|EventTouch)=>{event.propagationStopped=true;this.uiGesture=true;const now=Date.now();if(now-last<150)return;last=now;this.sound.unlock();this.sound.play('103');action();};
+    private nativeClick(node:Node,action:()=>void,buttonSound=true):void {
+        let last=0;const run=(event:EventMouse|EventTouch)=>{event.propagationStopped=true;this.uiGesture=true;const now=Date.now();if(now-last<150)return;last=now;this.sound.unlock();if(buttonSound)this.sound.play('103');action();};
         node.on(Node.EventType.TOUCH_END,run);node.on(Node.EventType.MOUSE_UP,run);
     }
     private nativeDoubleClick(node:Node,action:()=>void):void {
@@ -644,13 +652,13 @@ export class MirWorld extends Component {
         this.nativeImage(character,`ui:ClassicPrguse:${this.gender===1?377:376}`,40,53);
         const doll=this.makeNode('Original paperdoll equipment',character);doll.setPosition(33,-97);
         for(const slot of [1,0]){const item=this.equipment[slot];if(!item)continue;const info=item.info??this.itemInfo.get(item.itemindex),image=info?.image;if(this.frames.has(`ui:Stateitem:${image}`))this.equipmentIcons.set(slot,this.nativeImage(doll,`ui:Stateitem:${image}`,0,0,true).node);}
-        for(const {slot,x,y} of JEWELLERY_SLOTS){const item=this.equipment[slot];if(item){const icon=this.nativeItem(character,item,x,y,()=>this.equipmentCell(slot));if(icon)this.equipmentIcons.set(slot,icon.node);}const hit=this.makeNode('装备格 '+slot,character);hit.setPosition(x,-y);hit.getComponent(UITransform)!.setAnchorPoint(0,1);hit.getComponent(UITransform)!.setContentSize(36,32);this.nativeClick(hit,()=>this.equipmentCell(slot));if(item)this.bindItemTooltip(hit,item,character,'character');}
+        for(const {slot,x,y} of JEWELLERY_SLOTS){const item=this.equipment[slot];if(item){const icon=this.nativeItem(character,item,x,y,()=>this.equipmentCell(slot));if(icon)this.equipmentIcons.set(slot,icon.node);}const hit=this.makeNode('装备格 '+slot,character);hit.setPosition(x,-y);hit.getComponent(UITransform)!.setAnchorPoint(0,1);hit.getComponent(UITransform)!.setContentSize(36,32);this.nativeClick(hit,()=>this.equipmentCell(slot),false);if(item)this.bindItemTooltip(hit,item,character,'character');}
         // Weapon/armour are already drawn by Stateitem; their original paperdoll
         // hit regions must not be replaced with inventory icons in bracelet slots.
         for(const [slot,x,y,w,h] of [[0,47,80,47,87],[1,96,122,53,112]]){
             const item=this.equipment[slot];
             const hit=this.makeNode('装备格 '+slot,character);hit.setPosition(x,-y);
-            hit.getComponent(UITransform)!.setAnchorPoint(0,1);hit.getComponent(UITransform)!.setContentSize(w,h);this.nativeClick(hit,()=>this.equipmentCell(slot));if(item)this.bindItemTooltip(hit,item,character,'character');
+            hit.getComponent(UITransform)!.setAnchorPoint(0,1);hit.getComponent(UITransform)!.setContentSize(w,h);this.nativeClick(hit,()=>this.equipmentCell(slot),false);if(item)this.bindItemTooltip(hit,item,character,'character');
         }
         if(this.hp<=0){const action=this.nativeLabel(character,'重新开始',37,300,11,195,C.paper);this.nativeClick(action.node,()=>this.connection?.send({type:'restart'}));}
     }
@@ -683,12 +691,12 @@ export class MirWorld extends Component {
         this.nativeButton(character,'ui:ClassicPrguse:396',213,143,()=>this.changeSkillPage(1));
         for(const [i,m] of this.magics.slice(this.skillPage*5,this.skillPage*5+5).entries()){
             const icon=this.skillIcon(m.spell);if(icon!==undefined){const sprite=this.nativeImage(character,`ui:MagIcon:${icon}`,46,59+i*37);this.nativeClick(sprite.node,()=>this.showSkillKeys(m.spell));}
-            const label=this.nativeField(character,this.skillName(m.spell),85,62+i*37,96,16,12,new Color(192,192,192));this.nativeClick(label.node,()=>this.showSkillKeys(m.spell));
-            if(m.key>=1&&m.key<=8)this.nativeImage(character,`ui:ClassicPrguse:${247+m.key}`,183,61+i*37);
-            this.nativeImage(character,'ui:ClassicPrguse:112',85,77+i*37);
-            this.nativeImage(character,'ui:ClassicPrguse:111',111,77+i*37);
-            this.nativeField(character,String(m.level),103,77+i*37,10,16,12,new Color(192,192,192));
-            this.nativeField(character,m.level>=3?'—':`${m.experience??0}/${m['need'+(m.level+1)]??'—'}`,133,77+i*37,78,16,12,new Color(192,192,192));
+            const label=this.nativeField(character,this.skillName(m.spell),86,60+i*37,96,16,12,new Color(192,192,192));this.nativeClick(label.node,()=>this.showSkillKeys(m.spell));
+            if(m.key>=1&&m.key<=8)this.nativeImage(character,`ui:ClassicPrguse:${247+m.key}`,183,60+i*37);
+            this.nativeImage(character,'ui:ClassicPrguse:112',86,75+i*37);
+            this.nativeImage(character,'ui:ClassicPrguse:111',112,75+i*37);
+            this.nativeField(character,String(m.level),102,75+i*37,10,16,12,new Color(192,192,192));
+            this.nativeField(character,m.level>=3?'—':`${m.experience??0}/${m['need'+(m.level+1)]??'—'}`,132,75+i*37,78,16,12,new Color(192,192,192));
         }
     }
     private equipmentCell(slot:number):void {
@@ -813,7 +821,7 @@ export class MirWorld extends Component {
     }
     private nativeItem(parent:Node,item:any,x:number,y:number,action:()=>void,double=false,dock?:Node):Sprite|undefined {
         const info=item.info??this.itemInfo.get(item.itemindex),key=`ui:Items:${info?.image}`;if(!this.frames.has(key))return;
-        const f=this.frames.get(key)!;const icon=this.nativeImage(parent,key,x+(36-f.meta.w)/2,y+(32-f.meta.h)/2);if(double)this.nativeDoubleClick(icon.node,action);else this.nativeClick(icon.node,action);
+        const f=this.frames.get(key)!;const icon=this.nativeImage(parent,key,x+(36-f.meta.w)/2,y+(32-f.meta.h)/2);if(double)this.nativeDoubleClick(icon.node,action);else this.nativeClick(icon.node,action,false);
         this.bindItemTooltip(icon.node,item,dock);
         if(item.count>1)this.nativeLabel(icon.node,String(item.count),f.meta.w-10,f.meta.h-7,9,25,C.gold);
         return icon;
@@ -984,7 +992,7 @@ export class MirWorld extends Component {
                 this.notice(unmet.length?'无法穿戴：'+unmet.map(r=>r.text).join('，'):'未能完成装备操作，请检查位置、负重及物品状态。');return;}
             const from=name==='EquipItem'?this.inventory:this.equipment,to=name==='EquipItem'?this.equipment:this.inventory;
             const index=from.findIndex(i=>i&&String(i.uniqueid)===String(d.uniqueid));
-            if(index>=0){this.sound.play(equipmentSound((from[index].info??this.itemInfo.get(from[index].itemindex))?.type));const previous=to[d.to];to[d.to]=from[index];from[index]=previous??null;this.notice(name==='EquipItem'?'装备已穿戴':'装备已卸下');}
+            if(index>=0){this.sound.play(equipmentSound((from[index].info??this.itemInfo.get(from[index].itemindex))?.type,(from[index].info??this.itemInfo.get(from[index].itemindex))?.name));const previous=to[d.to];to[d.to]=from[index];from[index]=previous??null;this.notice(name==='EquipItem'?'装备已穿戴':'装备已卸下');}
             this.refreshBelt();if(this.menu.active){if(this.menuKind==='inventory')this.showInventory();else if(this.menuKind==='shop')this.showShop();}
         }
         if(name==='ItemUpgraded'){
@@ -993,7 +1001,7 @@ export class MirWorld extends Component {
             this.refreshBelt();if(this.menuKind==='inventory'&&this.menu.active)this.showInventory();
         }
         if(name==='DropItem'&&!d.heroitem){if(this.pendingDrop!==String(d.uniqueid))return;this.pendingDrop=null;this.bagMovePending=false;if(d.success){const slot=this.inventory.findIndex(i=>i&&String(i.uniqueid)===String(d.uniqueid));if(slot>=0)this.inventory[slot]=null;this.selectedBag=-1;this.clearItemTooltip();this.refreshBelt();if(this.menu.active&&this.menuKind==='inventory')this.showInventory();}else this.notice('无法丢弃该物品。');return;}
-        if(name==='GainedItem'){d.item.info=this.itemInfo.get(d.item.itemindex);if(!gainItem(this.inventory,d.item)){this.notice('物品状态待同步，正在重新连接');this.connection?.reconnect();return;}if(d.item.info?.type>=1&&d.item.info.type<=7)this.sound.play(equipmentSound(d.item.info.type));this.refreshBelt();this.notice(`获得 ${this.itemName(d.item)}`);if(this.menu.active){if(this.menuKind==='inventory')this.showInventory();else if(this.menuKind==='shop')this.showShop();}}
+        if(name==='GainedItem'){d.item.info=this.itemInfo.get(d.item.itemindex);if(!gainItem(this.inventory,d.item)){this.notice('物品状态待同步，正在重新连接');this.connection?.reconnect();return;}if(d.item.info?.type>=1&&d.item.info.type<=7)this.sound.play(equipmentSound(d.item.info.type,d.item.info.name));this.refreshBelt();this.notice(`获得 ${this.itemName(d.item)}`);if(this.menu.active){if(this.menuKind==='inventory')this.showInventory();else if(this.menuKind==='shop')this.showShop();}}
         if(name==='UseItem'){
             const key=String(d.uniqueid),item=this.inventory.find(i=>i&&String(i.uniqueid)===key);this.pendingUses.delete(key);
             if(consumeItem(this.inventory,key,d.success)){const book=(item?.info??this.itemInfo.get(item?.itemindex))?.type===20;if(!book)this.sound.play('107');this.notice(`${book?'已使用技能书':'服用'} ${this.itemName(item)}`);this.refreshBelt();if(this.menu.active){if(this.menuKind==='inventory')this.showInventory();else if(this.menuKind==='shop')this.showShop();}}

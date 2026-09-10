@@ -21,5 +21,8 @@ for y,row in enumerate(rows):
 print('HUD hit mask matches all 800x251 original alpha pixels')
 
 # Every seeded necklace/bracelet/ring must have a ground sprite as well as bag art.
-for item in json.loads((ROOT/'server/content/jewellery.json').read_text())['items']:
+for item in json.loads((root/'server/content/jewellery.json').read_text())['items']:
  assert f"ui:DnItems:{item['image']}" in m['frames'],item['name']+' missing floor art'
+
+for name in ['Items','DnItems']:
+ for index in [394,398]:assert f'ui:{name}:{index}' in m['frames']

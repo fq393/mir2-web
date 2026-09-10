@@ -6,6 +6,7 @@ import ts from 'typescript';
 import * as grid from '../client/assets/scripts/core/grid.ts';
 import * as classicLayout from '../client/assets/scripts/core/classicLayout.ts';
 import * as inventory from '../client/assets/scripts/core/inventory.ts';
+import * as appearance from '../client/assets/scripts/core/appearance.ts';
 import * as itemStats from '../client/assets/scripts/core/itemStats.ts';
 
 function load(file, mocks = {}, globals = {}) {
@@ -20,7 +21,7 @@ const cc = {Node:{EventType:{TOUCH_END:'touch',MOUSE_UP:'mouse'}},_decorator: {c
   KeyCode: {F1:112,F8:119,F11:122,ESCAPE:27,ENTER:13,KEY_D: 68, ARROW_RIGHT: 39, KEY_A: 65, ARROW_LEFT: 37, KEY_S: 83, ARROW_DOWN: 40, KEY_W: 87, ARROW_UP: 38}};
 let movementNow=1000;
 const {MirWorld} = load('../client/assets/scripts/MirWorld.ts', {
-  cc, './core/itemStats':itemStats, './core/classicLayout':classicLayout, './core/inventory':inventory, './platform/MirAudio':{MirAudio:class{stop(){}play(){}unlock(){}}}, './core/stepSound':{stepSound:()=>1}, './core/grid': grid, './platform/connection': {}, './renderer/MirSprite': {}, './renderer/TerrainStream':{TerrainStream:class{constructor(){this.newTerrain=true;}destroy(){}}},
+  cc, './core/appearance':appearance, './core/itemStats':itemStats, './core/classicLayout':classicLayout, './core/inventory':inventory, './platform/MirAudio':{MirAudio:class{stop(){}play(){}unlock(){}}}, './core/stepSound':{stepSound:()=>1}, './core/grid': grid, './platform/connection': {}, './renderer/MirSprite': {}, './renderer/TerrainStream':{TerrainStream:class{constructor(){this.newTerrain=true;}destroy(){}}},
 }, {performance:{now:()=>movementNow}});
 function world() {
   const w = new MirWorld();
@@ -511,4 +512,22 @@ test('carried equipment drop waits for matching success and failure keeps item',
 test('lost drop reply reconnects to authoritative inventory instead of retrying removal',()=>{
  const w=world();w.notice=()=>{};w.serverReady=true;w.inventory[6]={uniqueid:'keep',count:1};w.pendingDrop='keep';w.pendingDropAt=Date.now()-6000;w.bagMovePending=true;w.syncCarriedItem();
  assert.equal(w.reconnected,true);assert.equal(w.inventory[6].uniqueid,'keep');assert.equal(w.pendingDrop,null);
+});
+
+test('fireball uses hovered monster without selecting or starting melee',()=>{
+ const w=world();w.serverReady=true;w.magics=[{spell:31,key:1}];w.hovered=42;w.peers.set(42,{kind:'monster',point:{x:5,y:2},dead:false});let sent;w.sendAction=(type,payload)=>{sent={type,...payload};return true;};w.autoAttack=true;w.path=[{x:3,y:2}];w.castKey(1);
+ assert.equal(sent.targetId,42);assert.equal(sent.spell,31);assert.equal(w.autoAttack,false);assert.equal(w.path.length,0);
+});
+test('held mouse follows cursor with left walking/right running and stops on release',()=>{
+ const w=world();w.serverReady=true;w.mousePoint={x:400,y:300};const calls=[];w.destination=p=>calls.push({p,run:w.runRequested});
+ for(const button of [0,2]){w.heldButton=button;w.heldTick=0;w.updateHeldPointer(.2);assert.equal(calls.at(-1).run,button===2);}
+ w.windowPointerUp({});w.updateHeldPointer(1);assert.equal(calls.length,2);
+ w.heldButton=2;w.mousePoint={x:680,y:380};w.heldTick=0;w.updateHeldPointer(1);assert.equal(calls.length,2);
+ w.pauseInput();assert.equal(w.heldButton,null);
+});
+test('equip and remove acknowledgements use the actual item category and bracelet name',()=>{
+ for(const [type,name,sound] of [[1,'青铜剑','111'],[2,'布衣','112'],[4,'布帽','116'],[5,'金项链','115'],[6,'铁手镯','117'],[7,'牛角戒指','113']]){
+  const w=world();w.notice=()=>{};w.refreshBelt=()=>{};w.inventory=Array(46).fill(null);w.equipment=Array(14).fill(null);w.inventory[6]={uniqueid:'test',info:{type,name}};const sounds=[];w.sound={play:s=>sounds.push(s)};
+  w.packet('EquipItem',{UniqueID:'test',To:0,Success:true});w.packet('RemoveItem',{UniqueID:'test',To:6,Success:true});assert.deepEqual(sounds,[sound,sound]);
+ }
 });

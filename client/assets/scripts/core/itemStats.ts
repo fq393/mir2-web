@@ -65,6 +65,16 @@ export function compactBagDescription(item:any,info:any,name:string,measure:(tex
 }
 
 /** Pinned Crystal MirItemCell.PlayItemSound / SoundList, local original WAVs. */
-export function equipmentSound(type:number):string {
+export function equipmentSound(type:number,name=""):string {
+ if(type===6&&/手镯|手套/.test(name))return '117';
  return ({1:'111',2:'112',4:'116',5:'115',6:'114',7:'113',10:'117',13:'108'} as Record<number,string>)[type]??'118';
+}
+
+/** Fixed Delphi Actor sound switch; web weapon Shape is the undoubled identity. */
+export function weaponAttackSound(shape:number):string {
+ if([6,20].includes(shape))return '50';if(shape===1)return '51';
+ if([2,13,9,5,14,22].includes(shape))return '52';
+ if([4,17,10,15,16,23].includes(shape))return '53';
+ if([3,7,11].includes(shape))return '54';if(shape===24)return '55';
+ if([8,12,18,21].includes(shape))return '56';return '57';
 }

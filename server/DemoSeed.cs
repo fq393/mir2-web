@@ -58,8 +58,8 @@ static class DemoSeed
         var armour=AddItem("BichonRobe",ItemType.Armour,1,60);
         ApplyStarterArmourStats(armour);
         armour.Weight=5;armour.RequiredAmount=1;
-        // Small potion image identities checked against old item guide pictures.
-        foreach(var spec in new[]{(Name:"BichonHealthSmall",Image:(ushort)9,HP:20,MP:0),(Name:"BichonManaSmall",Image:(ushort)11,HP:0,MP:30)}) {
+        // User-confirmed original small potion frames: red 398, blue 394.
+        foreach(var spec in new[]{(Name:"BichonHealthSmall",Image:(ushort)398,HP:20,MP:0),(Name:"BichonManaSmall",Image:(ushort)394,HP:0,MP:30)}) {
             var potion=AddItem(spec.Name,ItemType.Potion,0,spec.Image);
             potion.Type=ItemType.Potion;potion.Shape=0;potion.Durability=0;
             potion.Price=88;potion.Weight=1;potion.StackSize=1;potion.StartItem=false;potion.RequiredAmount=0;
