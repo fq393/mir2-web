@@ -26,3 +26,11 @@ for index,(expected,_) in classic.read_library(ROOT/'raw-assets'/uiPins['folder'
  actual=Image.open(ROOT/'build/web/webui'/f'{index}.png')
  assert actual.size==expected.size and actual.tobytes()==expected.tobytes(),index
 print('8 original deletion/confirmation frames verified byte-for-byte')
+
+for role in range(3):
+ for gender in range(2):
+  for j in range(13):
+   expected=f[60+role*40+gender*120+j][0];actual=Image.open(out/f'freeze-{role}-{gender}-{j}.png');assert actual.size==expected.size and actual.tobytes()==expected.tobytes()
+for j in range(14):assert Image.open(out/f'select-effect-{j}.png').tobytes()==f[4+j][0].tobytes()
+assert (out/'melt.wav').read_bytes()==(ROOT/pins['files'][0]['path']).parent.parent.joinpath('Wav/101.wav').read_bytes()
+print('78 transition frames, 14 light frames and original melt audio verified')

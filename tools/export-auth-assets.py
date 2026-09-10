@@ -21,6 +21,9 @@ def export():
    sheet=Image.new('RGBA',(w*4,h*5))
    for j,i in enumerate(indices):sheet.paste(frames[i][0],(j%4*w,j//4*h))
    name=f'portrait-{role}-{gender}';sheet.save(out/(name+'.png'));portraits[name]={'w':w,'h':h,'indices':indices}
+   for j in range(13):frames[base+20+j][0].save(out/f'freeze-{role}-{gender}-{j}.png')
+ for j in range(14):frames[4+j][0].save(out/f'select-effect-{j}.png')
+ pin=pins['selectionSound'];assert hashlib.sha256((ROOT/pin['path']).read_bytes()).hexdigest()==pin['sha256'];shutil.copyfile(ROOT/pin['path'],out/'melt.wav')
  for pin,name in zip(pins['files'][2:],['login.wav','select.wav','door.wav']):shutil.copyfile(ROOT/pin['path'],out/name)
  (out/'manifest.json').write_text(json.dumps({'portraits':portraits,'door':{'count':10,'w':496,'h':361,'ms':230}}))
  return out

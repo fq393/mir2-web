@@ -544,3 +544,14 @@ test('all fireball phases use additive sprites, preserving black light backgroun
  w.spellEffect({x:1,y:1},{x:2,y:2});w.spellEffect({x:2,y:2},{x:2,y:2},true);
  assert.equal(w.particleEffects.length,2);for(const e of w.particleEffects)assert.equal(e.sprite.additive,true);
 });
+test('only successful magic acknowledgement retains a living target without auto melee',()=>{
+ const w=world();w.notice=()=>{};w.spellEffect=()=>{};w.peers.set(42,{kind:'monster',point:{x:5,y:2},dead:false});
+ w.packet('Magic',{Cast:false,TargetID:42});assert.equal(w.selected,0);
+ w.packet('Magic',{Cast:true,TargetID:42,Target:{x:5,y:2}});assert.equal(w.selected,42);assert.equal(w.autoAttack,false);
+ w.selected=0;w.peers.get(42).dead=true;w.packet('Magic',{Cast:true,TargetID:42});assert.equal(w.selected,0);
+});
+test('shop back leaves detail first and returns to merchant menu from categories',()=>{
+ const w=world();w.clearItemTooltip=()=>{};let renders=0;const sent=[];w.showShop=()=>renders++;w.connection.send=p=>(sent.push(p),true);w.shopDetail=9;w.shopTop=18;w.selectedGood={};w.npcId=42;
+ w.shopBack();assert.equal(w.shopDetail,null);assert.equal(w.selectedGood,null);assert.equal(w.shopTop,0);assert.equal(renders,1);assert.equal(sent.length,0);
+ w.shopBack();assert.equal(sent[0].key,'[@MAIN]');assert.equal(sent[0].id,42);
+});

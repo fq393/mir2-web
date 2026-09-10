@@ -27,5 +27,10 @@
       "sha256": "b80222a6ac8aee6f3580d065a87177bf28ec6f3834b265d52c1ad3b05248df62",
       "bytes": 265842
     }
-  ]
+  ],
+  "selectionSound": {
+    "path": "raw-assets/client-176/传奇私服1.76客户/Wav/101.wav",
+    "sha256": "ba9bdb1e3711159efd39e0199a5761f748bfc7ae813bc31dc89e6170a5b18617",
+    "bytes": 314688
+  }
 }

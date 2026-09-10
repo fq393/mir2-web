@@ -888,7 +888,13 @@ export class MirWorld extends Component {
             if(!this.inventory.some(i=>!i)){this.notice('背包空间不足。');return;}
             this.connection?.send({type:'buy',itemIndex:String(this.selectedGood.uniqueid),count:1});
         });
-        this.nativeButton(dialog,'ui:ClassicPrguse:64',291,0,()=>{this.clearItemTooltip();if(this.shopDetail!==null){this.shopDetail=null;this.selectedGood=null;this.shopTop=0;this.showShop();return;}this.connection?.send({type:'npc',id:this.npcId,key:'[@MAIN]'});});
+        this.nativeButton(dialog,'ui:ClassicPrguse:64',291,0,()=>this.shopBack());
+        const back=this.nativeLabel(dialog,this.shopDetail!==null?'返回商品分类':'返回商店菜单',132,180,10,81,Color.WHITE);this.nativeClick(back.node,()=>this.shopBack());
+    }
+    private shopBack():void {
+        this.clearItemTooltip();this.selectedGood=null;this.shopTop=0;
+        if(this.shopDetail!==null){this.shopDetail=null;this.showShop();return;}
+        this.connection?.send({type:'npc',id:this.npcId,key:'[@MAIN]'});
     }
     private skillRequest=0;private skillPending=false;private skillPage=0;private bindingSpell=0;private bindingKey=0;
     private skillName(spell:number):string {
@@ -990,7 +996,7 @@ export class MirWorld extends Component {
         if(name==='DamageIndicator'&&d.damage!==0){this.notice(`${id===this.ownId?'你':p?.name??'目标'} ${d.damage<0?'受到':'恢复'} ${Math.abs(d.damage)} 点${d.damage<0?'伤害':'生命'}`);if(p&&d.damage<0&&(this.fireTargets.get(id)??0)>Date.now()){this.spellEffect(p.point,p.point,true);this.sound.play('M31-2');this.fireTargets.delete(id);}}
         if(name==='ObjectDied'&&p){if(p.kind==='monster')this.sound.play(`${String(p.image).padStart(3,'0')}-3`);this.fireTargets.delete(id);p.dead=true;p.from={...p.point};p.visual={...p.point};p.elapsed=0;p.actionTime=0;this.notice(`${p.name} 已倒下`);}
         if(['ObjectAttack','ObjectMagic','ObjectStruck'].includes(name)){const action=name==='ObjectAttack'?'attack':name==='ObjectMagic'?'cast':'hit';if(p?.kind==='monster'&&name!=='ObjectMagic')this.sound.play(`${String(p.image).padStart(3,'0')}-${name==='ObjectAttack'?1:2}`);if(id===this.ownId&&name==='ObjectStruck')this.sound.play('138');if(id===this.ownId){this.ownAction=action;this.actionTime=.8;this.animationClock=0;this.facing=d.direction??this.facing;}else if(p){p.action=action;p.actionTime=.8;p.from={...p.point};p.visual={...p.point};p.elapsed=0;p.direction=d.direction??p.direction;}}
-        if(name==='Magic'){if(d.cast){this.sound.play('M31-0');this.sound.play('M31-1',.25);this.ownAction='cast';this.actionTime=.8;this.animationClock=0;this.spellEffect(this.point,d.target??this.point);this.fireTargets.set(d.targetid,Date.now()+1500);this.notice('施放火球术');}else this.notice('施法未成功：检查目标距离、MP 或冷却');}
+        if(name==='Magic'){if(d.cast){const target=this.peers.get(d.targetid);if(target&&!target.dead){this.selected=d.targetid;this.healthPoll=0;}this.sound.play('M31-0');this.sound.play('M31-1',.25);this.ownAction='cast';this.actionTime=.8;this.animationClock=0;this.spellEffect(this.point,d.target??this.point);this.fireTargets.set(d.targetid,Date.now()+1500);this.notice('施放火球术');}else this.notice('施法未成功：检查目标距离、MP 或冷却');}
         if(name==='EquipItem'||name==='RemoveItem'){
             this.equipmentPending=false;this.equipmentPendingAt=0;this.selectedEquipment=-1;
             if(!d.success){const item=this.inventory.find(i=>i&&String(i.uniqueid)===String(d.uniqueid));
