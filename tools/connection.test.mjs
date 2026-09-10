@@ -493,7 +493,7 @@ test('pointer Alt still harvests when keyboard modifier state was lost, and next
 test('closing a native panel consumes the same mouse/touch release before navigation',()=>{
  const w=world();w.sound={unlock(){},play(){}};let moves=0;w.destination=()=>moves++;const events={};
  w.nativeClick({on:(name,fn)=>events[name]=fn},()=>{w.menu.active=false;});w.menu.active=true;
- events.mouse({propagationStopped:false});w.onMouse({getButton:()=>0,getUILocation:()=>({x:300,y:400})});w.onTouch({getUILocation:()=>({x:300,y:400})});
+ events.mouse({propagationStopped:false,getButton:()=>0});w.onMouse({getButton:()=>0,getUILocation:()=>({x:300,y:400})});w.onTouch({getUILocation:()=>({x:300,y:400})});
  assert.equal(moves,0);w.uiGesture=false;w.onMouse({getButton:()=>0,getUILocation:()=>({x:300,y:400})});assert.equal(moves,1);
 });
 test('round HUD button transparent edges still block world navigation',()=>{
@@ -554,4 +554,12 @@ test('shop back leaves detail first and returns to merchant menu from categories
  const w=world();w.clearItemTooltip=()=>{};let renders=0;const sent=[];w.showShop=()=>renders++;w.connection.send=p=>(sent.push(p),true);w.shopDetail=9;w.shopTop=18;w.selectedGood={};w.npcId=42;
  w.shopBack();assert.equal(w.shopDetail,null);assert.equal(w.selectedGood,null);assert.equal(w.shopTop,0);assert.equal(renders,1);assert.equal(sent.length,0);
  w.shopBack();assert.equal(sent[0].key,'[@MAIN]');assert.equal(sent[0].id,42);
+});
+test('one gesture cannot activate rebuilt native buttons twice or execute right-click actions',()=>{
+ const w=world(),handlers={};let actions=0;
+ const node=()=>({on:(name,fn)=>handlers[name]=fn});
+ const bind=()=>w.nativeClick(node(),()=>{actions++;bind();},false);bind();
+ handlers.touch({});handlers.mouse({getButton:()=>0});assert.equal(actions,1);
+ w.lastNativeTouch=-Infinity;handlers.mouse({getButton:()=>2});assert.equal(actions,1);
+ handlers.touch({});assert.equal(actions,2);
 });

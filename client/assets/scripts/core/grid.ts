@@ -78,3 +78,9 @@ export function findPath(g: Grid, start: Point, goal: Point): Point[] {
     }
     return [];
 }
+/** Crystal MapControl.Direction16: nearest 22.5 degree sector, north = 0. */
+export function projectileDirection(from:{x:number;y:number},to:{x:number;y:number}):number {
+    const dx=to.x-from.x,dy=to.y-from.y;
+    if(!dx&&!dy)return 0;
+    return (Math.floor(Math.atan2(dx,-dy)/(Math.PI/8)+.5)+16)%16;
+}

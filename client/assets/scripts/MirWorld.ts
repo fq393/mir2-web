@@ -15,7 +15,7 @@ import {stepSound} from './core/stepSound';
 import { _decorator, Component, Node, UITransform, Sprite, SpriteFrame, Texture2D, ImageAsset,
     resources, JsonAsset, Rect, Vec3, Color, Graphics, Label,LabelOutline, input, Input, EventKeyboard,
     EventMouse, EventTouch, KeyCode, Layers, view, ResolutionPolicy, Size, Vec2, profiler, game, Game, UIOpacity } from 'cc';
-import { findPath, canStep, directionTo, Grid, Point } from './core/grid';
+import {projectileDirection, findPath, canStep, directionTo, Grid, Point } from './core/grid';
 import { Manifest, Frame, Ref } from './core/assets';
 import { CrystalConnection } from './platform/connection';
 import { MirSprite } from './renderer/MirSprite';
@@ -512,9 +512,13 @@ export class MirWorld extends Component {
         const f=this.frames.get(key);if(!f)throw Error('Missing original UI sprite '+key);
         const s=this.sprite(parent,key);s.spriteFrame=f.sprite;s.node.setPosition(x+(offset?f.meta.offsetX:0),-y-(offset?f.meta.offsetY:0));return s;
     }
+    private lastNativeTouch=-Infinity;
     private nativeClick(node:Node,action:()=>void,buttonSound=true):void {
         let last=0;const run=(event:EventMouse|EventTouch)=>{event.propagationStopped=true;this.uiGesture=true;const now=Date.now();if(now-last<150)return;last=now;this.sound.unlock();if(buttonSound)this.sound.play('103');action();};
-        node.on(Node.EventType.TOUCH_END,run);node.on(Node.EventType.MOUSE_UP,run);
+        // Cocos can dispatch a compatibility mouse-up after touch-end. The
+        // action may rebuild this entire window, so deduplicate across nodes.
+        node.on(Node.EventType.TOUCH_END,(event:EventTouch)=>{this.lastNativeTouch=Date.now();run(event);});
+        node.on(Node.EventType.MOUSE_UP,(event:EventMouse)=>{event.propagationStopped=true;this.uiGesture=true;if(event.getButton()===0&&Date.now()-this.lastNativeTouch>700)run(event);});
     }
     private nativeDoubleClick(node:Node,action:()=>void):void {
         let first:number|null=null,lastTouch=-Infinity;
@@ -958,7 +962,7 @@ export class MirWorld extends Component {
         Object.assign(p,{kind,name:names[d.name]??d.name??kind,image:d.image??0,armour:d.armour??0,weaponShape:d.weapon??-1,hairShape:d.hair??0,gender:d.gender??0,dead:d.dead??false,harvested:d.skeleton??false});
     }
     private spellEffect(from:Point,to:Point,hit=false):void {
-        const def=this.manifest.spellFireBall;let keys:string[]=hit?def?.hit:def?.projectile?.[(directionTo(from,to)*2)%16];
+        const def=this.manifest.spellFireBall;let keys:string[]=hit?def?.hit:def?.projectile?.[projectileDirection(from,to)];
         if(!keys?.length)return;const node=this.makeNode('Fireball',this.effects),flame=this.makeNode('Flame',node);
         flame.getComponent(UITransform)!.setAnchorPoint(0,1);const sprite=flame.addComponent(MirSprite);
         sprite.sizeMode=Sprite.SizeMode.RAW;sprite.setAdditive();sprite.grayscale=this.hp<=0;
