@@ -17,11 +17,11 @@ function load(file, mocks = {}, globals = {}) {
   vm.runInNewContext(code, {exports, require: name => mocks[name], console: {info() {}}, ...globals});
   return exports;
 }
-const cc = {Node:{EventType:{TOUCH_END:'touch',MOUSE_UP:'mouse'}},_decorator: {ccclass: () => cls => cls}, Component: class {}, Color: class {constructor(r,g,b,a){Object.assign(this,{r,g,b,a});}},
+const cc = {Sprite:{SizeMode:{RAW:0}},Node:{EventType:{TOUCH_END:'touch',MOUSE_UP:'mouse'}},_decorator: {ccclass: () => cls => cls}, Component: class {}, Color: class {constructor(r,g,b,a){Object.assign(this,{r,g,b,a});}},
   KeyCode: {F1:112,F8:119,F11:122,ESCAPE:27,ENTER:13,KEY_D: 68, ARROW_RIGHT: 39, KEY_A: 65, ARROW_LEFT: 37, KEY_S: 83, ARROW_DOWN: 40, KEY_W: 87, ARROW_UP: 38}};
 let movementNow=1000;
 const {MirWorld} = load('../client/assets/scripts/MirWorld.ts', {
-  cc, './core/appearance':appearance, './core/itemStats':itemStats, './core/classicLayout':classicLayout, './core/inventory':inventory, './platform/MirAudio':{MirAudio:class{stop(){}play(){}unlock(){}}}, './core/stepSound':{stepSound:()=>1}, './core/grid': grid, './platform/connection': {}, './renderer/MirSprite': {}, './renderer/TerrainStream':{TerrainStream:class{constructor(){this.newTerrain=true;}destroy(){}}},
+  cc, './core/appearance':appearance, './core/itemStats':itemStats, './core/classicLayout':classicLayout, './core/inventory':inventory, './platform/MirAudio':{MirAudio:class{stop(){}play(){}unlock(){}}}, './core/stepSound':{stepSound:()=>1}, './core/grid': grid, './platform/connection': {}, './renderer/MirSprite': {MirSprite:class{setAdditive(){this.additive=true;}}}, './renderer/TerrainStream':{TerrainStream:class{constructor(){this.newTerrain=true;}destroy(){}}},
 }, {performance:{now:()=>movementNow}});
 function world() {
   const w = new MirWorld();
@@ -515,7 +515,7 @@ test('lost drop reply reconnects to authoritative inventory instead of retrying 
 });
 
 test('fireball uses hovered monster without selecting or starting melee',()=>{
- const w=world();w.serverReady=true;w.magics=[{spell:31,key:1}];w.hovered=42;w.peers.set(42,{kind:'monster',point:{x:5,y:2},dead:false});let sent;w.sendAction=(type,payload)=>{sent={type,...payload};return true;};w.autoAttack=true;w.path=[{x:3,y:2}];w.castKey(1);
+ const w=world();w.serverReady=true;w.magics=[{spell:31,key:1}];w.entityAt=()=>42;w.peers.set(42,{kind:'monster',point:{x:5,y:2},dead:false});let sent;w.sendAction=(type,payload)=>{sent={type,...payload};return true;};w.autoAttack=true;w.path=[{x:3,y:2}];w.castKey(1);
  assert.equal(sent.targetId,42);assert.equal(sent.spell,31);assert.equal(w.autoAttack,false);assert.equal(w.path.length,0);
 });
 test('held mouse follows cursor with left walking/right running and stops on release',()=>{
@@ -525,9 +525,22 @@ test('held mouse follows cursor with left walking/right running and stops on rel
  w.heldButton=2;w.mousePoint={x:680,y:380};w.heldTick=0;w.updateHeldPointer(1);assert.equal(calls.length,2);
  w.pauseInput();assert.equal(w.heldButton,null);
 });
+test('casting refreshes stationary cursor target and never casts through a UI panel',()=>{
+ const w=world();w.serverReady=true;w.magics=[{spell:31,key:1}];w.mousePoint={x:400,y:200};w.hovered=9;
+ w.peers.set(42,{kind:'monster',point:{x:5,y:2},dead:false});w.entityAt=()=>42;
+ const sent=[];w.sendAction=(type,payload)=>(sent.push(payload),true);w.castKey(1);assert.equal(sent[0].targetId,42);
+ w.menu.active=true;w.panelRects=[{x:350,y:100,w:100,h:200}];w.castKey(1);assert.equal(sent.length,1);
+});
 test('equip and remove acknowledgements use the actual item category and bracelet name',()=>{
  for(const [type,name,sound] of [[1,'青铜剑','111'],[2,'布衣','112'],[4,'布帽','116'],[5,'金项链','115'],[6,'铁手镯','117'],[7,'牛角戒指','113']]){
   const w=world();w.notice=()=>{};w.refreshBelt=()=>{};w.inventory=Array(46).fill(null);w.equipment=Array(14).fill(null);w.inventory[6]={uniqueid:'test',info:{type,name}};const sounds=[];w.sound={play:s=>sounds.push(s)};
   w.packet('EquipItem',{UniqueID:'test',To:0,Success:true});w.packet('RemoveItem',{UniqueID:'test',To:6,Success:true});assert.deepEqual(sounds,[sound,sound]);
  }
+});
+
+test('all fireball phases use additive sprites, preserving black light backgrounds',()=>{
+ const w=world();w.manifest={spellFireBall:{hit:['magic:170'],projectile:Array(16).fill(['magic:10'])}};
+ w.makeNode=()=>({getComponent:()=>({setAnchorPoint(){}}),addComponent:C=>new C()});
+ w.spellEffect({x:1,y:1},{x:2,y:2});w.spellEffect({x:2,y:2},{x:2,y:2},true);
+ assert.equal(w.particleEffects.length,2);for(const e of w.particleEffects)assert.equal(e.sprite.additive,true);
 });

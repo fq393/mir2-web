@@ -493,7 +493,11 @@ export class MirWorld extends Component {
     private cast(spell=31):void {
         if(!this.magics.some(m=>m.spell===spell)){this.notice('尚未学习该技能');return;}
         if(spell!==31){this.notice(`${this.skillName(spell)}的施放尚未接入。`);return;}
-        if(!this.serverReady||this.step||this.pendingAction||this.hp<=0||this.actionTime>0)return;const targetId=this.hovered||this.selected,p=this.peers.get(targetId);
+        if(!this.serverReady||this.step||this.pendingAction||this.hp<=0||this.actionTime>0)return;
+        // Recompute at key-down: actors/camera can move under a stationary pointer.
+        const screen=this.mousePoint;
+        if(blocksWorld(screen.x,screen.y,this.menu.active?this.panelRects:[],this.hudRows)||this.miniMap?.blocksWorld(screen.x,screen.y))return;
+        this.hovered=this.entityAt(screen);const targetId=this.hovered||this.selected,p=this.peers.get(targetId);
         if(!p||!['monster','player'].includes(p.kind??'')||p.dead){this.notice('请将鼠标移到目标上，再按技能快捷键');return;}
         this.autoAttack=false;this.path=[];this.heldButton=null;this.facing=directionTo(this.point,p.point);this.sendAction('cast',{spell:31,targetId,x:p.point.x,y:p.point.y,direction:this.facing});
     }
@@ -949,7 +953,9 @@ export class MirWorld extends Component {
     }
     private spellEffect(from:Point,to:Point,hit=false):void {
         const def=this.manifest.spellFireBall;let keys:string[]=hit?def?.hit:def?.projectile?.[(directionTo(from,to)*2)%16];
-        if(!keys?.length)return;const node=this.makeNode('Fireball',this.effects),sprite=this.sprite(node,'Flame');
+        if(!keys?.length)return;const node=this.makeNode('Fireball',this.effects),flame=this.makeNode('Flame',node);
+        flame.getComponent(UITransform)!.setAnchorPoint(0,1);const sprite=flame.addComponent(MirSprite);
+        sprite.sizeMode=Sprite.SizeMode.RAW;sprite.setAdditive();sprite.grayscale=this.hp<=0;
         this.particleEffects.push({node,sprite,keys,age:0,life:hit?.5:.6,from:{...from},to:{...to}});
     }
     private packet(name:string,raw:any):void {
