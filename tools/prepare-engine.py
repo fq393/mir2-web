@@ -72,3 +72,37 @@ replace_player('''                    CanTrade = false;
                     TradePair[p].ReceiveChat''',2)
 out=root/'server/engine/generated/PlayerObject.cs'
 if not out.exists() or out.read_text()!=player: out.write_text(player)
+
+# Quote without changing shared shop instances. Partial used stacks retain the
+# remainder; only successful commits remove stock (upstream discarded it).
+npc=(root/'vendor/Crystal/Server/MirObjects/NPC/NPCScript.cs').read_text(encoding='utf-8-sig')
+def replace_npc(old,new):
+    global npc
+    assert npc.count(old)==1, 'Upstream shop changed; review patch: '+old[:80]
+    npc=npc.replace(old,new)
+replace_npc('''            if ((isBuyBack || isUsed) && count > goods.Count)
+                count = goods.Count;
+            else
+                goods.Count = count;
+
+            uint cost = goods.Price();''','''            bool instanceStock = isBuyBack || isUsed;
+            if (instanceStock && count > goods.Count) count = goods.Count;
+            var quoted = goods.Clone();
+            quoted.Count = count;
+
+            uint cost = quoted.Price();''')
+replace_npc('''            uint baseCost = (uint)(goods.Price() * PriceRate(player, true));''','''            uint baseCost = (uint)(quoted.Price() * PriceRate(player, true));''')
+replace_npc('''            UserItem item = (isBuyBack || isUsed) ? goods : Envir.CreateFreshItem(goods.Info);
+            item.Count = goods.Count;
+
+            if (!player.CanGainItem(item)) return;''','''            if (!player.CanGainItem(quoted)) return;
+            bool split = instanceStock && count < goods.Count;
+            UserItem item = instanceStock ? (split ? quoted : goods) : Envir.CreateFreshItem(goods.Info);
+            if (split) item.UniqueID = ++Envir.NextUserItemID;
+            item.Count = count;''')
+replace_npc('''                callingNPC.UsedGoods.Remove(goods); //If used or buyback will destroy whole stack instead of reducing to remaining quantity''','''                if (split) goods.Count -= count;
+                else callingNPC.UsedGoods.Remove(goods);''')
+replace_npc('''                callingNPC.BuyBack[player.Name].Remove(goods); //If used or buyback will destroy whole stack instead of reducing to remaining quantity''','''                if (split) goods.Count -= count;
+                else callingNPC.BuyBack[player.Name].Remove(goods);''')
+out=root/'server/engine/generated/NPCScript.cs'
+if not out.exists() or out.read_text()!=npc: out.write_text(npc)

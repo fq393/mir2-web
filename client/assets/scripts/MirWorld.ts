@@ -169,7 +169,13 @@ export class MirWorld extends Component {
     private createHUD():void {
         this.hudRoot=this.makeNode('Loading',this.node);this.hint=this.text(this.hudRoot,'正在加载原生地图与界面素材…',-260,0,18,C.paper,620);this.status=this.text(this.hudRoot,this.statusText,-260,-38,13,C.muted,620);
     }
-    private sprite(parent:Node,name:string):Sprite {const n=this.makeNode(name,parent);n.getComponent(UITransform)!.setAnchorPoint(0,1);const s=n.addComponent(Sprite);s.sizeMode=Sprite.SizeMode.RAW;return s;}
+    private sceneGrayscale=false;
+    private syncDeathScene():void {
+        const gray=this.hp<=0;this.terrain?.setGrayscale?.(gray);
+        if(gray===this.sceneGrayscale)return;this.sceneGrayscale=gray;
+        this.world?.getComponentsInChildren(Sprite).forEach(sprite=>sprite.grayscale=gray);
+    }
+    private sprite(parent:Node,name:string):Sprite {const n=this.makeNode(name,parent);n.getComponent(UITransform)!.setAnchorPoint(0,1);const s=n.addComponent(Sprite);let ancestor:Node|null=parent;while(ancestor&&ancestor!==this.world)ancestor=ancestor.parent;s.grayscale=ancestor===this.world&&this.hp<=0;s.sizeMode=Sprite.SizeMode.RAW;return s;}
     private buildPlayer():void {
         this.feet=this.makeNode('Player',this.objects);this.weapon=this.sprite(this.feet,'Weapon');this.body=this.sprite(this.feet,'Body');this.hair=this.sprite(this.feet,'Hair');
         this.ghost=this.sprite(this.effects,'Occlusion silhouette');this.ghost.node.addComponent(UIOpacity).opacity=90;
@@ -322,6 +328,7 @@ export class MirWorld extends Component {
         if(!this.ready)return;
         const halfX=400/48,halfY=222/32;
         this.camera={x:Math.max(halfX,Math.min(this.grid.width-halfX,this.visual.x)),y:Math.max(halfY,Math.min(this.grid.height-halfY,this.visual.y))};
+        this.syncDeathScene();
         this.world.setScale(this.zoom,this.zoom,1);this.world.setPosition(-this.camera.x*48*this.zoom,this.camera.y*32*this.zoom+78);
         void this.terrain.update(this.camera.x,this.camera.y,this.zoom);
         this.feet.setPosition(this.visual.x*48,-this.visual.y*32);

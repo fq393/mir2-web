@@ -474,3 +474,10 @@ test('death cancels queued movement and combat, resets death animation and uses 
   assert.equal(w.hp,0);assert.equal(w.autoAttack,false);assert.equal(w.path.length,0);assert.equal(w.keys.size,0);assert.equal(w.pendingAction,null);assert.equal(w.actionTime,0);assert.equal(w.animationClock,0);assert.deepEqual(heard,[gender?'145':'144']);assert.match(w.deathNotice,/Alt\+X/);
  }
 });
+
+test('death scene changes world sprites once, preserves HUD and restores after revival',()=>{
+ const w=world(),actors=[{grayscale:false},{grayscale:false}],hud={grayscale:false},terrain=[];let traversals=0;
+ w.world={getComponentsInChildren(){traversals++;return actors;}};w.terrain={setGrayscale(value){terrain.push(value);}};
+ w.hp=0;w.syncDeathScene();w.syncDeathScene();assert.equal(traversals,1);assert.ok(actors.every(s=>s.grayscale));assert.equal(hud.grayscale,false);
+ w.hp=18;w.syncDeathScene();assert.equal(traversals,2);assert.ok(actors.every(s=>!s.grayscale));assert.deepEqual(terrain,[true,true,false]);
+});

@@ -34,6 +34,8 @@ export const terrainOrder=(x:number,y:number,front:boolean):number=>y*100000+x*2
 export const actorOrder=(y:number,id=0):number=>Math.round(y)*100000+90000+(id%1000);
 export class TerrainStream {
  readonly tiles=new Map<string,TerrainTile>();
+ private grayscale=false;
+ setGrayscale(value:boolean):void{if(this.grayscale===value)return;this.grayscale=value;this.tiles.forEach(tile=>tile.sprite.grayscale=value);}
  private chunks=new Map<string,Cell[]>();private pending=new Map<string,Promise<void>>();
  private generation=0;private last='';private disposed=false;private desired:Chunk[]=[];private committedAtlases:number[]=[];
  constructor(private manifest:Manifest,private store:SpriteStore,private ground:Node,private objects:Node,private error:(text:string)=>void){}
@@ -57,7 +59,7 @@ export class TerrainStream {
     const id=`${c.x}:${c.y}:${kind}`;required.add(id);if(this.tiles.has(id))continue;
     const floor=ref.floor??kind==='back',node=new Node(id);node.layer=Layers.Enum.UI_2D;(floor?this.ground:this.objects).addChild(node);
     node.addComponent(UITransform).setAnchorPoint(0,1);node.setPosition(px,-py);
-    const sprite=node.addComponent(MirSprite);sprite.spriteFrame=f.sprite;sprite.sizeMode=Sprite.SizeMode.RAW;if(ref.blend)sprite.setAdditive();
+    const sprite=node.addComponent(MirSprite);sprite.grayscale=this.grayscale;sprite.spriteFrame=f.sprite;sprite.sizeMode=Sprite.SizeMode.RAW;if(ref.blend)sprite.setAdditive();
     this.tiles.set(id,{node,sprite,animationKeys:ref.animationKeys,baseY:-py,baseH:f.meta.h,sort:floor?c.y*100000+c.x*3+(['back','middle','front'].indexOf(kind)):terrainOrder(c.x,c.y,kind==='front'),floor});
    }
    this.tiles.forEach((tile,key)=>{if(!required.has(key)){tile.node.destroy();this.tiles.delete(key);}});

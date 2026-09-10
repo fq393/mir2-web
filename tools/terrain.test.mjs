@@ -63,3 +63,14 @@ test('atlas frame lookup uses registered buckets, including later interior asset
  const task=store.atlas(20);r.pending.get('mir/a20')(null,{});await task;assert.ok(store.frames.has('room'));
  store.destroy();
 });
+
+test('death grayscale covers late terrain loads and reverses on revival',async()=>{
+ const r=runtime(),ground=new Node('ground'),objects=new Node('objects');
+ const store={frames:new Map([['0:0',{sprite:{},meta:{w:48,h:32}}]]),atlas:async()=>{},retain:()=>{}};
+ const s=new r.TerrainStream({map:{chunks:[{x:0,y:0,width:32,height:32,file:'death.json',atlases:[0]}]}},store,ground,objects,e=>{throw Error(e);});
+ const loading=s.update(10,10,1);s.setGrayscale(true);
+ r.pending.get('mir/death')(null,{json:{cells:[{x:10,y:10,back:{library:0,index:0,floor:true},front:{library:0,index:0}}]}});await loading;
+ assert.equal(s.tiles.size,2);for(const tile of s.tiles.values())assert.equal(tile.sprite.grayscale,true);
+ s.setGrayscale(false);for(const tile of s.tiles.values())assert.equal(tile.sprite.grayscale,false);
+ s.setGrayscale(true);for(const tile of s.tiles.values())assert.equal(tile.sprite.grayscale,true);
+});
