@@ -281,7 +281,7 @@ test('failed save and disconnect do not apply unconfirmed or stale bindings',()=
   assert.equal(w.magics[0].key,1);assert.equal(w.skillPending,false);
 });
 test('unsupported bound skill does not dispatch fireball',()=>{
- const w=world(),sent=[];w.magics=[{spell:61,key:8}];w.notice=()=>{};w.connection.send=c=>sent.push(c);
+ const w=world(),sent=[];w.magics=[{spell:32,key:8}];w.notice=()=>{};w.connection.send=c=>sent.push(c);
  w.castKey(8);assert.equal(sent.length,0);
 });
 
@@ -562,4 +562,15 @@ test('one gesture cannot activate rebuilt native buttons twice or execute right-
  handlers.touch({});handlers.mouse({getButton:()=>0});assert.equal(actions,1);
  w.lastNativeTouch=-Infinity;handlers.mouse({getButton:()=>2});assert.equal(actions,1);
  handlers.touch({});assert.equal(actions,2);
+});
+test('healing uses self on empty ground instead of retained hostile selection, and hovered player when present',()=>{
+ const w=world();w.serverReady=true;w.ownId=7;w.magics=[{spell:61,key:2}];w.entityAt=()=>0;w.selected=42;w.mousePoint={x:400,y:200};const sent=[];w.sendAction=(type,p)=>(sent.push(p),true);
+ w.castKey(2);assert.equal(sent[0].spell,61);assert.equal(sent[0].targetId,7);
+ w.peers.set(8,{kind:'player',point:{x:3,y:2},dead:false});w.entityAt=()=>8;w.castKey(2);assert.equal(sent[1].targetId,8);
+ w.notice=()=>{};w.peers.get(8).dead=true;w.castKey(2);assert.equal(sent.length,2);
+});
+test('healing acknowledgements never play fireball effects or create a damage target marker',()=>{
+ const w=world();w.notice=()=>{};const calls=[];w.healingEffect=(...a)=>calls.push(a);w.spellEffect=()=>assert.fail('healing became fireball');w.ownId=7;
+ w.packet('Magic',{Spell:61,Cast:false,TargetID:7});assert.equal(calls.length,0);
+ w.packet('Magic',{Spell:61,Cast:true,TargetID:7,Target:{x:2,y:2}});assert.equal(calls.length,1);assert.equal(w.fireTargets.size,0);
 });

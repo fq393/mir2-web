@@ -85,7 +85,7 @@ export class MirWorld extends Component {
     private tradeMode="sell";private tradeItem:any=null;private tradeQuote:any=null;private tradeRequest=0;
     private lastMoveAcceptedAt=-Infinity;private autoAttack=false;private runRequested=false;private healthPoll=0;private dayIcon?:Sprite;
     private logs:string[]=[];private npcPage:string[]=[];private menuKind='';private npcId=0;private goods:any[]=[];private lastAttack=0;
-    private collisionCell='';private particleEffects:{node:Node;sprite:Sprite;keys:string[];age:number;life:number;from:Point;to:Point}[]=[];
+    private collisionCell='';private particleEffects:{node:Node;sprite:Sprite;keys:string[];age:number;life:number;from:Point;to:Point;follow?:number}[]=[];
 
     async start():Promise<void> {
         view.setDesignResolutionSize(800,600,ResolutionPolicy.SHOW_ALL);
@@ -117,6 +117,8 @@ export class MirWorld extends Component {
             this.manifest.actors={...this.manifest.actors,...classicNPC.actors};
             const chicken=(await resource<JsonAsset>('mir/actors/classic-chicken',JsonAsset)).json as any;
             const chickenBase=this.manifest.atlases.length;Object.values(chicken.frames).forEach((f:any)=>f.atlas+=chickenBase);Object.assign(this.manifest.frames,chicken.frames);this.store.registerFrames(chicken.frames);this.manifest.atlases.push(...chicken.atlases);this.manifest.actors={...this.manifest.actors,...chicken.actors};
+            const healing=(await resource<JsonAsset>('mir/actors/healing',JsonAsset)).json as any;
+            const healingBase=this.manifest.atlases.length;Object.values(healing.frames).forEach((f:any)=>f.atlas+=healingBase);Object.assign(this.manifest.frames,healing.frames);this.store.registerFrames(healing.frames);this.manifest.atlases.push(...healing.atlases);
             const classicPlayer=(await resource<JsonAsset>('mir/actors/classic-player',JsonAsset)).json as any;
             const playerAtlasBase=this.manifest.atlases.length;
             Object.values(classicPlayer.frames).forEach((f:any)=>f.atlas+=playerAtlasBase);
@@ -124,7 +126,7 @@ export class MirWorld extends Component {
             this.manifest.actors={...this.manifest.actors,...classicPlayer.actors};
             const actorKeys:string[]=[];
             const collect=(v:any):void=>{if(typeof v==='string'&&this.manifest.frames[v])actorKeys.push(v);else if(Array.isArray(v))v.forEach(collect);else if(v&&typeof v==='object')Object.values(v).forEach(collect);};
-            collect(this.manifest.player);collect(this.manifest.actors);collect(this.manifest.spellFireBall);actorKeys.push(...Object.keys(nativeUI.frames));await this.store.keys(actorKeys);this.createNativeHUD();
+            collect(this.manifest.player);collect(this.manifest.actors);collect(this.manifest.spellFireBall);actorKeys.push(...Object.keys(nativeUI.frames),...Object.keys(healing.frames));await this.store.keys(actorKeys);this.createNativeHUD();
             const worldMaps=[this.manifest.map];
             for(const roomId of ['0105','0141','0132']){
             const room=(await resource<JsonAsset>(`mir/maps/${roomId}/manifest`,JsonAsset)).json as any;
@@ -339,7 +341,7 @@ export class MirWorld extends Component {
         this.pickupAtDestination();
         this.actionTime=Math.max(0,this.actionTime-dt);
         this.peers.forEach(p=>{p.elapsed+=dt;p.actionTime=Math.max(0,(p.actionTime??0)-dt);const t=Math.min(1,p.elapsed/0.6);p.visual={x:p.from.x+(p.point.x-p.from.x)*t,y:p.from.y+(p.point.y-p.from.y)*t};});
-        this.particleEffects=this.particleEffects.filter(e=>{e.age+=dt;if(e.age>=e.life){e.node.destroy();return false;}const t=e.age/e.life;e.node.setPosition((e.from.x+(e.to.x-e.from.x)*t)*48+24,-(e.from.y+(e.to.y-e.from.y)*t)*32+28);const frame=this.frames.get(e.keys[Math.min(e.keys.length-1,Math.floor(t*e.keys.length))]);if(frame){e.sprite.spriteFrame=frame.sprite;e.sprite.node.setPosition(frame.meta.offsetX,-frame.meta.offsetY);}return true;});
+        this.particleEffects=this.particleEffects.filter(e=>{e.age+=dt;if(e.age<0)return true;e.node.active=true;if(e.follow){const p=e.follow===this.ownId?this.visual:this.peers.get(e.follow)?.visual;if(p){e.from={...p};e.to={...p};}}if(e.age>=e.life){e.node.destroy();return false;}const t=e.age/e.life;e.node.setPosition((e.from.x+(e.to.x-e.from.x)*t)*48+24,-(e.from.y+(e.to.y-e.from.y)*t)*32+28);const frame=this.frames.get(e.keys[Math.min(e.keys.length-1,Math.floor(t*e.keys.length))]);if(frame){e.sprite.spriteFrame=frame.sprite;e.sprite.node.setPosition(frame.meta.offsetX,-frame.meta.offsetY);}return true;});
         this.terrain?.animate(this.worldClock);this.updateView();
     }
     private drawActor(sprite:Sprite,actor:string|null,action:string,direction:number,clock:number):void {
@@ -492,12 +494,14 @@ export class MirWorld extends Component {
     }
     private cast(spell=31):void {
         if(!this.magics.some(m=>m.spell===spell)){this.notice('尚未学习该技能');return;}
-        if(spell!==31){this.notice(`${this.skillName(spell)}的施放尚未接入。`);return;}
+        if(spell!==31&&spell!==61){this.notice(`${this.skillName(spell)}的施放尚未接入。`);return;}
         if(!this.serverReady||this.step||this.pendingAction||this.hp<=0||this.actionTime>0)return;
         // Recompute at key-down: actors/camera can move under a stationary pointer.
         const screen=this.mousePoint;
         if(blocksWorld(screen.x,screen.y,this.menu.active?this.panelRects:[],this.hudRows)||this.miniMap?.blocksWorld(screen.x,screen.y))return;
-        this.hovered=this.entityAt(screen);const targetId=this.hovered||this.selected,p=this.peers.get(targetId);
+        this.hovered=this.entityAt(screen);
+        if(spell===61){const peer=this.peers.get(this.hovered);if(peer?.dead){this.notice('无法治疗死亡目标');return;}const targetId=peer?.kind==='player'?this.hovered:this.ownId,target=targetId===this.ownId?this.point:peer!.point;this.autoAttack=false;this.path=[];this.heldButton=null;this.sendAction('cast',{spell:61,targetId,x:target.x,y:target.y,direction:this.facing});return;}
+        const targetId=this.hovered||this.selected,p=this.peers.get(targetId);
         if(!p||!['monster','player'].includes(p.kind??'')||p.dead){this.notice('请将鼠标移到目标上，再按技能快捷键');return;}
         this.autoAttack=false;this.path=[];this.heldButton=null;this.facing=directionTo(this.point,p.point);this.sendAction('cast',{spell:31,targetId,x:p.point.x,y:p.point.y,direction:this.facing});
     }
@@ -968,6 +972,12 @@ export class MirWorld extends Component {
         sprite.sizeMode=Sprite.SizeMode.RAW;sprite.setAdditive();sprite.grayscale=this.hp<=0;
         this.particleEffects.push({node,sprite,keys,age:0,life:hit?.5:.6,from:{...from},to:{...to}});
     }
+    private healingEffect(from:Point,to:Point,targetId:number,ownerId=this.ownId):void {
+        for(const [start,delay,life,point,follow] of [[200,0,.8,from,ownerId],[370,.5,.8,to,targetId]] as const){
+            const node=this.makeNode('Healing',this.effects),flame=this.makeNode('Healing light',node);flame.getComponent(UITransform)!.setAnchorPoint(0,1);const sprite=flame.addComponent(MirSprite);sprite.sizeMode=Sprite.SizeMode.RAW;sprite.setAdditive();sprite.grayscale=this.hp<=0;node.active=delay===0;
+            this.particleEffects.push({node,sprite,keys:Array.from({length:10},(_,i)=>`healing:${start+i}`),age:-delay,life,from:{...point},to:{...point},follow});
+        }this.sound.play('M61-0');this.sound.play('M61-2',.5);
+    }
     private packet(name:string,raw:any):void {
         if(['NewItemInfo','LevelChanged','DuraChanged','ItemRepaired','ItemUpgraded','ItemUsed','DeleteItem','DeleteItems','GainedItem','EquipItem','RemoveItem','MoveItem','SellItem'].includes(name))this.clearItemTooltip();
         const d=this.normalize(raw),id=d.objectid,p=this.peers.get(id);if(name==='BaseStatsInfo'){this.baseStats=d.stats?.stats??[];return;}
@@ -1000,6 +1010,8 @@ export class MirWorld extends Component {
         if(name==='DamageIndicator'&&d.damage!==0){this.notice(`${id===this.ownId?'你':p?.name??'目标'} ${d.damage<0?'受到':'恢复'} ${Math.abs(d.damage)} 点${d.damage<0?'伤害':'生命'}`);if(p&&d.damage<0&&(this.fireTargets.get(id)??0)>Date.now()){this.spellEffect(p.point,p.point,true);this.sound.play('M31-2');this.fireTargets.delete(id);}}
         if(name==='ObjectDied'&&p){if(p.kind==='monster')this.sound.play(`${String(p.image).padStart(3,'0')}-3`);this.fireTargets.delete(id);p.dead=true;p.from={...p.point};p.visual={...p.point};p.elapsed=0;p.actionTime=0;this.notice(`${p.name} 已倒下`);}
         if(['ObjectAttack','ObjectMagic','ObjectStruck'].includes(name)){const action=name==='ObjectAttack'?'attack':name==='ObjectMagic'?'cast':'hit';if(p?.kind==='monster'&&name!=='ObjectMagic')this.sound.play(`${String(p.image).padStart(3,'0')}-${name==='ObjectAttack'?1:2}`);if(id===this.ownId&&name==='ObjectStruck')this.sound.play('138');if(id===this.ownId){this.ownAction=action;this.actionTime=.8;this.animationClock=0;this.facing=d.direction??this.facing;}else if(p){p.action=action;p.actionTime=.8;p.from={...p.point};p.visual={...p.point};p.elapsed=0;p.direction=d.direction??p.direction;}}
+        if(name==='ObjectMagic'&&id!==this.ownId&&p&&d.spell===61&&d.cast)this.healingEffect(p.point,d.target??p.point,d.targetid,id);
+        if(name==='Magic'&&d.spell===61){if(d.cast){this.ownAction='cast';this.actionTime=.8;this.animationClock=0;this.healingEffect(this.point,d.target??this.point,d.targetid||this.ownId);this.notice('施放治愈术');}else this.notice('治愈术未成功：请检查魔法值、目标和冷却');return;}
         if(name==='Magic'){if(d.cast){const target=this.peers.get(d.targetid);if(target&&!target.dead){this.selected=d.targetid;this.healthPoll=0;}this.sound.play('M31-0');this.sound.play('M31-1',.25);this.ownAction='cast';this.actionTime=.8;this.animationClock=0;this.spellEffect(this.point,d.target??this.point);this.fireTargets.set(d.targetid,Date.now()+1500);this.notice('施放火球术');}else this.notice('施法未成功：检查目标距离、MP 或冷却');}
         if(name==='EquipItem'||name==='RemoveItem'){
             this.equipmentPending=false;this.equipmentPendingAt=0;this.selectedEquipment=-1;

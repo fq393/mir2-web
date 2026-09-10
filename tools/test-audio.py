@@ -14,6 +14,7 @@ lst=m['originalSoundList'];assert hashlib.sha256((root/lst['local']).read_bytes(
 import re
 mapping={int(a):b.lower() for a,b in re.findall(r'^\s*(\d+):\s+wav\\([^\r\n]+)',(root/lst['local']).read_text(encoding='gb18030'),re.M)}
 files={f['file']:f for f in m['sources']}
-for category in ['fireball','deer','scarecrow']:
+categories=['fireball','healing','deer','scarecrow']
+for category in categories:
  for alias,index in lst[category].items():assert mapping[index]==files[alias]['originalFilename'].lower()
-print(f'All {len(m["sources"])} match local original bytes; 9 renamed event files match original sound.lst IDs')
+print(f'All {len(m["sources"])} match local original bytes; {sum(len(lst[c]) for c in categories)} renamed event files match original sound.lst IDs')

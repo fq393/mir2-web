@@ -456,6 +456,22 @@
       "originalFilename": "57.wav",
       "bytes": 35912,
       "sha256": "c7788b12d92c56115e43723fb79fd2f3d76a2d0ebc9ca9dd51f68a1da2493256"
+    },
+    {
+      "file": "M61-0.wav",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/M2-1.wav",
+      "originalFilename": "M2-1.wav",
+      "bytes": 194008,
+      "sha256": "aade9db9a46762b8c319a2fd3611fbb4cdc86d444b5c3fd14dc92aec812f94a1",
+      "verification": "original sound.lst healing event"
+    },
+    {
+      "file": "M61-2.wav",
+      "local": "raw-assets/client-176/传奇私服1.76客户/Wav/M2-3.wav",
+      "originalFilename": "M2-3.wav",
+      "bytes": 308496,
+      "sha256": "9e3942a729f886197b30d1ca0084aa020179f62bca64c6044e36d6e080d74ed5",
+      "verification": "original sound.lst healing event"
     }
   ],
   "missing": [
@@ -482,6 +498,10 @@
       "005-1.wav": 472,
       "005-2.wav": 474,
       "005-3.wav": 475
+    },
+    "healing": {
+      "M61-0.wav": 10020,
+      "M61-2.wav": 10022
     }
   }
 }

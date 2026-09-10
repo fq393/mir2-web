@@ -945,6 +945,15 @@
       "byteRange": "69589-134742",
       "httpStatus": 206,
       "contentRange": "bytes 69589-134742/134743"
+    },
+    {
+      "path": "Data/Magic.Lib",
+      "localFile": "Data_Magic.Lib.full",
+      "url": "https://www.mirfiles.com/resources/mir2/crystal/patch/Data/Magic.Lib",
+      "sha256": "75b52ee743b023aabd74cb5bad8a0577ffd82b13bb0a41e356c8dabd66d6048a",
+      "bytes": 9328415,
+      "byteRange": null,
+      "httpStatus": 200
     }
   ]
 }
