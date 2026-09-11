@@ -21,8 +21,16 @@ static class TradeProcessTests
         string file=Path.Combine(folder,"accounts.bin");
         if(phase=="read")
         {
-            using var reader=new BinaryReader(File.OpenRead(file));
-            string expected=reader.ReadString();var a=new AccountInfo(reader);var b=new AccountInfo(reader);
+            bool durable=File.Exists(Envir.AccountPath);
+            using var reader=new BinaryReader(File.OpenRead(durable?Envir.AccountPath:file));
+            string expected;
+            if(durable){
+                expected="committed";Envir.LoadVersion=reader.ReadInt32();Envir.LoadCustomVersion=reader.ReadInt32();
+                reader.ReadInt32();reader.ReadInt32();reader.ReadUInt64();reader.ReadInt32();
+                if(reader.ReadInt32()!=0)throw new Exception("unexpected fixture guild");reader.ReadInt32();
+                if(reader.ReadInt32()!=0||reader.ReadInt32()!=2)throw new Exception("unexpected fixture account header");
+            }else expected=reader.ReadString();
+            var a=new AccountInfo(reader);var b=new AccountInfo(reader);
             var items=a.Characters.SelectMany(c=>c.Inventory).Concat(b.Characters.SelectMany(c=>c.Inventory)).Where(i=>i!=null).ToArray();
             if(items.Length!=2||items.Select(i=>i.UniqueID).Distinct().Count()!=2||a.Gold+b.Gold!=2000)throw new Exception("cross-process asset conservation failed");
             bool exchanged=expected=="committed";
@@ -46,10 +54,23 @@ static class TradeProcessTests
             var item=envir.CreateFreshItem(definition);item.AddedStats[Stat.MaxDC]=bonus;item.CurrentDura=321;role.Inventory[6]=item;return p;
         }
         var first=Make("甲",5,MirDirection.Right,3);var second=Make("乙",6,MirDirection.Left,5);
+        envir.AccountList.AddRange(new[]{first.Account,second.Account});envir.Players.AddRange(new[]{first,second});
         second.TradeInvitation=first;second.TradeReply(true);
         first.DepositTradeItem(6,0);second.DepositTradeItem(6,0);first.TradeGold(30);second.TradeGold(10);
         if(phase=="cancelled"){first.TradeCancel();first.TradeCancel();}
-        if(phase=="committed"){first.TradeConfirm(true);second.TradeConfirm(true);first.TradeConfirm(true);}
+        if(phase=="committed"){
+            bool early=false;
+            first.BeforeEnqueue=second.BeforeEnqueue=packet=>{
+                if(packet is ServerPackets.GainedItem or ServerPackets.GainedGold or ServerPackets.TradeConfirm)
+                    if(!File.Exists(Envir.AccountPath)) early=true;
+            };
+            first.TradeConfirm(true);second.TradeConfirm(true);first.TradeConfirm(true);
+            if(early)throw new Exception("receipt notification preceded the durable file");
+        }
+        if(phase=="committed"){
+            if(!File.Exists(Envir.AccountPath)||!first.Packets.Any(p=>p is ServerPackets.TradeConfirm)||!second.Packets.Any(p=>p is ServerPackets.TradeConfirm))throw new Exception("no durable confirmed trade");
+            File.WriteAllText(Path.Combine(folder,"ready"),phase);Thread.Sleep(Timeout.Infinite);
+        }
         using(var stream=new FileStream(file,FileMode.Create))
         {
             using(var writer=new BinaryWriter(stream,System.Text.Encoding.UTF8,true))

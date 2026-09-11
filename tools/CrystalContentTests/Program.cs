@@ -140,7 +140,8 @@ try {
 static void Check(bool ok,string message){if(!ok)throw new Exception(message);}
 class RecordingPlayer:PlayerObject {
     public readonly List<Packet> Packets=new();
-    public override void Enqueue(Packet packet)=>Packets.Add(packet);
+    public Action<Packet>? BeforeEnqueue;
+    public override void Enqueue(Packet packet){BeforeEnqueue?.Invoke(packet);Packets.Add(packet);}
 }
 
 class LevelPlayer:RecordingPlayer {public void InitializeLevel()=>RefreshLevelStats();public override void LevelUp(){} }

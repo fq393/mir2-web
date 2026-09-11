@@ -14,12 +14,12 @@ static class PlayerTradeTests
         var map = new Map(new MapInfo { Index = 996, FileName = "player-trade-fixture" });
         RecordingPlayer Player(string name, int x, MirDirection direction) {
             var p = new RecordingPlayer {
-                Info = new CharacterInfo { Name = name, Level = 7 },
+                Info = new CharacterInfo { Name = name, Level = 7, CreationIP="127.0.0.1", CreationDate=DateTime.Now, LastLoginDate=DateTime.Now },
                 Account = new AccountInfo { Gold = 1000 }, Stats = new Stats { [Stat.BagWeight] = 1000 },
                 Connection = connection, CurrentMap = map, CurrentLocation = new Point(x, 5), Direction = direction,
                 AllowTrade = true
             };
-            p.Report = new Reporting(p); p.Info.Mount = new MountInfo(p); return p;
+            p.Report = new Reporting(p); p.Info.Mount = new MountInfo(p); p.Info.Heroes=new HeroInfo[p.Info.MaximumHeroCount]; p.Info.AccountInfo=p.Account; p.Account.Characters.Add(p.Info); envir.AccountList.Add(p.Account); envir.Players.Add(p); return p;
         }
         var a = Player("交易甲", 5, MirDirection.Right);
         var b = Player("交易乙", 6, MirDirection.Left);
@@ -114,7 +114,31 @@ static class PlayerTradeTests
         c.TradeConfirm(true); d.TradeConfirm(true);
         Check(c.Info.Inventory.Count(i=>i==other)==1 && d.Info.Inventory.Count(i=>i==returned)==1, "reservations blocked full-bag exchange");
         Check(!c.WebTradeCapacityReleased && !d.WebTradeCapacityReleased, "settlement bypass leaked outside confirmation");
+        var e=Player("保存甲",5,MirDirection.Right);var f=Player("保存乙",6,MirDirection.Left);
+        var stackDefinition=new ItemInfo{Index=envir.ItemInfoList.Max(i=>i.Index)+1,Name="仅测试堆叠",Type=ItemType.Potion,StackSize=10};envir.ItemInfoList.Add(stackDefinition);
+        var offered=envir.CreateFreshItem(stackDefinition);offered.Count=3;
+        var existing=envir.CreateFreshItem(stackDefinition);existing.Count=1;
+        e.Info.Inventory[6]=offered;f.Info.Inventory[6]=existing;
+        f.TradeInvitation=e;f.TradeReply(true);e.DepositTradeItem(6,0);e.TradeGold(25);
+        e.Packets.Clear();f.Packets.Clear();
+        Directory.CreateDirectory(Envir.AccountPath+"n"); // Real persistence failure after in-memory stack merge.
+        try{e.TradeConfirm(true);f.TradeConfirm(true);}finally{Directory.Delete(Envir.AccountPath+"n");}
+        Check(e.Info.Trade[0]==offered&&offered.Count==3&&existing.Count==1,"failed save did not restore stack counts/escrow");
+        Check(e.Account.Gold==975&&f.Account.Gold==1000&&e.TradeGoldAmount==25,"failed save did not restore both wallets");
+        Check(!e.TradeLocked&&!f.TradeLocked&&e.TradePartner==f&&f.TradePartner==e,"failed save must preserve session and unlock both");
+        Check(!e.Packets.Concat(f.Packets).Any(p=>p is ServerPackets.GainedItem or ServerPackets.GainedGold or ServerPackets.TradeConfirm),"failed save leaked success or receipt packets");
+        e.TradeConfirm(true);Check(e.Info.Trade[0]==offered,"one confirmation committed after save failure");
+        f.TradeConfirm(true);
+        Check(e.Info.Trade[0]==null&&existing.Count==4&&e.Account.Gold==975&&f.Account.Gold==1025,"retry did not commit exactly once");
+        Check(e.Packets.Count(p=>p is ServerPackets.TradeConfirm)==1&&f.Packets.Count(p=>p is ServerPackets.TradeConfirm)==1,"durable retry did not confirm both once");
+        // Once persisted, a disconnected recipient must not roll back the other owner.
+        var lastItem=envir.CreateFreshItem(definition);e.Info.Inventory[6]=lastItem;
+        f.TradeInvitation=e;f.TradeReply(true);e.DepositTradeItem(6,0);
+        e.BeforeEnqueue=p=>{if(p is ServerPackets.TradeConfirm)throw new IOException("notification fixture");};
+        e.TradeConfirm(true);f.TradeConfirm(true);e.BeforeEnqueue=null;
+        Check(f.Info.Inventory.Contains(lastItem)&&!e.Info.Inventory.Contains(lastItem)&&e.TradePartner==null&&f.TradePartner==null,"notification failure rolled back durable ownership");
+        Check(f.Packets.Count(p=>p is ServerPackets.TradeConfirm)==2,"one broken recipient prevented the other confirmation");
         if (failures.Count > 0) throw new Exception("Player trade regressions: " + string.Join("; ", failures));
-        Console.WriteLine("PASS real player trade: stale invitations, orphan deposit, capacity/wallet re-confirmation, escrow identity/+3 and duplicate cancellation.");
+        Console.WriteLine("PASS real player trade: stale invitations, orphan deposit, capacity/wallet re-confirmation, escrow identity/+3, save failure rollback, retry and durable notification failure.");
     }
 }

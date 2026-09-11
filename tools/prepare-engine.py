@@ -38,6 +38,29 @@ a=text.index('        public void BeginSaveAccounts()');b=text.index('        pr
 method=text[a:b];start=method.index('            using (var mStream');end=method.rfind('        }')
 method=method[:start]+'            try\n            {\n'+method[start:end]+'            }\n            catch (Exception ex) { Saving = false; MessageQueue.Enqueue(ex); }\n'+method[end:]
 text=text[:a]+method+text[b:]
+# Durable trade saves must propagate failure to the transaction boundary.
+anchor='        public void SaveAccounts()'
+assert text.count(anchor)==1
+text=text.replace(anchor,'''        public void SaveTradeAccountsOrThrow(PlayerObject first, PlayerObject second)
+        {
+            if (!Players.Contains(first) || !Players.Contains(second) ||
+                !AccountList.Contains(first.Account) || !AccountList.Contains(second.Account))
+                throw new InvalidOperationException("Trade participants are not registered for saving.");
+            var deadline = System.Diagnostics.Stopwatch.StartNew();
+            while (Saving) {
+                if (deadline.ElapsedMilliseconds > 10000) throw new IOException("Previous account save did not finish.");
+                Thread.Sleep(1);
+            }
+            using (var memory = new MemoryStream()) {
+                SaveAccounts(memory);
+                using (var file = new FileStream(AccountPath + "n", FileMode.Create, FileAccess.Write, FileShare.None)) {
+                    byte[] data = memory.ToArray(); file.Write(data, 0, data.Length); file.Flush(true);
+                }
+                File.Move(AccountPath + "n", AccountPath, true);
+            }
+        }
+
+'''+anchor)
 out=root/'server/engine/generated/Envir.cs';out.parent.mkdir(parents=True,exist_ok=True)
 if not out.exists() or out.read_text()!=text: out.write_text(text)
 
@@ -119,6 +142,16 @@ start=method.index(anchor)+len(anchor)
 end=method.rfind('        }')
 method=method[:start]+'\n            foreach (var member in TradePair) member.WebTradeCapacityReleased = true;\n            try\n            {\n'+method[start:end]+'\n            }\n            finally { foreach (var member in TradePair) member.WebTradeCapacityReleased = false; }\n'+method[end:]
 player=player[:a]+method+player[b:]
+# Replace the unpersisted swap/notification loop; retain the upstream preflight.
+a=player.index('        public void TradeConfirm(bool confirm)');b=player.index('        public void TradeCancel()',a)
+method=player[a:b];start=method.index('            //swap items');end=method.index('            finally {')
+method=method[:start]+'''            if (CanTrade) Mir2.WebHost.PlayerTradeCommit.Apply(TradePair[0], TradePair[1],
+                () => Envir.SaveTradeAccountsOrThrow(TradePair[0], TradePair[1]));
+            }
+'''+method[end:]
+method=method.replace('            UserItem u;\n','')
+player=player[:a]+method+player[b:]
+replace_player('            Enqueue(new S.GainedGold { Gold = gold });','            WebTradeNotify(new S.GainedGold { Gold = gold });')
 # Cancellation returns escrow, so it must inspect physical capacity, not subtract itself.
 a=player.index('        public void TradeCancel()');b=player.index('        #endregion',a)
 method=player[a:b].replace('FreeSpace(TradePair[p].Info.Inventory) < 1','!TradePair[p].Info.Inventory.Any(i => i == null)').replace('TradePair[p].CanGainItem(temp)','TradePair[p].Info.Inventory.Any(i => i == null)')
@@ -146,6 +179,14 @@ replace_human('''                if (array[i] == null) count++;
             return Math.Max(0, count);''')
 # A logically full bag can still contain physically empty, reserved slots.
 replace_human('''                    if (bagItem.Info != item.Info) continue;''','''                    if (bagItem == null || bagItem.Info != item.Info) continue;''')
+replace_human('        public bool WebTradeCapacityReleased;','''        public bool WebTradeCapacityReleased;
+        public List<Packet> WebTradeNotifications;
+        public void WebTradeNotify(Packet packet)
+        {
+            if (WebTradeNotifications != null) WebTradeNotifications.Add(packet);
+            else Enqueue(packet);
+        }''')
+replace_human('            Enqueue(new S.GainedItem { Item = clonedItem });','            WebTradeNotify(new S.GainedItem { Item = clonedItem });')
 out=root/'server/engine/generated/HumanObject.cs'
 if not out.exists() or out.read_text()!=human: out.write_text(human)
 
