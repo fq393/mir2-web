@@ -61,6 +61,7 @@ export class MirWorld extends Component {
     private keys=new Set<number>();
     private step:{from:Point;to:Point;elapsed:number;seq:number;running:boolean}|null=null;
     private nextSequence=0;
+    private queuedCast:{spell:number;targetId:number;expiresAt:number}|null=null;
     private pendingAction:{command:string;seq:number}|null=null;
     private facing=4;
     private animationClock=0;private worldClock=0;
@@ -196,7 +197,7 @@ export class MirWorld extends Component {
         if(e.keyCode===KeyCode.ENTER){this.saveSkillKey();return;}
         if(!this.skillPending&&e.keyCode>=KeyCode.F1&&e.keyCode<=KeyCode.F8){this.bindingKey=e.keyCode-KeyCode.F1+1;this.showSkillKeys(this.bindingSpell,false);}
         return;
-    }if(e.keyCode===KeyCode.KEY_G){this.party?.toggle();return;}if(e.keyCode===KeyCode.KEY_H&&(this.keys.has(KeyCode.CTRL_LEFT)||this.keys.has(KeyCode.CTRL_RIGHT))){this.connection?.send({type:"attackMode",mode:(this.attackMode+1)%6});return;}if(e.keyCode===KeyCode.KEY_X&&(this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT))){this.clearMovement();this.connection?.send({type:'restart'});return;}this.sound.unlock();if(e.keyCode===KeyCode.KEY_B||e.keyCode===KeyCode.F9){this.showInventory('bag');return;}if(e.keyCode===KeyCode.F10){this.showInventory('character');return;}if(e.keyCode===KeyCode.F11){this.toggleSkills();return;}if(e.keyCode>=KeyCode.DIGIT_1&&e.keyCode<=KeyCode.DIGIT_6){this.usePotion(this.inventory[e.keyCode-KeyCode.DIGIT_1]);return;}if(e.keyCode>=KeyCode.F1&&e.keyCode<=KeyCode.F8){this.castKey(e.keyCode-KeyCode.F1+1);return;}if(e.keyCode===KeyCode.SPACE){this.autoAttack=true;this.attack();return;}if(e.keyCode===KeyCode.KEY_M){this.miniMap?.toggle();return;}if(e.keyCode===KeyCode.ESCAPE){this.miniMap?.close();if(this.selectedBag>=6||this.selectedEquipment>=0){this.selectedBag=-1;this.selectedEquipment=-1;return;}this.menu.active=false;if(this.targetText)this.targetText.string='';this.selected=0;this.autoAttack=false;return;}this.pickupTarget=0;this.autoAttack=false;this.keys.add(e.keyCode);this.path=[];if(this.ready&&!this.step)this.beginStep();}
+    }if(e.keyCode===KeyCode.KEY_G){this.party?.toggle();return;}if(e.keyCode===KeyCode.KEY_H&&(this.keys.has(KeyCode.CTRL_LEFT)||this.keys.has(KeyCode.CTRL_RIGHT))){this.connection?.send({type:"attackMode",mode:(this.attackMode+1)%6});return;}if(e.keyCode===KeyCode.KEY_X&&(this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT))){this.clearMovement();this.connection?.send({type:'restart'});return;}this.sound.unlock();if(e.keyCode===KeyCode.KEY_B||e.keyCode===KeyCode.F9){this.showInventory('bag');return;}if(e.keyCode===KeyCode.F10){this.showInventory('character');return;}if(e.keyCode===KeyCode.F11){this.toggleSkills();return;}if(e.keyCode>=KeyCode.DIGIT_1&&e.keyCode<=KeyCode.DIGIT_6){this.usePotion(this.inventory[e.keyCode-KeyCode.DIGIT_1]);return;}if(e.keyCode>=KeyCode.F1&&e.keyCode<=KeyCode.F8){this.castKey(e.keyCode-KeyCode.F1+1);return;}if(e.keyCode===KeyCode.SPACE){this.autoAttack=true;this.attack();return;}if(e.keyCode===KeyCode.KEY_M){this.miniMap?.toggle();return;}if(e.keyCode===KeyCode.ESCAPE){this.queuedCast=null;this.miniMap?.close();if(this.selectedBag>=6||this.selectedEquipment>=0){this.selectedBag=-1;this.selectedEquipment=-1;return;}this.menu.active=false;if(this.targetText)this.targetText.string='';this.selected=0;this.autoAttack=false;return;}this.pickupTarget=0;this.autoAttack=false;this.queuedCast=null;this.keys.add(e.keyCode);this.path=[];if(this.ready&&!this.step)this.beginStep();}
     // Keep pointer coordinates available across Cocos UI hit regions. Capture them
     // before dispatch, using the same 800x600 transform as rendering.
     private trackPointer=(event:PointerEvent):void=>{
@@ -243,7 +244,7 @@ export class MirWorld extends Component {
     }
     private preventContext=(e:Event):void=>{e.preventDefault();if(!this.bagMovePending&&!this.equipmentPending){this.selectedBag=-1;this.selectedEquipment=-1;this.clearItemTooltip();}};
     private onKeyUp(e:EventKeyboard):void {this.keys.delete(e.keyCode);}
-    private pauseInput():void {this.heldButton=null;this.pointerAlt=false;this.autoAttack=false;this.runRequested=false;this.windowDrag=null;this.sound.stop();this.keys.clear();this.path=[];}
+    private pauseInput():void {this.queuedCast=null;this.heldButton=null;this.pointerAlt=false;this.autoAttack=false;this.runRequested=false;this.windowDrag=null;this.sound.stop();this.keys.clear();this.path=[];}
     private onMouse(e:EventMouse):void {if(e.getButton()===0&&!this.uiGesture&&this.selectedBag>=6){const p=e.getUILocation();if(this.dropCarried({x:p.x,y:600-p.y}))return;}if(this.uiGesture||this.accounts?.active||this.selectedBag>=6||this.selectedEquipment>=0||this.equipmentPending||this.windowDrag||Date.now()<this.dragMouseUntil)return;this.sound.unlock();if(e.getButton()!==0&&e.getButton()!==2)return;this.runRequested=e.getButton()===2;const p=e.getUILocation();if(this.miniMap?.blocksWorld(p.x,600-p.y))return;if(this.pointerAlt||this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT)){this.harvestAt({x:p.x,y:600-p.y});return;}this.destination(p);}
     private onTouch(e:EventTouch):void {if(this.uiGesture||this.accounts?.active||this.selectedBag>=6||this.selectedEquipment>=0||this.equipmentPending||this.windowDrag||Date.now()<this.dragMouseUntil)return;this.sound.unlock();const p=e.getUILocation();if(this.miniMap?.blocksWorld(p.x,600-p.y))return;if(this.pointerAlt||this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT)){this.harvestAt({x:p.x,y:600-p.y});return;}this.destination(p);}
     private dropCarried(screen:Point):boolean {
@@ -291,7 +292,7 @@ export class MirWorld extends Component {
     private destination(p:{x:number;y:number}):void {
         if(!this.ready||!this.serverReady)return;
         const screen={x:p.x,y:600-p.y};if(blocksWorld(screen.x,screen.y,this.menu.active?this.panelRects:[],this.hudRows))return;
-        const {x,y}=screenToCell(screen,this.camera),id=this.entityAt(screen);this.pickupTarget=0;
+        const {x,y}=screenToCell(screen,this.camera),id=this.entityAt(screen);this.queuedCast=null;this.pickupTarget=0;
         if(id){this.selected=id;this.path=[];this.autoAttack=this.peers.get(id)?.kind==='monster';if(this.autoAttack)this.healthPoll=0;if(this.peers.get(id)?.kind==='npc')this.talk();return;}
         this.selected=0;this.autoAttack=false;this.pickupTarget=Array.from(this.loot.entries()).find(([,v])=>v.point.x===x&&v.point.y===y)?.[0]??0;
         const from=this.step?.to??this.point;
@@ -304,11 +305,12 @@ export class MirWorld extends Component {
     }
     private beginStep():void {
         if(!this.serverReady){this.clearMovement();return;}
-        if(this.pendingAction||this.actionTime>0||this.hp<=0)return;
+        if(this.step||this.pendingAction||this.actionTime>0||this.hp<=0)return;
         // Match the authoritative 600ms movement cooldown; leave the 700ms
         // run-start window intact instead of consuming it with render delay.
         const sinceMove=performance.now()/1000-this.lastMoveAcceptedAt;
         if(sinceMove<.6)return;
+        if(this.queuedCast){const intent=this.queuedCast;this.queuedCast=null;if(performance.now()<=intent.expiresAt)this.dispatchCast(intent.spell,intent.targetId);return;}
         const down=(...codes:number[])=>codes.some(c=>this.keys.has(c));
         const dx=Number(down(KeyCode.KEY_D,KeyCode.ARROW_RIGHT))-Number(down(KeyCode.KEY_A,KeyCode.ARROW_LEFT));
         const dy=Number(down(KeyCode.KEY_S,KeyCode.ARROW_DOWN))-Number(down(KeyCode.KEY_W,KeyCode.ARROW_UP));
@@ -337,7 +339,7 @@ export class MirWorld extends Component {
     private resumePeerPresentation():void {
         this.peers.forEach(p=>{p.from={...p.point};p.visual={...p.point};p.elapsed=.6;p.actionTime=0;});
         this.particleEffects.forEach(e=>e.node.destroy());this.particleEffects=[];this.fireTargets.clear();
-        this.heldButton=null;this.keys.clear();this.path=[];this.autoAttack=false;this.sound.stop();
+        this.queuedCast=null;this.heldButton=null;this.keys.clear();this.path=[];this.autoAttack=false;this.sound.stop();
     }
     update(dt:number):void {
         if(typeof document!=='undefined'&&document.hidden)return;
@@ -513,15 +515,31 @@ export class MirWorld extends Component {
     private cast(spell=31):void {
         if(!this.magics.some(m=>m.spell===spell)){this.notice('尚未学习该技能');return;}
         if(spell!==31&&spell!==61){this.notice(`${this.skillName(spell)}的施放尚未接入。`);return;}
-        if(!this.serverReady||this.step||this.pendingAction||this.hp<=0||this.actionTime>0)return;
-        // Recompute at key-down: actors/camera can move under a stationary pointer.
+        if(!this.serverReady||this.pendingAction||this.hp<=0||this.actionTime>0)return;
+        // Capture the target when the key is pressed, not after the step ends.
         const screen=this.mousePoint;
         if(blocksWorld(screen.x,screen.y,this.menu.active?this.panelRects:[],this.hudRows)||this.miniMap?.blocksWorld(screen.x,screen.y))return;
         this.hovered=this.entityAt(screen);
-        if(spell===61){const peer=this.peers.get(this.hovered);if(peer?.dead){this.notice('无法治疗死亡目标');return;}const targetId=peer?.kind==='player'?this.hovered:this.ownId,target=targetId===this.ownId?this.point:peer!.point;this.autoAttack=false;this.path=[];this.heldButton=null;this.sendAction('cast',{spell:61,targetId,x:target.x,y:target.y,direction:this.facing});return;}
-        const targetId=this.hovered||this.selected,p=this.peers.get(targetId);
-        if(!p||!['monster','player'].includes(p.kind??'')||p.dead){this.notice('请将鼠标移到目标上，再按技能快捷键');return;}
-        this.autoAttack=false;this.path=[];this.heldButton=null;this.facing=directionTo(this.point,p.point);this.sendAction('cast',{spell:31,targetId,x:p.point.x,y:p.point.y,direction:this.facing});
+        const targetId=spell===61?(this.peers.get(this.hovered)?.kind==='player'?this.hovered:this.ownId):(this.hovered||this.selected);
+        if(!this.validCastTarget(spell,targetId))return;
+        this.pauseInput();this.pickupTarget=0;
+        // Never discard an in-flight move or its authoritative confirmation.
+        if(this.step){this.queuedCast={spell,targetId,expiresAt:performance.now()+3000};return;}
+        this.dispatchCast(spell,targetId);
+    }
+    private validCastTarget(spell:number,targetId:number):boolean {
+        if(spell===61&&targetId===this.ownId)return this.hp>0;
+        const p=this.peers.get(targetId);
+        if(!p||p.dead||!(spell===61?['player']:['monster','player']).includes(p.kind??'')){
+            this.notice(spell===61?'无法治疗该目标':'请将鼠标移到目标上，再按技能快捷键');return false;
+        }
+        return true;
+    }
+    private dispatchCast(spell:number,targetId:number):void {
+        if(!this.serverReady||this.step||this.pendingAction||this.hp<=0||!this.magics.some(m=>m.spell===spell)||!this.validCastTarget(spell,targetId))return;
+        const target=targetId===this.ownId?this.point:this.peers.get(targetId)!.point;
+        if(spell===31)this.facing=directionTo(this.point,target);
+        this.sendAction('cast',{spell,targetId,x:target.x,y:target.y,direction:this.facing});
     }
     private talk():void {
         const p=this.peers.get(this.selected);if(!p||p.kind!=='npc')return;

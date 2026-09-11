@@ -617,3 +617,23 @@ test('fireball separates original cast light, distance flight and impact timing'
  const [cast,near,far,hit]=w.particleEffects;assert.equal(cast.keys[0],'magic:0');assert.equal(cast.life,.5);assert.equal(cast.age,0);
  assert.equal(near.age,-.5);assert.equal(near.node.active,false);assert.equal(near.life,.05);assert.equal(far.life,.4);assert.equal(near.frameInterval,.03);assert.equal(hit.life,.6);
 });
+
+for(const running of [false,true])test(`skill during ${running?'run':'walk'} preserves committed step then casts once at captured target`,()=>{
+ const w=world(),sent=[];w.serverReady=true;w.ownId=7;w.magics=[{spell:31,key:1}];w.mousePoint={x:400,y:200};w.entityAt=()=>42;
+ w.peers.set(42,{kind:'monster',point:{x:5,y:2},visual:{x:5,y:2},from:{x:5,y:2},elapsed:1,dead:false});
+ w.connection.send=p=>(sent.push(p),true);w.keys.add(68);w.beginStep();w.step.running=running;const seq=w.step.seq;
+ w.path=[{x:4,y:2}];w.heldButton=running?2:0;w.runRequested=running;w.castKey(1);
+ assert.equal(w.step.seq,seq);assert.equal(w.path.length,0);assert.equal(w.keys.size,0);assert.equal(w.heldButton,null);assert.equal(w.runRequested,false);assert.equal(sent.length,1);
+ w.entityAt=()=>99;w.update(.6);assert.equal(sent.length,1,'no cast before confirmation');
+ w.serverEvent({type:'state',seq,x:3,y:2});movementNow+=600;w.lastVisibleFrameAt=movementNow;w.update(.01);
+ assert.equal(w.step,null);assert.equal(sent.length,2);assert.equal(sent[1].type,'cast');assert.equal(sent[1].targetId,42);
+ w.update(.1);assert.equal(sent.length,2);
+});
+test('queued cast cancels on pause and never fires at dead target or after expiry',()=>{
+ for(const reason of ['pause','dead','expired']){
+ const w=world();w.serverReady=true;w.magics=[{spell:31,key:1}];w.mousePoint={x:400,y:200};w.entityAt=()=>42;w.notice=()=>{};
+ w.peers.set(42,{kind:'monster',point:{x:5,y:2},dead:false});w.step={seq:1};w.castKey(1);
+ if(reason==='pause')w.pauseInput();if(reason==='dead')w.peers.get(42).dead=true;if(reason==='expired')movementNow+=3001;
+ w.step=null;w.connection.send=()=>assert.fail('cancelled skill sent');w.beginStep();assert.equal(w.queuedCast,null);
+ }
+});
