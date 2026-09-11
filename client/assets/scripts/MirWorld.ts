@@ -85,7 +85,7 @@ export class MirWorld extends Component {
     private tradeMode="sell";private tradeItem:any=null;private tradeQuote:any=null;private tradeRequest=0;
     private lastMoveAcceptedAt=-Infinity;private autoAttack=false;private runRequested=false;private healthPoll=0;private dayIcon?:Sprite;
     private logs:string[]=[];private npcPage:string[]=[];private menuKind='';private npcId=0;private goods:any[]=[];private lastAttack=0;
-    private collisionCell='';private particleEffects:{node:Node;sprite:Sprite;keys:string[];age:number;life:number;from:Point;to:Point;follow?:number}[]=[];
+    private collisionCell='';private particleEffects:{node:Node;sprite:Sprite;keys:string[];age:number;life:number;from:Point;to:Point;follow?:number;frameInterval?:number}[]=[];
 
     async start():Promise<void> {
         view.setDesignResolutionSize(800,600,ResolutionPolicy.SHOW_ALL);
@@ -359,7 +359,7 @@ export class MirWorld extends Component {
         this.pickupAtDestination();
         this.actionTime=Math.max(0,this.actionTime-dt);
         this.peers.forEach(p=>{p.elapsed+=dt;p.actionTime=Math.max(0,(p.actionTime??0)-dt);const t=Math.min(1,p.elapsed/0.6);p.visual={x:p.from.x+(p.point.x-p.from.x)*t,y:p.from.y+(p.point.y-p.from.y)*t};});
-        this.particleEffects=this.particleEffects.filter(e=>{e.age+=dt;if(e.age<0)return true;e.node.active=true;if(e.follow){const p=e.follow===this.ownId?this.visual:this.peers.get(e.follow)?.visual;if(p){e.from={...p};e.to={...p};}}if(e.age>=e.life){e.node.destroy();return false;}const t=e.age/e.life;e.node.setPosition((e.from.x+(e.to.x-e.from.x)*t)*48+24,-(e.from.y+(e.to.y-e.from.y)*t)*32+28);const frame=this.frames.get(e.keys[Math.min(e.keys.length-1,Math.floor(t*e.keys.length))]);if(frame){e.sprite.spriteFrame=frame.sprite;e.sprite.node.setPosition(frame.meta.offsetX,-frame.meta.offsetY);}return true;});
+        this.particleEffects=this.particleEffects.filter(e=>{e.age+=dt;if(e.age<0)return true;e.node.active=true;if(e.follow){const p=e.follow===this.ownId?this.visual:this.peers.get(e.follow)?.visual;if(p){e.from={...p};e.to={...p};}}if(e.age>=e.life){e.node.destroy();return false;}const t=e.age/e.life;e.node.setPosition((e.from.x+(e.to.x-e.from.x)*t)*48+24,-(e.from.y+(e.to.y-e.from.y)*t)*32+28);const frame=this.frames.get(e.keys[e.frameInterval?Math.floor(e.age/e.frameInterval)%e.keys.length:Math.min(e.keys.length-1,Math.floor(t*e.keys.length))]);if(frame){e.sprite.spriteFrame=frame.sprite;e.sprite.node.setPosition(frame.meta.offsetX,-frame.meta.offsetY);}return true;});
         this.terrain?.animate(this.worldClock);this.updateView();
     }
     private drawActor(sprite:Sprite,actor:string|null,action:string,direction:number,clock:number):void {
@@ -997,13 +997,15 @@ export class MirWorld extends Component {
         if(d.namecolour&&p.label)p.label.color=this.nameColor(d.namecolour);
         Object.assign(p,{kind,name:names[d.name]??d.name??kind,image:d.image??0,armour:d.armour??0,weaponShape:d.weapon??-1,hairShape:d.hair??0,gender:d.gender??0,dead:d.dead??false,harvested:d.skeleton??false});
     }
-    private spellEffect(from:Point,to:Point,hit=false):void {
+    private spellEffect(from:Point,to:Point,hit=false,cast=false):void {
         if(this.peerMotionPaused())return;
-        const def=this.manifest.spellFireBall;let keys:string[]=hit?def?.hit:def?.projectile?.[projectileDirection(from,to)];
+        const def=this.manifest.spellFireBall;let keys:string[]=cast?def?.cast:hit?def?.hit:def?.projectile?.[projectileDirection(from,to)];
         if(!keys?.length)return;const node=this.makeNode('Fireball',this.effects),flame=this.makeNode('Flame',node);
         flame.getComponent(UITransform)!.setAnchorPoint(0,1);const sprite=flame.addComponent(MirSprite);
         sprite.sizeMode=Sprite.SizeMode.RAW;sprite.setAdditive();sprite.grayscale=this.hp<=0;
-        this.particleEffects.push({node,sprite,keys,age:0,life:hit?.5:.6,from:{...from},to:{...to}});
+        const flight=Math.max(.03,Math.max(Math.abs(to.x-from.x),Math.abs(to.y-from.y))*.05);
+        const delay=hit||cast?0:.5;node.active=delay===0;
+        this.particleEffects.push({node,sprite,keys,age:delay?-delay:0,life:cast?.5:hit?.6:flight,frameInterval:hit||cast?undefined:.03,from:{...from},to:cast?{...from}:{...to}});
     }
     private healingEffect(from:Point,to:Point,targetId:number,ownerId=this.ownId):void {
         if(this.peerMotionPaused())return;
@@ -1046,7 +1048,7 @@ export class MirWorld extends Component {
         if(['ObjectAttack','ObjectMagic','ObjectStruck'].includes(name)){const action=name==='ObjectAttack'?'attack':name==='ObjectMagic'?'cast':'hit';if(p?.kind==='monster'&&name!=='ObjectMagic')this.sound.play(`${String(p.image).padStart(3,'0')}-${name==='ObjectAttack'?1:2}`);if(id===this.ownId&&name==='ObjectStruck')this.sound.play('138');if(id===this.ownId){this.ownAction=action;this.actionTime=.8;this.animationClock=0;this.facing=d.direction??this.facing;}else if(p){p.action=action;p.actionTime=.8;p.from={...p.point};p.visual={...p.point};p.elapsed=0;p.direction=d.direction??p.direction;}}
         if(name==='ObjectMagic'&&id!==this.ownId&&p&&d.spell===61&&d.cast)this.healingEffect(p.point,d.target??p.point,d.targetid,id);
         if(name==='Magic'&&d.spell===61){if(d.cast){this.ownAction='cast';this.actionTime=.8;this.animationClock=0;this.healingEffect(this.point,d.target??this.point,d.targetid||this.ownId);this.notice('施放治愈术');}else this.notice('治愈术未成功：请检查魔法值、目标和冷却');return;}
-        if(name==='Magic'){if(d.cast){const target=this.peers.get(d.targetid);if(target&&!target.dead){this.selected=d.targetid;this.healthPoll=0;}this.sound.play('M31-0');this.sound.play('M31-1',.25);this.ownAction='cast';this.actionTime=.8;this.animationClock=0;this.spellEffect(this.point,d.target??this.point);this.fireTargets.set(d.targetid,Date.now()+1500);this.notice('施放火球术');}else this.notice('施法未成功：检查目标距离、MP 或冷却');}
+        if(name==='Magic'){if(d.cast){const target=this.peers.get(d.targetid);if(target&&!target.dead){this.selected=d.targetid;this.healthPoll=0;}this.sound.play('M31-0');this.sound.play('M31-1',.5);this.ownAction='cast';this.actionTime=.8;this.animationClock=0;this.spellEffect(this.point,this.point,false,true);this.spellEffect(this.point,d.target??this.point);this.fireTargets.set(d.targetid,Date.now()+1500);this.notice('施放火球术');}else this.notice('施法未成功：检查目标距离、MP 或冷却');}
         if(name==='EquipItem'||name==='RemoveItem'){
             this.equipmentPending=false;this.equipmentPendingAt=0;this.selectedEquipment=-1;
             if(!d.success){const item=this.inventory.find(i=>i&&String(i.uniqueid)===String(d.uniqueid));

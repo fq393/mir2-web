@@ -608,3 +608,12 @@ test('paused rendering does not accumulate transient spell nodes',()=>{
  w.spellEffect({x:1,y:1},{x:2,y:2});w.healingEffect({x:1,y:1},{x:1,y:1},7);
  assert.equal(w.particleEffects.length,0);
 });
+
+test('fireball separates original cast light, distance flight and impact timing',()=>{
+ const w=world();w.manifest={spellFireBall:{cast:['magic:0'],hit:['magic:170'],projectile:Array(16).fill(['magic:10'])}};
+ w.makeNode=()=>({getComponent:()=>({setAnchorPoint(){}}),addComponent:C=>new C()});
+ w.spellEffect({x:1,y:1},{x:1,y:1},false,true);
+ w.spellEffect({x:1,y:1},{x:2,y:1});w.spellEffect({x:1,y:1},{x:9,y:3});w.spellEffect({x:2,y:1},{x:2,y:1},true);
+ const [cast,near,far,hit]=w.particleEffects;assert.equal(cast.keys[0],'magic:0');assert.equal(cast.life,.5);assert.equal(cast.age,0);
+ assert.equal(near.age,-.5);assert.equal(near.node.active,false);assert.equal(near.life,.05);assert.equal(far.life,.4);assert.equal(near.frameInterval,.03);assert.equal(hit.life,.6);
+});
