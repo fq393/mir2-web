@@ -637,3 +637,21 @@ test('queued cast cancels on pause and never fires at dead target or after expir
  w.step=null;w.connection.send=()=>assert.fail('cancelled skill sent');w.beginStep();assert.equal(w.queuedCast,null);
  }
 });
+
+test('trade Escape requests cancellation without hiding other panels or moving', () => {
+  const w=world();let cancelled=0;w.menu.active=true;
+  w.playerTrade={active:true,cancel(){cancelled++;}};
+  w.onKeyDown({keyCode:27});
+  assert.equal(cancelled,1);assert.equal(w.menu.active,true);assert.equal(w.step,null);
+});
+test('server trade packets reach the separate player window with normalized fields',()=>{
+  const w=world(),events=[];w.playerTrade={event:(...args)=>events.push(args)};
+  for(const name of ['TradeRequest','TradeAccept','TradeCancel','TradeConfirm'])w.packet(name,{Name:'交易甲',Unlock:false});
+  assert.equal(events.length,4);assert.equal(events[0][1].name,'交易甲');assert.equal(events[2][1].unlock,false);
+});
+test('a pending trade invitation blocks movement and skill hotkeys',()=>{
+  const w=world();w.playerTrade={inviting:true};w.serverReady=true;
+  let casts=0;w.castKey=()=>casts++;
+  w.onKeyDown({keyCode:68});w.onKeyDown({keyCode:112});
+  assert.equal(w.keys.size,0);assert.equal(w.step,null);assert.equal(casts,0);
+});

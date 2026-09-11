@@ -246,7 +246,7 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey, IReadOnlyDi
                     lastLocation=user.Location;
                     currentHP=user.HP;
                     learnedSpells.Clear();foreach(var magic in user.Magics) learnedSpells.Add((int)magic.Spell);
-                    await Send(new {type="ready",source="crystal-tcp",packet="UserInformation",objectId,name=user.Name,map=currentMap,x=user.Location.X,y=user.Location.Y,direction=(int)user.Direction,hp=user.HP,mp=user.MP,experience=user.Experience,maxExperience=user.MaxExperience,level=user.Level,@class=(int)user.Class,gender=(int)user.Gender,hair=user.Hair,gold=user.Gold,inventory=DemoSeed.Items(user.Inventory),equipment=DemoSeed.Items(user.Equipment),magics=JsonSerializer.SerializeToElement(user.Magics,packetJson)},ct); break;
+                    await Send(new {type="ready",playerTradePreview=Environment.GetEnvironmentVariable("MIR2_TRADE_PREVIEW")=="1",source="crystal-tcp",packet="UserInformation",objectId,name=user.Name,map=currentMap,x=user.Location.X,y=user.Location.Y,direction=(int)user.Direction,hp=user.HP,mp=user.MP,experience=user.Experience,maxExperience=user.MaxExperience,level=user.Level,@class=(int)user.Class,gender=(int)user.Gender,hair=user.Hair,gold=user.Gold,inventory=DemoSeed.Items(user.Inventory),equipment=DemoSeed.Items(user.Equipment),magics=JsonSerializer.SerializeToElement(user.Magics,packetJson)},ct); break;
                 case S.UserLocation location:
                     var hasCommand = pending.TryDequeue(out var request);
                     bool? accepted = hasCommand && request.Type is "walk" or "run" or "turn" ? (request.Type is "walk" or "run" ? location.Location!=lastLocation : (int)location.Direction==request.Direction) : null;
@@ -327,6 +327,14 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey, IReadOnlyDi
                 ulong Id(string k)=>r.GetProperty(k).ValueKind==JsonValueKind.String?ulong.Parse(r.GetProperty(k).GetString()!):r.GetProperty(k).GetUInt64();
                 if(command is "attack" or "cast" or "harvest" && (Num("direction")<0 || Num("direction")>7)) throw new InvalidDataException("direction must be 0..7");
                 if(command=="restart"){await Write(new C.LogOut(),ct);continue;}
+                // Invitation/window QA only; item and gold routes remain closed until their UI is verified.
+                if(command is "playerTradeRequest" or "playerTradeReply" or "playerTradeCancel"){
+                    if(Environment.GetEnvironmentVariable("MIR2_TRADE_PREVIEW")!="1")continue;
+                    if(command=="playerTradeRequest")await Write(new C.TradeRequest(),ct);
+                    else if(command=="playerTradeReply")await Write(new C.TradeReply{AcceptInvite=r.GetProperty("accept").GetBoolean()},ct);
+                    else await Write(new C.TradeCancel(),ct);
+                    continue;
+                }
                 if(command=="skillKey"){
                     int request=Num("request");
                     try{

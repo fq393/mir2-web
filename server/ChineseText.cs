@@ -44,6 +44,10 @@ static class ChineseText
             ["TooHeavyToTransfer"]="物品太重，无法转移。",["WeaponLuck"]="你的武器获得了幸运。",["WeaponCurse"]="你的武器受到了诅咒。",["WeaponNoEffect"]="没有产生效果。",
             ["YouCannotUsePotionsHere"]="这里不能使用药剂。",["NoTownTeleport"]="这里不能使用回城卷。",["CanNotRandom"]="这里不能使用随机传送卷。",["CanNotDungeon"]="这里不能使用地牢逃脱卷。",
             ["CannotResurrection"]="存活时不能使用复活卷。",["CanNotDrop"]="这里不能丢弃物品。",["BeenPoisoned"]="你中毒了。",
+            ["AlreadyTrading"]="你正在交易中。",["CannotTradeWithSelf"]="不能与自己交易。",["CannotTradeWhenDead"]="死亡时不能交易。",
+            ["PlayerAlreadyHasTradeInvitation"]="{0}正在处理交易邀请。",["PlayerNotAllowingTrade"]="{0}没有允许交易。",["PlayerNotInTradeRange"]="{0}不在交易范围内。",
+            ["PlayerAlreadyTrading"]="{0}正在交易中。",["PlayerRefusedTrade"]="{0}拒绝了交易。",["PlayerWaitingConfirmTrade"]="{0}正在等待你确认交易。",
+            ["TradingPartnerCannotAcceptAllItems"]="对方无法接收全部物品。",["UnableAcceptAllItems"]="你无法接收全部物品。",["PartnerCannotAcceptMoreGold"]="对方无法接收更多金币。",["UnableAcceptMoreGold"]="你无法接收更多金币。",
             ["FaceToTrade"]="请面对交易对象。",["HasConnected"]="{0}进入了游戏。",["ServerClosed"]="{0}已离线：服务器关闭。",["DoubleLogin"]="{0}已离线：账号重复登录。",
         };
         foreach(var (key,value) in texts) {

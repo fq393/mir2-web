@@ -9,7 +9,7 @@ export class NativeConfirm {
  private previousFocus:HTMLElement|null;
  private siblings:{node:HTMLElement;inert:boolean}[]=[];
  private finished=false;private trapFocus:(event:FocusEvent)=>void=()=>{};
- constructor(parent:HTMLElement,text:string,private choose:(accepted:boolean)=>void,mode:'confirm'|'alert'='confirm'){
+ constructor(parent:HTMLElement,text:string,private choose:(accepted:boolean)=>void,mode:'confirm'|'alert'|'choice'='confirm',labels:readonly [string,string,string]=['确认删除','不删除','取消删除']){
   this.previousFocus=document.activeElement instanceof HTMLElement?document.activeElement:null;
   for(const child of Array.from(parent.children)){if(child instanceof HTMLElement){this.siblings.push({node:child,inert:child.inert});child.inert=true;}}
   this.overlay=document.createElement('div');this.overlay.style.cssText='position:absolute;inset:0;z-index:25;';parent.append(this.overlay);
@@ -17,7 +17,7 @@ export class NativeConfirm {
   panel.style.cssText='position:absolute;left:174px;top:210px;width:452px;height:179px;background:url(webui/360.png);';this.overlay.append(panel);
   const label=document.createElement('div');label.textContent=text;label.style.cssText=`position:absolute;left:39px;top:38px;width:374px;color:white;font:12px ${CLASSIC_FONT_FAMILY};line-height:18px;overflow-wrap:anywhere;`;panel.append(label);
   const buttons:HTMLButtonElement[]=[];
-  const choices:readonly (readonly [string,number,number,boolean])[]=mode==='alert'?[['确定',361,324,true]]:[['确认删除',363,104,true],['不删除',367,214,false],['取消删除',365,324,false]];
+  const choices:readonly (readonly [string,number,number,boolean])[]=mode==='alert'?[['确定',361,324,true]]:mode==='choice'?[[labels[0],363,214,true],[labels[1],367,324,false]]:[[labels[0],363,104,true],[labels[1],367,214,false],[labels[2],365,324,false]];
   for(const [name,image,x,accepted] of choices){
    const button=document.createElement('button');button.type='button';button.setAttribute('aria-label',name);button.style.cssText=`position:absolute;left:${x}px;top:126px;width:80px;height:34px;border:0;padding:0;background:url(webui/${image}.png);cursor:pointer;`;
    button.onpointerdown=()=>button.style.backgroundImage=`url(webui/${image+1}.png)`;
