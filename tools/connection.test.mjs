@@ -583,3 +583,28 @@ test('single category click opens instances without buying, instance selection p
  w.selectShopRow(item);assert.equal(w.selectedGood,item);assert.equal(w.selectedGood.addedstats.values.maxdc,3);assert.equal(sent.length,0);
  w.shopBack();assert.equal(w.shopDetail,null);assert.equal(w.selectedGood,null);
 });
+
+test('background movement snaps to latest authority instead of traversing stale visual positions',()=>{
+ const w=world();const peer={visual:{x:2,y:2},from:{x:2,y:2},point:{x:2,y:2},elapsed:1};w.peers.set(42,peer);
+ w.packet('ObjectWalk',{ObjectID:42,Location:{X:3,Y:2}});assert.equal(peer.elapsed,0);assert.equal(peer.from.x,2);
+ movementNow+=120000;
+ w.packet('ObjectWalk',{ObjectID:42,Location:{X:4,Y:2}});assert.equal(peer.elapsed,.6);assert.equal(peer.visual.x,4);assert.equal(peer.from.x,4);
+ w.packet('ObjectWalk',{ObjectID:42,Location:{X:17,Y:8}});assert.equal(peer.visual.x,17);
+});
+test('normal one-cell walks and two-cell runs interpolate; discontinuities snap',()=>{
+ const w=world(),p={visual:{x:1,y:1},point:{x:1,y:1},from:{x:1,y:1},elapsed:1};
+ w.positionPeer(p,{x:3,y:1},true);assert.equal(p.elapsed,0);assert.equal(p.from.x,1);
+ w.positionPeer(p,{x:12,y:1},true);assert.equal(p.elapsed,.6);assert.equal(p.visual.x,12);
+});
+test('resume clears stale presentations and held inputs without discarding unconfirmed own step',()=>{
+ const w=world(),p={visual:{x:1,y:1},point:{x:9,y:7},from:{x:1,y:1},elapsed:0,actionTime:.4};w.peers.set(4,p);
+ let removed=0;w.particleEffects=[{node:{destroy:()=>removed++}}];w.heldButton=0;w.keys.add(68);w.path=[{x:3,y:2}];w.autoAttack=true;w.step={seq:91};
+ w.resumePeerPresentation();assert.equal(p.visual.x,9);assert.equal(p.from.y,7);assert.equal(p.actionTime,0);assert.equal(removed,1);
+ assert.equal(w.heldButton,null);assert.equal(w.keys.size,0);assert.equal(w.path.length,0);assert.equal(w.autoAttack,false);assert.equal(w.step.seq,91);
+});
+
+test('paused rendering does not accumulate transient spell nodes',()=>{
+ const w=world();movementNow+=60000;w.makeNode=()=>assert.fail('background effect allocated');
+ w.spellEffect({x:1,y:1},{x:2,y:2});w.healingEffect({x:1,y:1},{x:1,y:1},7);
+ assert.equal(w.particleEffects.length,0);
+});

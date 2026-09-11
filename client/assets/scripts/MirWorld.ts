@@ -324,7 +324,25 @@ export class MirWorld extends Component {
         if(!this.connection?.send({type:running?'run':'walk',direction,seq})){this.serverReady=false;this.clearMovement();return;}
         this.confirmed=null;this.facing=direction;this.step={from:{...this.point},to:next,elapsed:0,seq,running};this.animationClock=0;this.stepSoundPhase=0;
     }
+    private lastVisibleFrameAt=performance.now();
+    private peerMotionPaused():boolean {
+        return (typeof document!=='undefined'&&document.hidden)||performance.now()-this.lastVisibleFrameAt>750;
+    }
+    private positionPeer(p:Peer,point:Point,running=false):void {
+        const distance=Math.max(Math.abs(point.x-p.visual.x),Math.abs(point.y-p.visual.y));
+        const snap=this.peerMotionPaused()||distance>(running?4:2)+.01;
+        p.from=snap?{...point}:{...p.visual};p.point={...point};p.elapsed=snap?.6:0;
+        if(snap){p.visual={...point};p.actionTime=0;}
+    }
+    private resumePeerPresentation():void {
+        this.peers.forEach(p=>{p.from={...p.point};p.visual={...p.point};p.elapsed=.6;p.actionTime=0;});
+        this.particleEffects.forEach(e=>e.node.destroy());this.particleEffects=[];this.fireTargets.clear();
+        this.heldButton=null;this.keys.clear();this.path=[];this.autoAttack=false;this.sound.stop();
+    }
     update(dt:number):void {
+        if(typeof document!=='undefined'&&document.hidden)return;
+        if(this.peerMotionPaused()){this.resumePeerPresentation();dt=Math.min(dt,.1);}
+        this.lastVisibleFrameAt=performance.now();
         if(this.itemTooltip&&(!this.itemTooltipOwner?.isValid||!this.itemTooltipOwner.activeInHierarchy||!this.serverReady))this.clearItemTooltip();
         if(this.status)this.status.string=this.statusText;
         this.syncCarriedItem();for(const row of this.characterValues)if(row.label.isValid)row.label.string=row.value();
@@ -450,7 +468,7 @@ export class MirWorld extends Component {
         if(event.type==='peer'&&event.id!==this.ownId&&Number.isFinite(event.x)&&Number.isFinite(event.y)) {
             const point={x:event.x-this.manifest.map.originX,y:event.y-this.manifest.map.originY};let peer=this.peers.get(event.id);
             if(!peer){const node=this.makeNode(`Peer${event.id}`,this.objects);const bodyNode=this.makeNode('Body',node);bodyNode.getComponent(UITransform)!.setAnchorPoint(0,1);const body=bodyNode.addComponent(Sprite);body.sizeMode=Sprite.SizeMode.RAW;const label=this.text(this.labels,'同行者',0,65,12,Color.WHITE,160);peer={label,kind:'player',name:'同行者',node,body,point,visual:{...point},from:{...point},direction:event.direction??4,elapsed:1};this.peers.set(event.id,peer);}
-            else {peer.from={...peer.visual};peer.point=point;peer.elapsed=0;peer.direction=event.direction??peer.direction;}
+            else {this.positionPeer(peer,point,true);peer.direction=event.direction??peer.direction;}
         }
         if(event.type==='peerRemoved'){this.peers.get(event.id)?.node.destroy();this.peers.get(event.id)?.label?.node.destroy();this.peers.get(event.id)?.healthBar?.node.destroy();this.peers.delete(event.id);}
         if(event.type==='error')this.statusText=String(event.message??event.error??'Crystal 服务返回错误');
@@ -980,6 +998,7 @@ export class MirWorld extends Component {
         Object.assign(p,{kind,name:names[d.name]??d.name??kind,image:d.image??0,armour:d.armour??0,weaponShape:d.weapon??-1,hairShape:d.hair??0,gender:d.gender??0,dead:d.dead??false,harvested:d.skeleton??false});
     }
     private spellEffect(from:Point,to:Point,hit=false):void {
+        if(this.peerMotionPaused())return;
         const def=this.manifest.spellFireBall;let keys:string[]=hit?def?.hit:def?.projectile?.[projectileDirection(from,to)];
         if(!keys?.length)return;const node=this.makeNode('Fireball',this.effects),flame=this.makeNode('Flame',node);
         flame.getComponent(UITransform)!.setAnchorPoint(0,1);const sprite=flame.addComponent(MirSprite);
@@ -987,6 +1006,7 @@ export class MirWorld extends Component {
         this.particleEffects.push({node,sprite,keys,age:0,life:hit?.5:.6,from:{...from},to:{...to}});
     }
     private healingEffect(from:Point,to:Point,targetId:number,ownerId=this.ownId):void {
+        if(this.peerMotionPaused())return;
         for(const [start,delay,life,point,follow] of [[200,0,.8,from,ownerId],[370,.5,.8,to,targetId]] as const){
             const node=this.makeNode('Healing',this.effects),flame=this.makeNode('Healing light',node);flame.getComponent(UITransform)!.setAnchorPoint(0,1);const sprite=flame.addComponent(MirSprite);sprite.sizeMode=Sprite.SizeMode.RAW;sprite.setAdditive();sprite.grayscale=this.hp<=0;node.active=delay===0;
             this.particleEffects.push({node,sprite,keys:Array.from({length:10},(_,i)=>`healing:${start+i}`),age:-delay,life,from:{...point},to:{...point},follow});
@@ -1007,7 +1027,7 @@ export class MirWorld extends Component {
         if(name==='ObjectNPC'){this.spawnEntity(d,'npc');return;}
         if(name==='ObjectPlayer'){if(id===this.ownId){this.hairShape=d.hair??this.hairShape;this.gender=d.gender??this.gender;}else this.spawnEntity(d,'player');return;}
         if(name==='PlayerUpdate'&&p?.kind==='player'){p.armour=d.armour;p.weaponShape=d.weapon;return;}
-        if(['ObjectWalk','ObjectRun','ObjectTurn'].includes(name)&&p){p.running=name==='ObjectRun';if(d.location){p.from={...p.visual};p.point=d.location;p.elapsed=0;}p.direction=d.direction??p.direction;}
+        if(['ObjectWalk','ObjectRun','ObjectTurn'].includes(name)&&p){p.running=name==='ObjectRun';if(d.location){this.positionPeer(p,d.location,p.running);}p.direction=d.direction??p.direction;}
         if(name==='ObjectRemove'){const loot=this.loot.get(id);loot?.node.destroy();loot?.label.node.destroy();this.loot.delete(id);if(this.pickupTarget===id)this.pickupTarget=0;p?.node.destroy();p?.label?.node.destroy();p?.healthBar?.node.destroy();this.peers.delete(id);}
         if(name==='ObjectHealth'&&p){p.hp=d.percent;p.healthUntil=Date.now()+Math.max(0,d.expire??0)*1000;}
         if(name==='HealthChanged'){if(this.hp>0&&d.hp<=0)this.animationClock=0;this.hp=d.hp;this.mp=d.mp;}if(name==='Struck'){this.sound.play(this.gender===1?'139':'138');this.ownAction='hit';this.actionTime=.4;this.animationClock=0;}if(name==='Death'){this.clearMovement();this.actionTime=0;this.animationClock=0;this.sound.play(this.gender===1?'145':'144');this.hp=0;if(this.menu.active){if(this.menuKind==='inventory')this.showInventory();else if(this.menuKind==='shop')this.showShop();}this.notice('你已死亡，按 Alt+X 重新开始游戏。');}
