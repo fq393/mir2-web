@@ -14,6 +14,30 @@ text=text.replace(needle,needle+'\n                        Mir2.WebHost.WorldSna
 idle='                        //   if (Players.Count == 0) Thread.Sleep(1);'
 assert text.count(idle)==1, 'Upstream loop changed; review scheduler yield'
 text=text.replace(idle,'                        Thread.Sleep(1); // Web host: bounded scheduler yield, no timer scaling.')
+# Serialize uncommitted escrow as returned assets in the existing account schema.
+account_save='                    AccountList[i].Save(writer);'
+assert text.count(account_save)==1
+text=text.replace(account_save,'                    Mir2.WebHost.TradeAccountSnapshot.Write(writer, AccountList[i], Players);')
+# Keep the last valid account file present until a complete replacement exists.
+text=text.replace('File.Move(AccountPath, Path.Combine(AccountsBackUpPath, fileName));','File.Copy(AccountPath, Path.Combine(AccountsBackUpPath, fileName));')
+old='                if (File.Exists(AccountPath))\n                    File.Move(AccountPath, AccountPath + "o");\n                File.Move(AccountPath + "n", AccountPath);\n                if (File.Exists(AccountPath + "o"))\n                    File.Delete(AccountPath + "o");'
+assert text.count(old)==1
+text=text.replace(old,'                File.Move(AccountPath + "n", AccountPath, true);')
+old='                    if (File.Exists(oldfilename))\n                        File.Move(oldfilename, oldfilename + "o");\n                    File.Move(newfilename, oldfilename);\n                    if (File.Exists(oldfilename + "o"))\n                        File.Delete(oldfilename + "o");'
+assert text.count(old)==1
+text=text.replace(old,'                    File.Move(newfilename, oldfilename, true);')
+# Async write failures must be visible and release the file handle.
+a=text.index('        private void EndSaveAccounts(');b=text.index('        public bool LoadDB()',a)
+method=text[a:b].replace('                    fStream.Dispose();','                    fStream.Flush(true);\n                    fStream.Dispose();')
+old='            catch (Exception)\n            {\n            }\n\n            Saving = false;'
+assert method.count(old)==1
+method=method.replace(old,'            catch (Exception ex) { MessageQueue.Enqueue(ex); }\n            finally { fStream?.Dispose(); Saving = false; }')
+text=text[:a]+method+text[b:]
+# Serialization failures must not permanently suppress later saves.
+a=text.index('        public void BeginSaveAccounts()');b=text.index('        private void EndSaveAccounts(',a)
+method=text[a:b];start=method.index('            using (var mStream');end=method.rfind('        }')
+method=method[:start]+'            try\n            {\n'+method[start:end]+'            }\n            catch (Exception ex) { Saving = false; MessageQueue.Enqueue(ex); }\n'+method[end:]
+text=text[:a]+method+text[b:]
 out=root/'server/engine/generated/Envir.cs';out.parent.mkdir(parents=True,exist_ok=True)
 if not out.exists() or out.read_text()!=text: out.write_text(text)
 
