@@ -6,6 +6,8 @@ using Server.MirEnvir;
 using Server.MirNetwork;
 using Server.MirObjects;
 
+if(args[0]=="--trade-recovery-child"){TradeProcessTests.Child(args[1],args[2]);return;}
+
 var sourceRoot=Path.GetFullPath(args[0]);
 var sandbox=Path.Combine(Path.GetTempPath(),"mir2-content-test-"+Guid.NewGuid());
 Directory.CreateDirectory(sandbox);Directory.SetCurrentDirectory(sandbox);
@@ -118,6 +120,7 @@ try {
     MerchantTests.Run(root,envir,connection);
     PlayerTradeTests.Run(envir,connection);
     TradeSnapshotTests.Run(envir);
+    TradeProcessTests.Run();
     PlayerDropTests.Run(envir,connection);
     SkillBindingTests.Run();
     BookshopTests.Run(root,envir,connection);
