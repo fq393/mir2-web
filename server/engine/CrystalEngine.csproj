@@ -3,8 +3,8 @@
  <ItemGroup>
   <PackageReference Include="log4net" Version="3.3.0" />
   <ProjectReference Include="../../vendor/Crystal/Shared/Shared.csproj" />
-  <Compile Include="../../vendor/Crystal/Server/**/*.cs" Exclude="../../vendor/Crystal/Server/obj/**;../../vendor/Crystal/Server/bin/**;../../vendor/Crystal/Server/MirEnvir/Envir.cs;../../vendor/Crystal/Server/MirObjects/PlayerObject.cs;../../vendor/Crystal/Server/MirObjects/NPC/NPCScript.cs" />
-  <Compile Include="generated/Envir.cs" /><Compile Include="generated/PlayerObject.cs" /><Compile Include="generated/NPCScript.cs" /><Compile Include="WorldSnapshots.cs" /><Compile Include="WorldRequests.cs" /><Compile Include="MerchantTrades.cs" /><Compile Include="SkillBindings.cs" />
+  <Compile Include="../../vendor/Crystal/Server/**/*.cs" Exclude="../../vendor/Crystal/Server/obj/**;../../vendor/Crystal/Server/bin/**;../../vendor/Crystal/Server/MirEnvir/Envir.cs;../../vendor/Crystal/Server/MirObjects/PlayerObject.cs;../../vendor/Crystal/Server/MirObjects/HumanObject.cs;../../vendor/Crystal/Server/MirObjects/NPC/NPCScript.cs" />
+  <Compile Include="generated/Envir.cs" /><Compile Include="generated/PlayerObject.cs" /><Compile Include="generated/HumanObject.cs" /><Compile Include="generated/NPCScript.cs" /><Compile Include="WorldSnapshots.cs" /><Compile Include="WorldRequests.cs" /><Compile Include="MerchantTrades.cs" /><Compile Include="SkillBindings.cs" />
  </ItemGroup>
  <Target Name="PrepareSnapshotHook" BeforeTargets="BeforeCompile"><Exec Command="python3 &quot;$(MSBuildThisFileDirectory)../../tools/prepare-engine.py&quot;" /></Target>
 </Project>

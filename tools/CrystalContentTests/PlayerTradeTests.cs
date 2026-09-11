@@ -87,6 +87,33 @@ static class PlayerTradeTests
             "successful exchange changed identity/bonus or duplicated item");
         Check(a.Account.Gold == 990 && b.Account.Gold == 1010 && a.TradeGoldAmount == 0 && a.TradePartner == null && b.TradePartner == null,
             "successful exchange or duplicate confirmation changed gold/session");
+        // A full bag lends its freed slot to escrow, not to later purchases or pickups.
+        var c = Player("返还甲", 5, MirDirection.Right);
+        var d = Player("返还乙", 6, MirDirection.Left);
+        for (var i = 0; i < c.Info.Inventory.Length; i++) c.Info.Inventory[i] = envir.CreateFreshItem(definition);
+        var returned = c.Info.Inventory[6]; returned.AddedStats[Stat.MaxDC] = 3;
+        d.TradeInvitation = c; d.TradeReply(true); c.DepositTradeItem(6, 0);
+        Check(!c.CanGainItem(envir.CreateFreshItem(definition)), "pickup can consume the reserved return slot");
+        Check(!c.CanGainItems(new[]{envir.CreateFreshItem(definition)}), "purchase can consume the reserved return slot");
+        var worn = envir.CreateFreshItem(definition); c.Info.Equipment[(int)EquipmentSlot.RingL] = worn;
+        c.RemoveItem(MirGridType.Inventory, worn.UniqueID, 6);
+        Check(c.Info.Inventory[6]==null && c.Info.Equipment[(int)EquipmentSlot.RingL]==worn, "unequip consumed return reservation");
+        c.RetrieveTradeItem(0,6);
+        Check(c.Info.Inventory[6]==returned && c.Info.Trade[0]==null, "reservation prevented explicit withdrawal");
+        c.DepositTradeItem(6,0);
+        c.TradeCancel(); c.TradeCancel();
+        Check(c.Info.Inventory.Count(i=>i==returned)==1 && returned.AddedStats[Stat.MaxDC]==3 && !c.Info.Trade.Any(i=>i!=null), "full-bag cancellation did not return the exact item");
+        d.TradeInvitation = c; d.TradeReply(true); c.Account.Gold = uint.MaxValue; c.TradeGold(10);
+        Check(!c.CanGainGold(1), "incoming gold can consume escrow refund capacity");
+        c.GainGold(10); Check(c.Account.Gold==uint.MaxValue-10 && c.TradeGoldAmount==10, "earnings overwrote reserved gold"); c.TradeCancel(); c.TradeCancel();
+        Check(c.Account.Gold==uint.MaxValue && c.TradeGoldAmount==0, "escrow refund truncated or duplicated at wallet cap");
+        // Both outgoing slots become available together at final settlement.
+        for (var i=0;i<d.Info.Inventory.Length;i++) d.Info.Inventory[i]=envir.CreateFreshItem(definition);
+        var other=d.Info.Inventory[6]; d.TradeInvitation=c; d.TradeReply(true);
+        c.DepositTradeItem(6,0); d.DepositTradeItem(6,0);
+        c.TradeConfirm(true); d.TradeConfirm(true);
+        Check(c.Info.Inventory.Count(i=>i==other)==1 && d.Info.Inventory.Count(i=>i==returned)==1, "reservations blocked full-bag exchange");
+        Check(!c.WebTradeCapacityReleased && !d.WebTradeCapacityReleased, "settlement bypass leaked outside confirmation");
         if (failures.Count > 0) throw new Exception("Player trade regressions: " + string.Join("; ", failures));
         Console.WriteLine("PASS real player trade: stale invitations, orphan deposit, capacity/wallet re-confirmation, escrow identity/+3 and duplicate cancellation.");
     }

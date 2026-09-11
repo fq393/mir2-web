@@ -72,6 +72,59 @@ replace_player('''                    CanTrade = false;
                     TradePair[p].ReceiveChat''','''                    CanTrade = false;
                     TradeUnlock();
                     TradePair[p].ReceiveChat''',2)
+# Escrow owns return capacity until cancellation or the final two-party settlement.
+replace_player('return (ulong)gold + Account.Gold <= uint.MaxValue;', 'return (ulong)gold + Account.Gold + (WebTradeCapacityReleased ? 0u : TradeGoldAmount) <= uint.MaxValue;')
+replace_player('''            if (((UInt64)Account.Gold + gold) > uint.MaxValue)
+                gold = uint.MaxValue - Account.Gold;''','''            ulong available = (ulong)uint.MaxValue - Account.Gold;
+            if (!WebTradeCapacityReleased) available = available >= TradeGoldAmount ? available - TradeGoldAmount : 0;
+            gold = (uint)Math.Min((ulong)gold, available);''')
+# Direct inventory-slot insertions do not all call CanGainItem.
+import re
+for method in ['RemoveItem','RemoveSlotItem','TakeBackItem','TakeBackHeroItem','RetrieveRefineItem']:
+    pattern=r'(        public void '+method+r'\([^\n]*\)\s*\{\s*S\.[^;]+;)'
+    player,n=re.subn(pattern, r'\1\n            if (!WebTradeCapacityReleased && Info.Trade.Any(i => i != null) && FreeSpace(Info.Inventory) <= 0) { Enqueue(p); return; }',player,count=1)
+    assert n==1, 'Review reserved-slot insertion: '+method
+replace_player('                    Info.Inventory[to] = MyGuild.StoredItems[from].Item;','                    if (!WebTradeCapacityReleased && FreeSpace(Info.Inventory) <= 0) { Enqueue(p); return; }\n                    Info.Inventory[to] = MyGuild.StoredItems[from].Item;')
+replace_player('            var packet = new S.RetrieveRentalItem { From = from, To = to, Success = false };', '            var packet = new S.RetrieveRentalItem { From = from, To = to, Success = false };\n            if (!WebTradeCapacityReleased && FreeSpace(Info.Inventory) <= 0) { Enqueue(packet); return; }')
+# Successful settlement may consume outgoing escrow capacity, and only for its duration.
+a=player.index('        public void TradeConfirm(bool confirm)')
+b=player.index('        public void TradeCancel()',a)
+method=player[a:b]
+anchor='            PlayerObject[] TradePair = new PlayerObject[2] { TradePartner, this };'
+start=method.index(anchor)+len(anchor)
+end=method.rfind('        }')
+method=method[:start]+'\n            foreach (var member in TradePair) member.WebTradeCapacityReleased = true;\n            try\n            {\n'+method[start:end]+'\n            }\n            finally { foreach (var member in TradePair) member.WebTradeCapacityReleased = false; }\n'+method[end:]
+player=player[:a]+method+player[b:]
+# Cancellation returns escrow, so it must inspect physical capacity, not subtract itself.
+a=player.index('        public void TradeCancel()');b=player.index('        #endregion',a)
+method=player[a:b].replace('FreeSpace(TradePair[p].Info.Inventory) < 1','!TradePair[p].Info.Inventory.Any(i => i == null)').replace('TradePair[p].CanGainItem(temp)','TradePair[p].Info.Inventory.Any(i => i == null)')
+method=method.replace('''                        TradePair[p].GainGold(TradePair[p].TradeGoldAmount);
+                        TradePair[p].TradeGoldAmount = 0;''','''                        uint refund = TradePair[p].TradeGoldAmount;
+                        TradePair[p].TradeGoldAmount = 0;
+                        TradePair[p].GainGold(refund);''')
+player=player[:a]+method+player[b:]
+
+human=(root/'vendor/Crystal/Server/MirObjects/HumanObject.cs').read_text(encoding='utf-8-sig')
+def replace_human(old,new):
+    global human
+    assert human.count(old)==1, 'Review inventory capacity patch: '+old[:80]
+    human=human.replace(old,new)
+replace_human('''        protected static int FreeSpace(IList<UserItem> array)
+''','''        public bool WebTradeCapacityReleased;
+        protected int FreeSpace(IList<UserItem> array)
+''')
+replace_human('''                if (array[i] == null) count++;
+
+            return count;''','''                if (array[i] == null) count++;
+
+            if (!WebTradeCapacityReleased && ReferenceEquals(array, Info.Inventory))
+                count -= Info.Trade.Count(i => i != null);
+            return Math.Max(0, count);''')
+# A logically full bag can still contain physically empty, reserved slots.
+replace_human('''                    if (bagItem.Info != item.Info) continue;''','''                    if (bagItem == null || bagItem.Info != item.Info) continue;''')
+out=root/'server/engine/generated/HumanObject.cs'
+if not out.exists() or out.read_text()!=human: out.write_text(human)
+
 out=root/'server/engine/generated/PlayerObject.cs'
 if not out.exists() or out.read_text()!=player: out.write_text(player)
 
