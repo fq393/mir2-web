@@ -19,9 +19,11 @@ Cocos Creator **3.8.8**、TypeScript **5.9.3**、Crystal **.NET 8**。先做中�
 - 实际已学技能及熟练度列表、分页、增删同步；主动特效仍只接入部分技能。
 - 原包36个音效；图集分桶索引、场景资源释放与HTTP缓存校验。
 
+当前系统分析、版本依据和执行顺序：[2026-09-11系统重整](docs/system-plan-2026-09-11.md)。
+
 完整玩法/物品体系、原味差异与比奇流程：[系统全景蓝图](docs/mir176-system-blueprint.md)。
 
-75项任务与当前状态：[任务总表](docs/TASKS.md)。战斗后捡金币掉线的根因、修复与重启验证见[拾取稳定性](docs/pickup-stability.md)。
+按18个系统拆解的118个功能验收单元与当前状态：[任务总表](docs/TASKS.md)。战斗后捡金币掉线的根因、修复与重启验证见[拾取稳定性](docs/pickup-stability.md)。
 
 当前边界与验收：[系统路线](docs/systems-roadmap.md)、[显示问题核查](docs/health-and-remaining-audit.md)、[性能设计](docs/performance.md)。全技能/技能书、怪物规则与掉落、完整商店与价格校准、任务社交、其他室内、大地图和BGM仍需继续完成与版本核对。
 
