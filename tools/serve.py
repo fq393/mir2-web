@@ -1,13 +1,31 @@
 """Loopback-only static Web build server; revalidate cached assets so rebuilds remain visible."""
 import http.server
 import json
+import logging
+from logging.handlers import RotatingFileHandler
 import pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
+(ROOT / '.runtime').mkdir(exist_ok=True)
+LOGGER = logging.getLogger('mir2.web')
+LOGGER.propagate = False
+LOGGER.setLevel(logging.INFO)
+if not LOGGER.handlers:
+    handler = RotatingFileHandler(ROOT / '.runtime/web-access.log', maxBytes=2_000_000, backupCount=3, encoding='utf-8')
+    handler.setFormatter(logging.Formatter('%(asctime)s %(message)s'))
+    LOGGER.addHandler(handler)
 
 class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(ROOT / 'build/web'), **kwargs)
+
+    def log_message(self, format, *args):
+        # SimpleHTTPRequestHandler logs before sending headers. A detached launcher's
+        # closed stderr pipe must not turn a valid response into an empty reply.
+        try:
+            LOGGER.info('%s %s', self.address_string(), (format % args).replace('\n', r'\n').replace('\r', r'\r'))
+        except OSError:
+            pass
 
     def do_GET(self):
         if self.path == '/__mir2_health':

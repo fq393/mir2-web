@@ -72,6 +72,8 @@ npm start
 
 ## 架构与规则
 
+[当前后端架构、端口与服务故障定位](docs/backend-architecture.md)：.NET 8接入层与Crystal同进程，Python独立提供网页，本地二进制存档。
+
 客户端只负责输入、表现与服务端回包展示；经验升级、交易、装备和战斗由Crystal结算。桥接不接受浏览器直接设置等级/金币/生命值。
 
 Crystal固定提交`0e315fe327192afe52c3d7357ddd1f5b7e26c5b8`。启动脚本获取上游，拒绝不同提交或修改过的受版本控制源码。`tools/prepare-engine.py`生成仅插入一次属性快照调用的Envir副本，`server/engine/CrystalEngine.csproj`编译；原检出不修改。快照在单线程游戏循环中读取最终Stats，再供WebSocket线程读取不可变记录。见[系统路线](docs/systems-roadmap.md)。
