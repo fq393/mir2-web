@@ -847,8 +847,23 @@ export class MirWorld extends Component {
         // FState.DMerchantDlgDirectPaint draws script text at (30,20), not a separate merchant-name heading.
         const dialog=this.nativeWindow(this.menu,'ui:ClassicPrguse:384',0,0);this.closeNative(dialog,399,1);let y=20;
         page.forEach(line=>{const links=Array.from(line.matchAll(/<([^/<>]+)\/([^<>]+)>/g));const plain=line.replace(/<[^<>]+>/g,'').replace(/\\/g,'').trim();if(plain){this.nativeField(dialog,plain,30,y,365,16,12,Color.WHITE);y+=16;}
-            links.forEach(match=>{const label=this.nativeField(dialog,match[1],30,y,365,16,12,Color.YELLOW);this.nativeClick(label.node,()=>{if(/exit/i.test(match[2])){this.menu.active=false;if(this.targetText)this.targetText.string='';return;}this.connection?.send({type:'npc',id:this.npcId,key:`[@${match[2].replace(/^@/,'').toUpperCase()}]`});});const underline=label.node.addComponent(Graphics);underline.strokeColor=Color.YELLOW;underline.lineWidth=1;underline.moveTo(0,-13);underline.lineTo(match[1].length*12,-13);underline.stroke();y+=16;});});
+            links.forEach(match=>{this.npcLink(dialog,match[1],y,()=>{if(/exit/i.test(match[2])){this.menu.active=false;if(this.targetText)this.targetText.string='';return;}this.connection?.send({type:'npc',id:this.npcId,key:`[@${match[2].replace(/^@/,'').toUpperCase()}]`});});y+=16;});});
+        if(this.menuKind==='shop')this.npcLink(dialog,'返回',Math.max(132,y+16),()=>this.shopBack());
     }
+    private npcLink(parent:Node,text:string,y:number,action:()=>void):void {
+        const width=Math.min(365,Array.from(text).reduce((n,c)=>n+(c.charCodeAt(0)>255?12:7),0));
+        const label=this.nativeField(parent,text,30,y,width,16,12,Color.YELLOW);
+        label.isUnderline=true;this.nativeClick(label.node,action);
+        label.node.on(Node.EventType.MOUSE_ENTER,()=>label.color=Color.GREEN);
+        label.node.on(Node.EventType.MOUSE_LEAVE,()=>label.color=Color.YELLOW);
+    }
+    private selectShopRow(item:any):void {
+        this.clearItemTooltip();
+        if(item.shopGroup){this.shopDetail=item.itemindex;this.selectedGood=null;this.shopTop=0;this.targetText.string='';}
+        else {this.selectedGood=item;this.targetText.string=this.itemHint(item);}
+        this.showShop();
+    }
+
     private requestTrade(item:any):void {
         this.tradeItem=item;this.tradeQuote=null;this.tradeRequest++;
         this.connection?.send({type:'tradeQuote',request:this.tradeRequest,uniqueId:String(item.uniqueid),mode:this.tradeMode});this.showMerchant();
@@ -881,7 +896,7 @@ export class MirWorld extends Component {
             const selected=String(this.selectedGood?.uniqueid)===String(item.uniqueid),color=selected?Color.RED:Color.WHITE,y=38+i*13;
             if(selected)this.nativeLabel(dialog,'•',10,y,12,10,Color.RED);
             const row=this.makeNode('商品 '+this.itemName(item),dialog);row.setPosition(14,-(32+i*13));row.getComponent(UITransform)!.setAnchorPoint(0,1);row.getComponent(UITransform)!.setContentSize(265,13);
-            this.nativeClick(row,()=>{this.selectedGood=item;this.showShop();this.targetText.string=item.shopGroup?this.itemName(item):this.itemHint(item);});
+            this.nativeClick(row,()=>this.selectShopRow(item));
             if(!item.shopGroup)this.bindItemTooltip(row,item);
             this.nativeField(dialog,this.itemName(item),19,y-6,127,13,12,color);
             this.nativeField(dialog,item.shopGroup?"":String(this.shopPrice(item)),156,y-6,77,13,12,color,Label.HorizontalAlign.RIGHT);
@@ -897,7 +912,6 @@ export class MirWorld extends Component {
             this.connection?.send({type:'buy',itemIndex:String(this.selectedGood.uniqueid),count:1});
         });
         this.nativeButton(dialog,'ui:ClassicPrguse:64',291,0,()=>this.shopBack());
-        const back=this.nativeLabel(dialog,this.shopDetail!==null?'返回商品分类':'返回商店菜单',132,180,10,81,Color.WHITE);this.nativeClick(back.node,()=>this.shopBack());
     }
     private shopBack():void {
         this.clearItemTooltip();this.selectedGood=null;this.shopTop=0;

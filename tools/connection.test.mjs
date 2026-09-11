@@ -574,3 +574,12 @@ test('healing acknowledgements never play fireball effects or create a damage ta
  w.packet('Magic',{Spell:61,Cast:false,TargetID:7});assert.equal(calls.length,0);
  w.packet('Magic',{Spell:61,Cast:true,TargetID:7,Target:{x:2,y:2}});assert.equal(calls.length,1);assert.equal(w.fireTargets.size,0);
 });
+
+test('single category click opens instances without buying, instance selection preserves exact identity',()=>{
+ const w=world(),sent=[];w.clearItemTooltip=()=>{};w.showShop=()=>{};w.targetText={string:'old'};w.itemHint=i=>'bonus '+i.uniqueid;w.connection.send=p=>(sent.push(p),true);
+ w.shopTop=9;w.selectedGood={};w.selectShopRow({shopGroup:true,itemindex:7});
+ assert.equal(w.shopDetail,7);assert.equal(w.shopTop,0);assert.equal(w.selectedGood,null);assert.equal(sent.length,0);
+ const item={uniqueid:'9007199254740993',itemindex:7,currentdura:1200,addedstats:{values:{maxdc:3}}};
+ w.selectShopRow(item);assert.equal(w.selectedGood,item);assert.equal(w.selectedGood.addedstats.values.maxdc,3);assert.equal(sent.length,0);
+ w.shopBack();assert.equal(w.shopDetail,null);assert.equal(w.selectedGood,null);
+});
