@@ -22,6 +22,7 @@ try {
         File.Copy(Path.Combine(sourceRoot,"raw-assets",table,"StdItems.json"),Path.Combine(root,"raw-assets",table,"StdItems.json"));
     }
     ProfileTests.Run(root);
+    GoldDropTests.Run();
     var clothCheck=new ItemInfo();DemoSeed.ApplyStarterArmourStats(clothCheck);
     foreach(var table in new[]{"reference-server176","reference-delphi"}){
         using var items=System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(root,"raw-assets",table,"StdItems.json")));

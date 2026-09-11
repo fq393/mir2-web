@@ -3,6 +3,7 @@ import {CLASSIC_FONT_FAMILY,classicFont} from './core/typography';
 import {playerLayers,equippedShape,actorFrame} from './core/appearance';
 import {MiniMap} from './platform/MiniMap';
 import {PartyUI} from './platform/PartyUI';
+import {GoldDropUI} from './platform/GoldDropUI';
 import {PlayerTradeUI} from './platform/PlayerTradeUI';
 import {AccountUI} from './platform/AccountUI';
 import {ChatInput} from './platform/ChatInput';
@@ -27,12 +28,12 @@ const C = {gold:new Color(202,171,110),paper:new Color(220,218,197),dark:new Col
 type TileRef = Ref & {drawX?:number;drawY?:number;floor?:boolean;render?:boolean;blend?:boolean};
 type CachedFrame = {sprite:SpriteFrame;meta:Frame};
 type RenderTile = {node:Node;x:number;y:number;w:number;h:number;sort:number;kind:string};
-type Peer = {node:Node;body:Sprite;point:Point;visual:Point;from:Point;direction:number;elapsed:number;name?:string;kind?:string;image?:number;hp?:number;healthUntil?:number;nameHeight?:number;healthBar?:{node:Node;fill:Sprite};dead?:boolean;harvested?:boolean;action?:string;actionTime?:number;label?:Label;weapon?:Sprite;hair?:Sprite;armour?:number;weaponShape?:number;hairShape?:number;gender?:number;running?:boolean};
+type Peer = {highlight?:MirSprite;node:Node;body:Sprite;point:Point;visual:Point;from:Point;direction:number;elapsed:number;name?:string;kind?:string;image?:number;hp?:number;healthUntil?:number;nameHeight?:number;healthBar?:{node:Node;fill:Sprite};dead?:boolean;harvested?:boolean;action?:string;actionTime?:number;label?:Label;weapon?:Sprite;hair?:Sprite;armour?:number;weaponShape?:number;hairShape?:number;gender?:number;running?:boolean};
 
 @ccclass('MirWorld')
 export class MirWorld extends Component {
     private itemTooltip?:Node;private itemTooltipOwner?:Node;private itemTooltipDock?:Node;private mousePoint={x:0,y:0};
-    private party?:PartyUI;private playerTrade?:PlayerTradeUI;private playerTradePreview=false;private playerTradeButton?:Node;
+    private party?:PartyUI;private playerTrade?:PlayerTradeUI;private goldDrop?:GoldDropUI;private carryGold=false;private goldDropRequest=0;private goldDropPending=0;private goldDropAt=0;private playerTradePreview=false;private playerTradeButton?:Node;
     private gender=0;private hairShape=0;private missingActors=new Set<string>();
     private characterName="旅人";
     private accounts?:AccountUI;
@@ -79,7 +80,7 @@ export class MirWorld extends Component {
     private store!:SpriteStore;private terrain!:TerrainStream;private labels!:Node;private effects!:Node;
     private camera:Point={x:0,y:0};private weapon!:Sprite;private hair!:Sprite;private ownLabel!:Label;
     private ownHealth!:{node:Node;fill:Sprite};private displayedMaxHP=0;private displayedMaxMP=0;
-    private ghost!:Sprite;private ownAction='stand';private actionTime=0;private selected=0;
+    private ghost!:Sprite;private ownAction='stand';private actionTime=0;private selected=0;private magicTarget=0;
     private handWeight=0;private maxHandWeight=0;private wearWeight=0;private maxWearWeight=0;private bagGold:Label|null=null;private bagWeights:Label|null=null;private bagStatus:Label|null=null;private bagHighlights=new Map<number,Graphics>();private selectedBag=-1;private selectedBagAt=0;private lastBagTouch=-Infinity;private bagMovePending=false;
     private authoritativeMaxHP=0;private authoritativeMaxMP=0;private experience=0;private maxExperience=0;private bagWeight=0;private maxBagWeight=0;private magics:any[]=[];private expBar!:Sprite;private weightBar!:Sprite;
     private job=0;private hpBase!:Sprite;private hp=0;private mp=0;private gold=0;private level=1;private inventory:any[]=[];private equipment:any[]=[];
@@ -193,12 +194,12 @@ export class MirWorld extends Component {
         return findPath({...this.grid,blocked},from,to);
     }
     private reset():void {if(!this.ready||!this.serverReady)return;this.path=this.pathFor(this.step?.to??this.point,this.manifest.map.spawn);}
-    private onKeyDown(e:EventKeyboard):void {if(this.playerTrade?.inviting||this.accounts?.active||this.chatInput?.editing||(typeof document!=='undefined'&&['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName??'')))return;if(this.menu.active&&this.menuKind==='skillKeys'){
+    private onKeyDown(e:EventKeyboard):void {if(this.goldDrop?.active||this.playerTrade?.inviting||this.accounts?.active||this.chatInput?.editing||(typeof document!=='undefined'&&['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName??'')))return;if(this.menu.active&&this.menuKind==='skillKeys'){
         if(e.keyCode===KeyCode.ESCAPE){this.showSkills(this.skillPage);return;}
         if(e.keyCode===KeyCode.ENTER){this.saveSkillKey();return;}
         if(!this.skillPending&&e.keyCode>=KeyCode.F1&&e.keyCode<=KeyCode.F8){this.bindingKey=e.keyCode-KeyCode.F1+1;this.showSkillKeys(this.bindingSpell,false);}
         return;
-    }if(e.keyCode===KeyCode.KEY_G){this.party?.toggle();return;}if(e.keyCode===KeyCode.KEY_H&&(this.keys.has(KeyCode.CTRL_LEFT)||this.keys.has(KeyCode.CTRL_RIGHT))){this.connection?.send({type:"attackMode",mode:(this.attackMode+1)%6});return;}if(e.keyCode===KeyCode.KEY_X&&(this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT))){this.clearMovement();this.connection?.send({type:'restart'});return;}this.sound.unlock();if(e.keyCode===KeyCode.KEY_B||e.keyCode===KeyCode.F9){this.showInventory('bag');return;}if(e.keyCode===KeyCode.F10){this.showInventory('character');return;}if(e.keyCode===KeyCode.F11){this.toggleSkills();return;}if(e.keyCode>=KeyCode.DIGIT_1&&e.keyCode<=KeyCode.DIGIT_6){this.usePotion(this.inventory[e.keyCode-KeyCode.DIGIT_1]);return;}if(e.keyCode>=KeyCode.F1&&e.keyCode<=KeyCode.F8){this.castKey(e.keyCode-KeyCode.F1+1);return;}if(e.keyCode===KeyCode.SPACE){this.autoAttack=true;this.attack();return;}if(e.keyCode===KeyCode.KEY_M){this.miniMap?.toggle();return;}if(e.keyCode===KeyCode.ESCAPE){if(this.playerTrade?.active){this.playerTrade.cancel();return;}this.queuedCast=null;this.miniMap?.close();if(this.selectedBag>=6||this.selectedEquipment>=0){this.selectedBag=-1;this.selectedEquipment=-1;return;}this.menu.active=false;if(this.targetText)this.targetText.string='';this.selected=0;this.autoAttack=false;return;}this.pickupTarget=0;this.autoAttack=false;this.queuedCast=null;this.keys.add(e.keyCode);this.path=[];if(this.ready&&!this.step)this.beginStep();}
+    }if(e.keyCode===KeyCode.KEY_G){this.party?.toggle();return;}if(e.keyCode===KeyCode.KEY_H&&(this.keys.has(KeyCode.CTRL_LEFT)||this.keys.has(KeyCode.CTRL_RIGHT))){this.connection?.send({type:"attackMode",mode:(this.attackMode+1)%6});return;}if(e.keyCode===KeyCode.KEY_X&&(this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT))){this.clearMovement();this.connection?.send({type:'restart'});return;}this.sound.unlock();if(e.keyCode===KeyCode.KEY_B||e.keyCode===KeyCode.F9){this.showInventory('bag');return;}if(e.keyCode===KeyCode.F10){this.showInventory('character');return;}if(e.keyCode===KeyCode.F11){this.toggleSkills();return;}if(e.keyCode>=KeyCode.DIGIT_1&&e.keyCode<=KeyCode.DIGIT_6){this.usePotion(this.inventory[e.keyCode-KeyCode.DIGIT_1]);return;}if(e.keyCode>=KeyCode.F1&&e.keyCode<=KeyCode.F8){this.castKey(e.keyCode-KeyCode.F1+1);return;}if(e.keyCode===KeyCode.SPACE){this.autoAttack=true;this.attack();return;}if(e.keyCode===KeyCode.KEY_M){this.miniMap?.toggle();return;}if(e.keyCode===KeyCode.ESCAPE){if(this.carryGold){this.carryGold=false;return;}if(this.playerTrade?.active){this.playerTrade.cancel();return;}this.queuedCast=null;this.miniMap?.close();if(this.selectedBag>=6||this.selectedEquipment>=0){this.selectedBag=-1;this.selectedEquipment=-1;return;}this.menu.active=false;if(this.targetText)this.targetText.string='';this.selected=0;this.magicTarget=0;this.autoAttack=false;return;}this.pickupTarget=0;this.autoAttack=false;this.queuedCast=null;this.keys.add(e.keyCode);this.path=[];if(this.ready&&!this.step)this.beginStep();}
     // Keep pointer coordinates available across Cocos UI hit regions. Capture them
     // before dispatch, using the same 800x600 transform as rendering.
     private trackPointer=(event:PointerEvent):void=>{
@@ -215,7 +216,7 @@ export class MirWorld extends Component {
         if(rect?.width&&rect.height){const x=(event.clientX-rect.left)*800/rect.width,y=(event.clientY-rect.top)*600/rect.height;
             this.uiGesture=event.target!==canvas||blocksWorld(x,y,this.menu?.active?this.panelRects:[],this.hudRows)||(this.miniMap?.blocksWorld(x,y)??false);
         }
-        if(!this.uiGesture&&!event.altKey&&!this.accounts?.active&&this.selectedBag<6&&this.selectedEquipment<0&&(event.button===0||event.button===2)&&rect){this.mousePoint={x:(event.clientX-rect.left)*800/rect.width,y:(event.clientY-rect.top)*600/rect.height};this.heldButton=event.button;this.heldTick=0;}
+        if(!this.carryGold&&!this.goldDrop?.active&&!this.goldDropPending&&!this.uiGesture&&!event.altKey&&!this.accounts?.active&&this.selectedBag<6&&this.selectedEquipment<0&&(event.button===0||event.button===2)&&rect){this.mousePoint={x:(event.clientX-rect.left)*800/rect.width,y:(event.clientY-rect.top)*600/rect.height};this.heldButton=event.button;this.heldTick=0;}
         if(event.button!==0||event.target!==document.querySelector('canvas')||this.accounts?.active||!this.menu.active||this.menuKind!=='inventory')return;
         this.trackPointer(event);const p=this.mousePoint;
         const id=[...this.windowOrder].reverse().find(id=>{const r=this.inventoryWindows.get(id)?.rect;return r&&p.x>=r.x&&p.x<r.x+r.w&&p.y>=r.y&&p.y<r.y+r.h;});if(!id)return;
@@ -243,11 +244,24 @@ export class MirWorld extends Component {
         const x=Math.round(Math.max(0,Math.min(800-w.rect.w,this.mousePoint.x-this.windowDrag.dx))),y=Math.round(Math.max(0,Math.min(600-w.rect.h,this.mousePoint.y-this.windowDrag.dy)));
         this.windowPositions[this.windowDrag.id]={x,y};w.rect.x=x;w.rect.y=y;w.node.setPosition(x,-y);
     }
-    private preventContext=(e:Event):void=>{e.preventDefault();if(!this.bagMovePending&&!this.equipmentPending){this.selectedBag=-1;this.selectedEquipment=-1;this.clearItemTooltip();}};
+    private preventContext=(e:Event):void=>{e.preventDefault();if(this.carryGold)this.uiGesture=true;this.carryGold=false;this.heldButton=null;if(!this.bagMovePending&&!this.equipmentPending){this.selectedBag=-1;this.selectedEquipment=-1;this.clearItemTooltip();}};
     private onKeyUp(e:EventKeyboard):void {this.keys.delete(e.keyCode);}
     private pauseInput():void {this.queuedCast=null;this.heldButton=null;this.pointerAlt=false;this.autoAttack=false;this.runRequested=false;this.windowDrag=null;this.sound.stop();this.keys.clear();this.path=[];}
-    private onMouse(e:EventMouse):void {if(e.getButton()===0&&!this.uiGesture&&this.selectedBag>=6){const p=e.getUILocation();if(this.dropCarried({x:p.x,y:600-p.y}))return;}if(this.uiGesture||this.accounts?.active||this.selectedBag>=6||this.selectedEquipment>=0||this.equipmentPending||this.windowDrag||Date.now()<this.dragMouseUntil)return;this.sound.unlock();if(e.getButton()!==0&&e.getButton()!==2)return;this.runRequested=e.getButton()===2;const p=e.getUILocation();if(this.miniMap?.blocksWorld(p.x,600-p.y))return;if(this.pointerAlt||this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT)){this.harvestAt({x:p.x,y:600-p.y});return;}this.destination(p);}
-    private onTouch(e:EventTouch):void {if(this.uiGesture||this.accounts?.active||this.selectedBag>=6||this.selectedEquipment>=0||this.equipmentPending||this.windowDrag||Date.now()<this.dragMouseUntil)return;this.sound.unlock();const p=e.getUILocation();if(this.miniMap?.blocksWorld(p.x,600-p.y))return;if(this.pointerAlt||this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT)){this.harvestAt({x:p.x,y:600-p.y});return;}this.destination(p);}
+    private onMouse(e:EventMouse):void {if(this.goldDrop?.active)return;if(this.carryGold){if(e.getButton()===0&&!this.uiGesture){const p=e.getUILocation();this.dropCarriedGold({x:p.x,y:600-p.y});}return;}if(e.getButton()===0&&!this.uiGesture&&this.selectedBag>=6){const p=e.getUILocation();if(this.dropCarried({x:p.x,y:600-p.y}))return;}if(this.uiGesture||this.accounts?.active||this.selectedBag>=6||this.selectedEquipment>=0||this.equipmentPending||this.windowDrag||Date.now()<this.dragMouseUntil)return;this.sound.unlock();if(e.getButton()!==0&&e.getButton()!==2)return;this.runRequested=e.getButton()===2;const p=e.getUILocation();if(this.miniMap?.blocksWorld(p.x,600-p.y))return;if(this.pointerAlt||this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT)){this.harvestAt({x:p.x,y:600-p.y});return;}this.destination(p);}
+    private onTouch(e:EventTouch):void {if(this.goldDrop?.active)return;if(this.carryGold){if(!this.uiGesture){const p=e.getUILocation();this.dropCarriedGold({x:p.x,y:600-p.y});}return;}if(this.uiGesture||this.accounts?.active||this.selectedBag>=6||this.selectedEquipment>=0||this.equipmentPending||this.windowDrag||Date.now()<this.dragMouseUntil)return;this.sound.unlock();const p=e.getUILocation();if(this.miniMap?.blocksWorld(p.x,600-p.y))return;if(this.pointerAlt||this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT)){this.harvestAt({x:p.x,y:600-p.y});return;}this.destination(p);}
+    private pickGold():void {
+        if(!this.serverReady||this.hp<=0||this.goldDropPending||this.bagMovePending||this.equipmentPending||this.selectedBag>=6||this.selectedEquipment>=0)return;
+        if(this.menuKind!=='inventory')return;
+        this.pauseInput();this.carryGold=!this.carryGold&&this.gold>0;if(this.carryGold)this.sound.play('106');
+    }
+    private dropCarriedGold(screen:Point):void {
+        if(blocksWorld(screen.x,screen.y,this.menu.active?this.panelRects:[],this.hudRows)||this.miniMap?.blocksWorld(screen.x,screen.y))return;
+        if(!this.serverReady||this.hp<=0||this.goldDropPending||!this.goldDrop)return;
+        this.carryGold=false;this.pauseInput();this.goldDrop.open(this.gold,amount=>{
+            if(!this.serverReady||this.hp<=0||this.goldDropPending)return;
+            const request=++this.goldDropRequest;if(this.connection?.send({type:'dropGold',request,amount})){this.goldDropPending=request;this.goldDropAt=Date.now();}
+        });
+    }
     private dropCarried(screen:Point):boolean {
         if(blocksWorld(screen.x,screen.y,this.menu.active?this.panelRects:[],this.hudRows)||(this.miniMap?.blocksWorld(screen.x,screen.y)??false))return false;
         if(this.pendingDrop||this.bagMovePending||this.equipmentPending||!this.serverReady||this.hp<=0)return true;
@@ -258,7 +272,7 @@ export class MirWorld extends Component {
     }
     private updateHeldPointer(dt:number):void {
         if(this.heldButton===null)return;this.heldTick-=dt;if(this.heldTick>0)return;this.heldTick=.15;
-        if(!this.serverReady||this.hp<=0||this.accounts?.active||this.pendingDrop||this.equipmentPending||this.bagMovePending||this.selectedBag>=6||this.selectedEquipment>=0||blocksWorld(this.mousePoint.x,this.mousePoint.y,this.menu.active?this.panelRects:[],this.hudRows)||this.miniMap?.blocksWorld(this.mousePoint.x,this.mousePoint.y))return;
+        if(this.carryGold||this.goldDrop?.active||this.goldDropPending||!this.serverReady||this.hp<=0||this.accounts?.active||this.pendingDrop||this.equipmentPending||this.bagMovePending||this.selectedBag>=6||this.selectedEquipment>=0||blocksWorld(this.mousePoint.x,this.mousePoint.y,this.menu.active?this.panelRects:[],this.hudRows)||this.miniMap?.blocksWorld(this.mousePoint.x,this.mousePoint.y))return;
         this.runRequested=this.heldButton===2;this.destination({x:this.mousePoint.x,y:600-this.mousePoint.y});
     }
     private onHover(e:EventMouse):void {
@@ -294,7 +308,7 @@ export class MirWorld extends Component {
         if(!this.ready||!this.serverReady)return;
         const screen={x:p.x,y:600-p.y};if(blocksWorld(screen.x,screen.y,this.menu.active?this.panelRects:[],this.hudRows))return;
         const {x,y}=screenToCell(screen,this.camera),id=this.entityAt(screen);this.queuedCast=null;this.pickupTarget=0;
-        if(id){this.selected=id;this.path=[];this.autoAttack=this.peers.get(id)?.kind==='monster';if(this.autoAttack)this.healthPoll=0;if(this.peers.get(id)?.kind==='npc')this.talk();return;}
+        if(id){this.selected=id;if(this.peers.get(id)?.kind==='monster')this.magicTarget=id;this.path=[];this.autoAttack=this.peers.get(id)?.kind==='monster';if(this.autoAttack)this.healthPoll=0;if(this.peers.get(id)?.kind==='npc')this.talk();return;}
         this.selected=0;this.autoAttack=false;this.pickupTarget=Array.from(this.loot.entries()).find(([,v])=>v.point.x===x&&v.point.y===y)?.[0]??0;
         const from=this.step?.to??this.point;
         this.pathFailures=0;this.path=this.pathFor(from,{x,y});
@@ -399,8 +413,12 @@ export class MirWorld extends Component {
             const actor=p.kind==='monster'?`monster${p.image}`:p.kind==='npc'?`npc${p.image}`:layers.body;
             this.drawActor(p.body,actor,action,p.direction,p.elapsed);
             if(p.weapon&&p.hair){this.drawActor(p.weapon,layers.weapon,action,p.direction,p.elapsed);this.drawActor(p.hair,layers.hair,action,p.direction,p.elapsed);p.weapon.node.setSiblingIndex([0,5,6,7].includes(p.direction)?0:2);}
+            // Delphi Actor.GetDrawEffectValue ceBright: use the same sprite pixels, no invented reticle.
+            const bright=p.kind==='monster'&&!p.dead&&(id===this.magicTarget||id===this.hovered);
+            if(bright&&!p.highlight){const node=this.makeNode('目标高亮',p.node);node.getComponent(UITransform)!.setAnchorPoint(0,1);p.highlight=node.addComponent(MirSprite);p.highlight.sizeMode=Sprite.SizeMode.RAW;p.highlight.setAdditive();p.highlight.color=new Color(255,255,255,64);}
+            if(p.highlight){p.highlight.node.active=bright;p.highlight.spriteFrame=p.body.spriteFrame;p.highlight.node.setPosition(p.body.node.position);p.highlight.grayscale=this.hp<=0;}
             p.nameHeight??=p.kind==='npc'?Math.max(70,p.body.node.position.y+12):70;
-            if(p.label){p.label.node.setPosition(Math.round(p.visual.x*48+24-80),Math.round(-p.visual.y*32+p.nameHeight));p.label.string=p.name??'旅人';p.label.node.active=!p.dead&&(p.kind!=='monster'||id===this.hovered||id===this.selected);}
+            if(p.label){p.label.node.setPosition(Math.round(p.visual.x*48+24-80),Math.round(-p.visual.y*32+p.nameHeight));p.label.string=p.name??'旅人';p.label.node.active=!p.dead&&(p.kind!=='monster'||id===this.hovered||id===this.selected||id===this.magicTarget);}
             if(p.kind==='player'||p.kind==='monster'){
                 p.healthBar??=this.makeHealthBar();
                 this.drawHealthBar(p.healthBar,p.visual.x*48+24,-p.visual.y*32+60,p.hp,showHealth(p.kind,p.dead,p.hp,p.healthUntil,Date.now()));
@@ -416,7 +434,7 @@ export class MirWorld extends Component {
     }
     private changeMap(id:string,location?:Point,direction?:number):boolean {
         const target=this.maps.get(id);
-        this.clearMovement();this.clearLoot();this.menu.active=false;if(this.targetText)this.targetText.string='';this.selected=0;this.hovered=0;
+        this.clearMovement();this.clearLoot();this.menu.active=false;if(this.targetText)this.targetText.string='';this.selected=0;this.magicTarget=0;this.hovered=0;
         if(!target){this.serverReady=false;this.world.active=false;this.statusText=`地图 ${id} 尚未接入`;return false;}
         // Resources/collision metadata are prepared before connecting, so following
         // object packets cannot race an asynchronous map manifest load.
@@ -450,11 +468,12 @@ export class MirWorld extends Component {
             return;
         }
         if(event.type==='targetHealth'){const target=this.peers.get(event.objectId);if(target){target.hp=event.percent;target.healthUntil=Date.now()+2000;}return;}
+        if(event.type==='goldDropResult'){if(event.request!==this.goldDropPending)return;this.goldDropPending=0;if(!event.success)this.notice(event.message??'无法丢弃金币。');return;}
         if(event.type==='packet'){this.packet(event.packet,event.data);return;}
-        if(event.type==='disconnected'){this.playerTrade?.reset();this.playerTradePreview=false;if(this.playerTradeButton)this.playerTradeButton.active=false;this.pendingDrop=null;this.windowDrag=null;this.attributes=null;this.characterValues=[];this.skillRequest++;this.skillPending=false;this.selectedEquipment=-1;this.equipmentPending=false;this.selectedBag=-1;this.bagMovePending=false;this.tradeRequest++;this.tradeItem=null;this.tradeQuote=null;this.chatInput?.setActive(false);this.logs=[];if(this.logText)this.logText.string='';if(this.menu)this.menu.active=false;if(this.targetText)this.targetText.string='';this.party?.reset();this.clearLoot();this.pendingUses.clear();this.fireTargets.clear();this.serverReady=false;this.clearMovement();this.peers.forEach(p=>{p.node.destroy();p.label?.node.destroy();p.healthBar?.node.destroy();});this.peers.clear();return;}
+        if(event.type==='disconnected'){this.carryGold=false;this.goldDropPending=0;this.goldDrop?.reset();this.magicTarget=0;this.playerTrade?.reset();this.playerTradePreview=false;if(this.playerTradeButton)this.playerTradeButton.active=false;this.pendingDrop=null;this.windowDrag=null;this.attributes=null;this.characterValues=[];this.skillRequest++;this.skillPending=false;this.selectedEquipment=-1;this.equipmentPending=false;this.selectedBag=-1;this.bagMovePending=false;this.tradeRequest++;this.tradeItem=null;this.tradeQuote=null;this.chatInput?.setActive(false);this.logs=[];if(this.logText)this.logText.string='';if(this.menu)this.menu.active=false;if(this.targetText)this.targetText.string='';this.party?.reset();this.clearLoot();this.pendingUses.clear();this.fireTargets.clear();this.serverReady=false;this.clearMovement();this.peers.forEach(p=>{p.node.destroy();p.label?.node.destroy();p.healthBar?.node.destroy();});this.peers.clear();return;}
         if(event.type==='vitals'){const d=this.normalize(event.data);if(d.objectid!==this.ownId)return;this.authoritativeMaxHP=d.maxhp;this.authoritativeMaxMP=d.maxmp;this.bagWeight=d.bagweight;this.maxBagWeight=d.maxbagweight;this.handWeight=d.handweight;this.maxHandWeight=d.maxhandweight;this.wearWeight=d.wearweight;this.maxWearWeight=d.maxwearweight;this.attributes=d.attributes??null;return;}
         if(event.type==='transport')this.statusText='正在进入游戏';
-        if(event.type==='ready') {this.playerTrade?.reset();this.playerTradePreview=event.playerTradePreview===true;if(this.playerTradeButton)this.playerTradeButton.active=this.playerTradePreview;this.windowPositions={bag:{x:0,y:0},character:{x:568,y:0}};this.windowOrder=['bag','character'];this.windowDrag=null;this.characterPage=0;this.skillPage=0;this.skillReturnBag=false;this.attributes=null;this.characterValues=[];this.chatInput?.setActive(true);this.gender=event.gender??0;this.hairShape=event.hair??0;this.missingActors.clear();this.characterName=event.name??'旅人';if(this.ownLabel)this.ownLabel.string=this.characterName;
+        if(event.type==='ready') {this.carryGold=false;this.goldDropPending=0;this.goldDrop?.reset();this.magicTarget=0;this.playerTrade?.reset();this.playerTradePreview=event.playerTradePreview===true;if(this.playerTradeButton)this.playerTradeButton.active=this.playerTradePreview;this.windowPositions={bag:{x:0,y:0},character:{x:568,y:0}};this.windowOrder=['bag','character'];this.windowDrag=null;this.characterPage=0;this.skillPage=0;this.skillReturnBag=false;this.attributes=null;this.characterValues=[];this.chatInput?.setActive(true);this.gender=event.gender??0;this.hairShape=event.hair??0;this.missingActors.clear();this.characterName=event.name??'旅人';if(this.ownLabel)this.ownLabel.string=this.characterName;
             if(event.map&&event.map!==this.mapId&&!this.changeMap(event.map))return;
             this.authoritativeMaxHP=0;this.authoritativeMaxMP=0;this.experience=event.experience??0;this.maxExperience=event.maxExperience??0;this.magics=this.normalize(event.magics??[]);this.job=event.class??0;this.hp=event.hp??0;this.mp=event.mp??0;this.gold=event.gold??0;this.level=event.level??1;this.inventory=this.normalize(event.inventory??[]);this.equipment=this.normalize(event.equipment??[]);
             this.pendingUses.clear();this.refreshBelt();this.serverReady=true;this.ownId=event.objectId;this.statusText='已进入游戏';
@@ -483,8 +502,10 @@ export class MirWorld extends Component {
     private nameColor(value:any):Color {return value&&Number.isFinite(value.r)?new Color(value.r,value.g,value.b,255):Color.WHITE;}
     private notice(text:string,type=3):void {this.chatInput?.add(text,type);this.logs.push(text);this.logs=this.logs.slice(-4);if(this.logText)this.logText.string=this.logs.join('\n');}
     private updateCombat(dt:number):void {
-        const target=this.peers.get(this.selected);this.healthPoll-=dt;
-        if(target?.kind==='monster'&&!target.dead&&this.healthPoll<=0){this.healthPoll=1;this.connection?.send({type:'targetHealth',target:this.selected});}
+        if(this.magicTarget&&(!this.peers.has(this.magicTarget)||this.peers.get(this.magicTarget)?.dead))this.magicTarget=0;
+        const healthTarget=this.magicTarget||this.selected,healthPeer=this.peers.get(healthTarget);this.healthPoll-=dt;
+        if(healthPeer?.kind==='monster'&&!healthPeer.dead&&this.healthPoll<=0){this.healthPoll=1;this.connection?.send({type:'targetHealth',target:healthTarget});}
+        const target=this.peers.get(this.selected);
         if(!this.autoAttack||!this.serverReady||this.accounts?.active||this.chatInput?.editing)return;
         if(!target||target.dead||this.hp<=0){this.autoAttack=false;this.path=[];return;}
         if(this.step||this.actionTime>0)return;
@@ -521,7 +542,7 @@ export class MirWorld extends Component {
         const screen=this.mousePoint;
         if(blocksWorld(screen.x,screen.y,this.menu.active?this.panelRects:[],this.hudRows)||this.miniMap?.blocksWorld(screen.x,screen.y))return;
         this.hovered=this.entityAt(screen);
-        const targetId=spell===61?(this.peers.get(this.hovered)?.kind==='player'?this.hovered:this.ownId):(this.hovered||this.selected);
+        const targetId=spell===61?(this.peers.get(this.hovered)?.kind==='player'?this.hovered:this.ownId):(['monster','player'].includes(this.peers.get(this.hovered)?.kind??'')?this.hovered:(this.magicTarget||this.selected));
         if(!this.validCastTarget(spell,targetId))return;
         this.pauseInput();this.pickupTarget=0;
         // Never discard an in-flight move or its authoritative confirmation.
@@ -619,7 +640,7 @@ export class MirWorld extends Component {
         const mute=this.makeNode('Sound toggle',bar);mute.getComponent(UITransform)!.setAnchorPoint(0,1);mute.getComponent(UITransform)!.setContentSize(40,40);mute.setPosition(754,0);this.nativeClick(mute,()=>this.notice(this.sound.toggle()?'音效已开启':'音效已静音'));
         this.coord=this.nativeLabel(bar,'比奇省',29,235,12,175,Color.WHITE);this.targetText=this.nativeField(bar,'',214,124,374,16,11,Color.WHITE);
         this.menu=this.makeNode('Classic dialogs',this.nativeLayer);this.menu.active=false;if(this.targetText)this.targetText.string='';
-        if(typeof document!=='undefined'){this.miniMap=new MiniMap(point=>{this.autoAttack=false;this.selected=0;this.runRequested=true;this.path=this.pathFor(this.step?.to??this.point,point);if(!this.path.length&&(point.x!==this.point.x||point.y!==this.point.y))this.notice('无法到达该位置');});this.accounts=new AccountUI(v=>!!this.connection?.send(v),()=>this.connection?.reconnect());this.party=new PartyUI(v=>!!this.connection?.send(v),()=>this.characterName);this.playerTrade=new PlayerTradeUI(v=>!!this.connection?.send(v),()=>this.characterName,()=>this.pauseInput());this.chatInput=new ChatInput(text=>!!this.serverReady&&!!this.connection?.send({type:'chat',message:text}),()=>{this.autoAttack=false;this.keys.clear();this.path=[];},()=>!this.playerTrade?.inviting&&!this.accounts?.active&&this.serverReady&&!(this.menu.active&&this.menuKind==='skillKeys'));this.logText.node.active=false;this.hint.node.active=false;}
+        if(typeof document!=='undefined'){this.miniMap=new MiniMap(point=>{this.autoAttack=false;this.selected=0;this.runRequested=true;this.path=this.pathFor(this.step?.to??this.point,point);if(!this.path.length&&(point.x!==this.point.x||point.y!==this.point.y))this.notice('无法到达该位置');});this.accounts=new AccountUI(v=>!!this.connection?.send(v),()=>this.connection?.reconnect());this.goldDrop=new GoldDropUI();this.party=new PartyUI(v=>!!this.connection?.send(v),()=>this.characterName);this.playerTrade=new PlayerTradeUI(v=>!!this.connection?.send(v),()=>this.characterName,()=>this.pauseInput());this.chatInput=new ChatInput(text=>!!this.serverReady&&!!this.connection?.send({type:'chat',message:text}),()=>{this.autoAttack=false;this.keys.clear();this.path=[];},()=>!this.goldDrop?.active&&!this.playerTrade?.inviting&&!this.accounts?.active&&this.serverReady&&!(this.menu.active&&this.menuKind==='skillKeys'));this.logText.node.active=false;this.hint.node.active=false;}
     }
     private exitGame(full:boolean):void {if(!this.serverReady)return;this.clearMovement();this.exitToLogin=full;if(!this.connection?.send({type:'restart'}))this.exitToLogin=false;}
     private refreshBelt():void {
@@ -760,6 +781,7 @@ export class MirWorld extends Component {
     }
     private positionCarriedItem():void {if(this.carrySprite?.node.active)this.carrySprite.node.setPosition(this.mousePoint.x-18,-this.mousePoint.y+16);}
     private syncCarriedItem():void {
+        if(this.goldDropPending&&Date.now()-this.goldDropAt>5000){this.goldDropPending=0;this.serverReady=false;this.connection?.reconnect();}
         if(this.pendingDrop&&Date.now()-this.pendingDropAt>5000){this.pendingDrop=null;this.bagMovePending=false;this.serverReady=false;this.notice('丢弃结果待同步，正在重新连接');this.connection?.reconnect();}
 
         if(this.equipmentPending){
@@ -774,13 +796,15 @@ export class MirWorld extends Component {
         const item=this.selectedEquipment>=0?this.equipment[this.selectedEquipment]:this.selectedBag>=6?this.inventory[this.selectedBag]:null;
         for(const [slot,node] of this.equipmentIcons)if(node.isValid)node.active=slot!==this.selectedEquipment;
         for(const [slot,node] of this.bagIcons)if(node.isValid)node.active=slot!==this.selectedBag;
-        if(!item){if(this.carrySprite)this.carrySprite.node.active=false;return;}
-        const info=item.info??this.itemInfo.get(item.itemindex),frame=this.frames.get(`ui:Items:${info?.image}`);
+        if(this.carryGold&&(!this.serverReady||this.hp<=0||!this.menu.active||!this.bagOpen||this.menuKind!=='inventory'))this.carryGold=false;
+        if(!item&&!this.carryGold){if(this.carrySprite)this.carrySprite.node.active=false;return;}
+        const info=item?.info??this.itemInfo.get(item?.itemindex),frame=this.frames.get(`ui:Items:${this.carryGold?116:info?.image}`);
         if(!frame){if(this.carrySprite)this.carrySprite.node.active=false;return;}
         if(!this.carrySprite)this.carrySprite=this.sprite(this.nativeLayer,'鼠标物品');
         this.carrySprite.node.active=this.mousePoint.x>=0&&this.mousePoint.x<800&&this.mousePoint.y>=0&&this.mousePoint.y<600;this.carrySprite.spriteFrame=frame.sprite;this.carrySprite.node.setSiblingIndex(this.nativeLayer.children.length-1);this.positionCarriedItem();
     }
     private bagCell(slot:number):void {
+        if(this.carryGold||this.goldDrop?.active||this.goldDropPending)return;
         if(this.bagMovePending||this.equipmentPending)return;
         if(this.selectedEquipment>=0){
             const item=this.equipment[this.selectedEquipment];
@@ -805,7 +829,7 @@ export class MirWorld extends Component {
     private renderBag(x:number):void {
         const bag=this.nativeWindow(this.menu,'ui:ClassicPrguse:3',x,0);
         // FState.DGold / MShare.DlgConf: original purse icon, independent of its amount.
-        this.nativeImage(bag,'ui:ClassicPrguse:29',10,190);
+        const purse=this.nativeImage(bag,'ui:ClassicPrguse:29',10,190);this.nativeClick(purse.node,()=>this.pickGold());
         this.closeNative(bag,309,202,()=>{if(this.menuKind==='shop'){this.shopBagOpen=false;this.showShop();}else this.showInventory('bag');if(this.targetText)this.targetText.string='';});this.nativeField(bag,'金币',65,182,32,18,12,C.gold);this.bagGold=this.nativeField(bag,String(this.gold),101,182,100,18,12,Color.WHITE);
         // User-requested Chinese text over the baked USE glyphs; preserve the original frame.
         const useText=this.makeNode('包裹使用中文',bag);useText.setPosition(256,-184);const cover=useText.addComponent(Graphics);cover.fillColor=new Color(10,20,53,255);cover.rect(0,-15,40,15);cover.fill();
@@ -1050,9 +1074,9 @@ export class MirWorld extends Component {
         if(name==='ObjectPlayer'){if(id===this.ownId){this.hairShape=d.hair??this.hairShape;this.gender=d.gender??this.gender;}else this.spawnEntity(d,'player');return;}
         if(name==='PlayerUpdate'&&p?.kind==='player'){p.armour=d.armour;p.weaponShape=d.weapon;return;}
         if(['ObjectWalk','ObjectRun','ObjectTurn'].includes(name)&&p){p.running=name==='ObjectRun';if(d.location){this.positionPeer(p,d.location,p.running);}p.direction=d.direction??p.direction;}
-        if(name==='ObjectRemove'){const loot=this.loot.get(id);loot?.node.destroy();loot?.label.node.destroy();this.loot.delete(id);if(this.pickupTarget===id)this.pickupTarget=0;p?.node.destroy();p?.label?.node.destroy();p?.healthBar?.node.destroy();this.peers.delete(id);}
+        if(name==='ObjectRemove'){if(this.magicTarget===id)this.magicTarget=0;const loot=this.loot.get(id);loot?.node.destroy();loot?.label.node.destroy();this.loot.delete(id);if(this.pickupTarget===id)this.pickupTarget=0;p?.node.destroy();p?.label?.node.destroy();p?.healthBar?.node.destroy();this.peers.delete(id);}
         if(name==='ObjectHealth'&&p){p.hp=d.percent;p.healthUntil=Date.now()+Math.max(0,d.expire??0)*1000;}
-        if(name==='HealthChanged'){if(this.hp>0&&d.hp<=0)this.animationClock=0;this.hp=d.hp;this.mp=d.mp;}if(name==='Struck'){this.sound.play(this.gender===1?'139':'138');this.ownAction='hit';this.actionTime=.4;this.animationClock=0;}if(name==='Death'){this.clearMovement();this.actionTime=0;this.animationClock=0;this.sound.play(this.gender===1?'145':'144');this.hp=0;if(this.menu.active){if(this.menuKind==='inventory')this.showInventory();else if(this.menuKind==='shop')this.showShop();}this.notice('你已死亡，按 Alt+X 重新开始游戏。');}
+        if(name==='HealthChanged'){if(this.hp>0&&d.hp<=0)this.animationClock=0;this.hp=d.hp;this.mp=d.mp;}if(name==='Struck'){this.sound.play(this.gender===1?'139':'138');this.ownAction='hit';this.actionTime=.4;this.animationClock=0;}if(name==='Death'){this.magicTarget=0;this.carryGold=false;this.goldDrop?.reset();this.clearMovement();this.actionTime=0;this.animationClock=0;this.sound.play(this.gender===1?'145':'144');this.hp=0;if(this.menu.active){if(this.menuKind==='inventory')this.showInventory();else if(this.menuKind==='shop')this.showShop();}this.notice('你已死亡，按 Alt+X 重新开始游戏。');}
         if(name==='MapInformation'||name==='MapChanged'){this.changeMap(d.filename,d.location,d.direction);return;}
         if(name==='Revived'){this.clearMovement();this.menu.active=false;if(this.targetText)this.targetText.string='';this.notice('已回城复活');}
         if(name==='GainExperience'){this.experience+=d.amount;this.notice(`获得 ${d.amount} 点经验`);}
@@ -1068,7 +1092,7 @@ export class MirWorld extends Component {
         if(['ObjectAttack','ObjectMagic','ObjectStruck'].includes(name)){const action=name==='ObjectAttack'?'attack':name==='ObjectMagic'?'cast':'hit';if(p?.kind==='monster'&&name!=='ObjectMagic')this.sound.play(`${String(p.image).padStart(3,'0')}-${name==='ObjectAttack'?1:2}`);if(id===this.ownId&&name==='ObjectStruck')this.sound.play('138');if(id===this.ownId){this.ownAction=action;this.actionTime=.8;this.animationClock=0;this.facing=d.direction??this.facing;}else if(p){p.action=action;p.actionTime=.8;p.from={...p.point};p.visual={...p.point};p.elapsed=0;p.direction=d.direction??p.direction;}}
         if(name==='ObjectMagic'&&id!==this.ownId&&p&&d.spell===61&&d.cast)this.healingEffect(p.point,d.target??p.point,d.targetid,id);
         if(name==='Magic'&&d.spell===61){if(d.cast){this.ownAction='cast';this.actionTime=.8;this.animationClock=0;this.healingEffect(this.point,d.target??this.point,d.targetid||this.ownId);this.notice('施放治愈术');}else this.notice('治愈术未成功：请检查魔法值、目标和冷却');return;}
-        if(name==='Magic'){if(d.cast){const target=this.peers.get(d.targetid);if(target&&!target.dead){this.selected=d.targetid;this.healthPoll=0;}this.sound.play('M31-0');this.sound.play('M31-1',.5);this.ownAction='cast';this.actionTime=.8;this.animationClock=0;this.spellEffect(this.point,this.point,false,true);this.spellEffect(this.point,d.target??this.point);this.fireTargets.set(d.targetid,Date.now()+1500);this.notice('施放火球术');}else this.notice('施法未成功：检查目标距离、MP 或冷却');}
+        if(name==='Magic'){if(d.cast){const target=this.peers.get(d.targetid);if(target&&!target.dead){this.selected=d.targetid;if(target.kind==='monster')this.magicTarget=d.targetid;this.healthPoll=0;}this.sound.play('M31-0');this.sound.play('M31-1',.5);this.ownAction='cast';this.actionTime=.8;this.animationClock=0;this.spellEffect(this.point,this.point,false,true);this.spellEffect(this.point,d.target??this.point);this.fireTargets.set(d.targetid,Date.now()+1500);this.notice('施放火球术');}else this.notice('施法未成功：检查目标距离、MP 或冷却');}
         if(name==='EquipItem'||name==='RemoveItem'){
             this.equipmentPending=false;this.equipmentPendingAt=0;this.selectedEquipment=-1;
             if(!d.success){const item=this.inventory.find(i=>i&&String(i.uniqueid)===String(d.uniqueid));
@@ -1119,7 +1143,7 @@ export class MirWorld extends Component {
         if(name==='ChangeAMode'){this.attackMode=d.mode;this.notice(ATTACK_MODES[d.mode]??'攻击模式已更新');}
 
     }
-    onDestroy():void {this.miniMap?.destroy();this.party?.destroy();this.playerTrade?.destroy();this.accounts?.destroy();this.chatInput?.destroy();this.resizeObserver?.disconnect();this.sound.destroy();
+    onDestroy():void {this.miniMap?.destroy();this.party?.destroy();this.playerTrade?.destroy();this.goldDrop?.destroy();this.accounts?.destroy();this.chatInput?.destroy();this.resizeObserver?.disconnect();this.sound.destroy();
         input.off(Input.EventType.KEY_DOWN,this.onKeyDown,this);input.off(Input.EventType.KEY_UP,this.onKeyUp,this);
         input.off(Input.EventType.MOUSE_UP,this.onMouse,this);input.off(Input.EventType.TOUCH_END,this.onTouch,this);input.off(Input.EventType.MOUSE_MOVE,this.onHover,this);
         if(typeof document!=='undefined'){document.querySelector('canvas')?.removeEventListener('contextmenu',this.preventContext);document.removeEventListener('pointermove',this.trackPointer,true);document.removeEventListener('pointerdown',this.windowPointerDown,true);document.removeEventListener('pointerup',this.windowPointerUp,true);document.removeEventListener('pointercancel',this.windowPointerUp,true);document.removeEventListener('mousedown',this.blockDragMouse,true);document.removeEventListener('mouseup',this.blockDragMouse,true);}

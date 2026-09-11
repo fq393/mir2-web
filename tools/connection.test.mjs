@@ -655,3 +655,18 @@ test('a pending trade invitation blocks movement and skill hotkeys',()=>{
   w.onKeyDown({keyCode:68});w.onKeyDown({keyCode:112});
   assert.equal(w.keys.size,0);assert.equal(w.step,null);assert.equal(casts,0);
 });
+test('walking clears melee pursuit but preserves the magic target for the next key',()=>{
+ const w=world();w.serverReady=true;w.magicTarget=42;w.selected=42;w.autoAttack=true;w.camera={x:2,y:2};w.entityAt=()=>0;
+ w.peers.set(42,{kind:'monster',dead:false,point:{x:5,y:2}});w.magics=[{spell:31,key:1}];w.mousePoint={x:400,y:200};
+ w.destination({x:400,y:350});assert.equal(w.magicTarget,42);assert.equal(w.autoAttack,false);
+ const sent=[];w.sendAction=(type,p)=>(sent.push(p),true);w.castKey(1);assert.equal(sent[0].targetId,42);
+ w.peers.get(42).dead=true;w.updateCombat(.1);assert.equal(w.magicTarget,0);
+});
+test('gold carry opens amount dialog only on ground, sends once, and waits for its reply',()=>{
+ const w=world();w.serverReady=true;w.hp=18;w.gold=100;w.menuKind='inventory';w.pickGold();assert.equal(w.carryGold,true);
+ const sent=[];let submit;w.goldDrop={open:(max,fn)=>{assert.equal(max,100);submit=fn;}};w.connection.send=p=>(sent.push(p),true);
+ w.dropCarriedGold({x:400,y:200});assert.equal(w.carryGold,false);assert.equal(sent.length,0);
+ submit(20);submit(20);assert.equal(sent.length,1);assert.equal(w.gold,100);
+ w.serverEvent({type:'goldDropResult',request:999,success:true});assert.ok(w.goldDropPending);
+ w.serverEvent({type:'goldDropResult',request:sent[0].request,success:true});assert.equal(w.goldDropPending,0);assert.equal(w.gold,100);
+});

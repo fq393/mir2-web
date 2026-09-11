@@ -335,6 +335,15 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey, IReadOnlyDi
                     else await Write(new C.TradeCancel(),ct);
                     continue;
                 }
+                if(command=="dropGold"){
+                    int request=Num("request");
+                    try{
+                        if(!r.TryGetProperty("amount",out var amountValue)||!amountValue.TryGetUInt32(out var amount)||amount==0)throw new InvalidOperationException("请输入有效的金币数量。");
+                        await WorldRequests.Run(e=>{GoldDrops.Drop(e.Players.FirstOrDefault(p=>p.ObjectID==objectId),amount);return true;},ct);
+                        await Send(new{type="goldDropResult",request,success=true},ct);
+                    }catch(InvalidOperationException ex){await Send(new{type="goldDropResult",request,success=false,message=ex.Message},ct);}
+                    continue;
+                }
                 if(command=="skillKey"){
                     int request=Num("request");
                     try{
