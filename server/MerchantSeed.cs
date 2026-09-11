@@ -17,6 +17,14 @@ static class MerchantSeed {
   if(smith==null){smith=new NPCInfo{Index=++envir.NPCIndex,FileName="BoundarySmith"};envir.NPCInfoList.Add(smith);}
   smith.Name="边界村铁匠铺";smith.MapIndex=map.Index;smith.Location=new Point(297,612);smith.Image=0;smith.Rate=100;smith.Colour=Color.Lime;
   ApplyEquipmentShops(envir,root,map);
+  // MerChant.txt lines 32/52: distinct original outdoor medicine merchants.
+  // Only the already verified small medicines are wired; full stock remains audited separately.
+  foreach(var spec in new[]{(File:"BichonCityMedicine",Name:"比奇夏家店老板",X:324,Y:291,Image:5),(File:"BoundaryMedicine",Name:"边界村小店老板",X:291,Y:610,Image:1)}) {
+   var npc=envir.NPCInfoList.FirstOrDefault(n=>n.FileName==spec.File);
+   if(npc==null){npc=new NPCInfo{Index=++envir.NPCIndex,FileName=spec.File};envir.NPCInfoList.Add(npc);}
+   npc.Name=spec.Name;npc.MapIndex=map.Index;npc.Location=new Point(spec.X,spec.Y);npc.Image=(ushort)spec.Image;npc.Rate=100;npc.Colour=Color.Lime;
+   File.WriteAllText(Path.Combine(Settings.NPCPath,spec.File+".txt"),"[@MAIN]\n#SAY\n你需要什么药品？\\\n<购买药品/@BUY>\\\n<关闭/@EXIT>\n\n[@BUY]\n#SAY\n请选择药品。\n\n[TRADE]\nBichonHealthSmall 1\nBichonManaSmall 1\n");
+  }
  }
  static void ApplyEquipmentShops(Envir envir,string root,MapInfo map){
   using var document=JsonDocument.Parse(File.ReadAllText(Path.Combine(root,"server/content/equipment-shops.json")));

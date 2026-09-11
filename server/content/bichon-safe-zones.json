@@ -1,0 +1,27 @@
+{
+  "status": "Candidate 1.76 StartPoint; not authenticated official configuration",
+  "source": "mrzhqiang/mirserver-1.76@39e17246a32247a2c43c4cc481e97e88c692fa53/Mir200/Envir/StartPoint.txt",
+  "sha256": "22dde19cf73410927839e3010ce31816527b80ee568bf46a300f338d4f8bdcc7",
+  "zones": [
+    {
+      "x": 334,
+      "y": 266,
+      "size": 10
+    },
+    {
+      "x": 330,
+      "y": 268,
+      "size": 10
+    },
+    {
+      "x": 289,
+      "y": 618,
+      "size": 10
+    },
+    {
+      "x": 650,
+      "y": 631,
+      "size": 10
+    }
+  ]
+}

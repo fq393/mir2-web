@@ -32,6 +32,11 @@ static class MerchantTests {
   p.NPCPage=new NPCPage(NPCScript.BuyKey);Reject(()=>MerchantTrades.Commit(p,sale));p.NPCPage=new NPCPage(NPCScript.SellKey);
   MerchantTrades.Commit(p,sale);Check(p.Info.Inventory[6]==null&&p.Account.Gold==1000+sale.Gold,"sale transfer mismatch");Reject(()=>MerchantTrades.Commit(p,sale));Check(p.Packets.OfType<ServerPackets.SellItem>().Count(x=>x.Success)==1,"duplicate sale");
   MerchantSeed.Apply(envir,root,map.Info);var count=envir.NPCInfoList.Count;MerchantSeed.Apply(envir,root,map.Info);Check(envir.NPCInfoList.Count==count,"merchant seed duplicated NPCs");
+  foreach(var spec in new[]{(File:"BichonCityMedicine",X:324,Y:291,Image:5),(File:"BoundaryMedicine",X:291,Y:610,Image:1)}){
+   var medicine=envir.NPCInfoList.Single(n=>n.FileName==spec.File);
+   Check(medicine.MapIndex==map.Info.Index&&medicine.Location==new Point(spec.X,spec.Y)&&medicine.Image==spec.Image,"medicine merchant identity mismatch");
+   Check(File.ReadAllText(Path.Combine(Settings.NPCPath,spec.File+".txt")).Contains("BichonManaSmall 1"),"medicine stock missing");
+  }
   var smith=envir.NPCInfoList.Single(n=>n.FileName=="BoundarySmith");
   Check(smith.Name=="边界村铁匠铺"&&smith.MapIndex==map.Info.Index&&smith.Location==new Point(297,612)&&smith.Image==0,"boundary smith identity/map/location/image mismatch");
   var smithScript=File.ReadAllText(Path.Combine(Settings.NPCPath,"BoundarySmith.txt"));

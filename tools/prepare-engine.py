@@ -226,3 +226,11 @@ replace_npc('''                callingNPC.BuyBack[player.Name].Remove(goods); //
                 else callingNPC.BuyBack[player.Name].Remove(goods);''')
 out=root/'server/engine/generated/NPCScript.cs'
 if not out.exists() or out.read_text()!=npc: out.write_text(npc)
+
+# Exclude protected cells once when assembling natural wildlife respawn candidates.
+map_source=(root/'vendor/Crystal/Server/MirEnvir/Map.cs').read_text(encoding='utf-8-sig')
+anchor='info.WalkableCells = WalkableCells.Where(x =>'
+assert map_source.count(anchor)==1
+map_source=map_source.replace(anchor,anchor+'\n                        Mir2.WebHost.SpawnSafety.Allows(this, info.Monster, x) &&')
+out=root/'server/engine/generated/Map.cs'
+if not out.exists() or out.read_text()!=map_source: out.write_text(map_source)

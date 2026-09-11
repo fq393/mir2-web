@@ -43,7 +43,14 @@ static class DemoSeed
         Door(boundary,2,12,map,302,623);Door(boundary,17,27,map,311,632);
         JewellerySeed.Apply(envir,root,boundary);
 
-        foreach(var zone in map.SafeZones.Where(z=>z.StartPoint))zone.Size=2;
+        // Candidate StartPoint column 5 is range (Delphi LocalDB.LoadStartPoint).
+        // Keep existing restart locations and administrator zones intact.
+        using(var zones=System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(root,"server/content/bichon-safe-zones.json"))))
+        foreach(var row in zones.RootElement.GetProperty("zones").EnumerateArray()) {
+            var location=new Point(row.GetProperty("x").GetInt32(),row.GetProperty("y").GetInt32());
+            if(!map.SafeZones.Any(z=>z.Location==location))
+                map.SafeZones.Add(new SafeZoneInfo{Info=map,Location=location,Size=row.GetProperty("size").GetUInt16(),StartPoint=false});
+        }
         ItemInfo AddItem(string name,ItemType type,short shape,ushort image) {
             var item=envir.ItemInfoList.FirstOrDefault(i=>i.Name==name);
             if(item!=null){item.Image=image;return item;}

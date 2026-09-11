@@ -18,3 +18,7 @@ for pin in mini['files']:
 source=ROOT/mini['files'][0]['path'];im,_=classic.read_library(source,[mini['frame']])[mini['frame']];im.save(out/'bichon-map.png')
 b=source.read_bytes();colors={str(i):'#%02x%02x%02x'%(b[60+(i-1)*4+2],b[60+(i-1)*4+1],b[60+(i-1)*4]) for i in [218,249,255]}
 (out/'minimap-colors.json').write_text(json.dumps(colors))
+
+# Close button normal face is baked into the login window; frame 64 is its pressed overlay.
+login,_=classic.read_library(folder/next(v for v in p['sources'] if v['name']=='ClassicPrguse')['file'],[60])[60]
+login.crop((252,28,268,51)).save(out/'close-normal.png')

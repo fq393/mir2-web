@@ -24,6 +24,14 @@ static class WildlifeTests {
   Check(hits>9000&&hits<11000,"drop probability far outside 1/3");
   var map=new Map(new MapInfo{Index=801,FileName="fixture"}){Width=12,Height=12,Cells=new Cell[12,12]};
   for(int x=0;x<12;x++)for(int y=0;y<12;y++)map.Cells[x,y]=new Cell{Attribute=CellAttribute.Walk};
+  var protectedZone=new SafeZoneInfo{Info=map.Info,Location=new Point(5,5),Size=2};map.Info.SafeZones.Add(protectedZone);
+  Check(!Mir2.WebHost.SpawnSafety.Allows(map,deer,new Point(3,3)),"wildlife allowed on safe-zone boundary");
+  Check(!Mir2.WebHost.SpawnSafety.Allows(map,straw,new Point(5,5)),"wildlife allowed at safe-zone centre");
+  Check(Mir2.WebHost.SpawnSafety.Allows(map,deer,new Point(2,5)),"outside safe-zone blocked");
+  Check(Mir2.WebHost.SpawnSafety.Allows(map,new MonsterInfo{Name="GuardFixture"},new Point(5,5)),"guard/non-wildlife spawn changed");
+  Check(!Mir2.WebHost.SpawnSafety.Allows(map,new MonsterInfo{Name=deer.Name},new Point(5,5)),"DB reload lost wildlife exclusion");
+  map.Info.SafeZones.Clear();
+  Console.WriteLine("PASS wildlife spawn exclusion: protected centre/boundary, outside cells and guard separation.");
   var owner=new RecordingPlayer{Info=new CharacterInfo{Level=1},Stats=new Stats(),Account=new AccountInfo(),Connection=connection,CurrentMap=map,CurrentLocation=new Point(5,5)};
   owner.Report=new Reporting(owner);owner.Info.Mount=new MountInfo(owner);owner.Node=envir.Objects.AddLast(owner);map.AddObject(owner);
   var other=new RecordingPlayer{Info=new CharacterInfo{Level=1},Stats=new Stats(),Account=new AccountInfo(),Connection=connection,CurrentMap=map,CurrentLocation=owner.CurrentLocation};other.Report=new Reporting(other);other.Node=envir.Objects.AddLast(other);map.AddObject(other);

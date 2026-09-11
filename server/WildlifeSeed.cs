@@ -44,6 +44,7 @@ static class WildlifeSeed
             foreach(var line in lines)if(DropInfo.FromLine(line)==null)throw new InvalidDataException("Unresolved wildlife drop: "+line);
             Directory.CreateDirectory(Settings.DropPath);File.WriteAllLines(Path.Combine(Settings.DropPath,key+".txt"),lines);m.DropPath=key;
         }
+        Mir2.WebHost.SpawnSafety.SetSpecies(monsters.Values);
         // Reconcile only managed species. Retain other map spawns and stable indices.
         var managed=monsters.Values.Select(m=>m.Index).ToHashSet();var old=map.Respawns.Where(r=>managed.Contains(r.MonsterIndex)).ToList();
         map.Respawns.RemoveAll(r=>managed.Contains(r.MonsterIndex));
