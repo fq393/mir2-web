@@ -122,6 +122,7 @@ try {
     PlayerTradeTests.Run(envir,connection);
     TradeSnapshotTests.Run(envir);
     CharacterStorageTests.Run(envir);
+    StorageTransferTests.Run(envir,connection);
     TradeProcessTests.Run();
     PlayerDropTests.Run(envir,connection);
     SkillBindingTests.Run();

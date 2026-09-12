@@ -41,7 +41,10 @@ text=text[:a]+method+text[b:]
 # Durable trade saves must propagate failure to the transaction boundary.
 anchor='        public void SaveAccounts()'
 assert text.count(anchor)==1
-text=text.replace(anchor,'''        public void SaveTradeAccountsOrThrow(PlayerObject first, PlayerObject second)
+text=text.replace(anchor,'''        public void SaveStorageAccountsOrThrow(PlayerObject player)
+            => SaveTradeAccountsOrThrow(player, player); // Same whole-account atomic file, one participant.
+
+        public void SaveTradeAccountsOrThrow(PlayerObject first, PlayerObject second)
         {
             if (!Players.Contains(first) || !Players.Contains(second) ||
                 !AccountList.Contains(first.Account) || !AccountList.Contains(second.Account))
