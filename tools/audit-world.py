@@ -46,8 +46,9 @@ def build(root):
     maps,portals,unknown=parse_maps((reference/'MapInfo.txt').read_text())
     npcs,npc_unknown=parse_npcs((reference/'MerChant.txt').read_text())
     files={p.stem.lower():p for p in (root/'raw-assets/client-176/传奇私服1.76客户/Map').glob('*') if p.suffix.lower()=='.map'}
-    pins=[json.loads(p.read_text()) for p in sorted((root/'tools').glob('interior*inputs.json'))]
-    connected={'0'}|{p['map'] for p in pins}
+    registry=json.loads((root/'server/content/world-maps.json').read_text())['maps']
+    pins=[json.loads((root/m['pin']).read_text()) for m in registry if m.get('pin')]
+    connected={m['id'] for m in registry}
     expected={tuple(p) for pin in pins for p in pin['portals']}
     original={(p['source'],p['x'],p['y'],p['target'],p['tx'],p['ty']) for p in portals}
     checks=[]
@@ -60,15 +61,14 @@ def build(root):
             if state!='walkable':issues.append(f'{mid}:{cx},{cy}:{state}')
         if any(q[:3]==(b,tx,ty) for q in expected):issues.append('arrival-is-another-door')
         checks.append(dict(edge=edge,issues=issues))
-    # Structural source check: the active server seed must contain every pinned door.
+    drift=[]
+    frontend=json.loads((root/'client/assets/resources/mir/world-maps.json').read_text())['maps']
+    if frontend!=registry:drift.append(dict(issue='stale-client-registry'))
+    for row in registry:
+        if row['id']!='0' and not (root/f"client/assets/resources/mir/maps/{row['id']}/manifest.json").exists():
+            drift.append(dict(issue='missing-client-manifest',map=row['id']))
     seed=(root/'server/DemoSeed.cs').read_text()
-    names={'map':'0'}
-    names.update(re.findall(r'var\s+(\w+)=envir.MapInfoList.FirstOrDefault\(m=>m.FileName=="([^"]+)"',seed))
-    actual=set()
-    for a,x,y,b,tx,ty in re.findall(r'Door\((\w+),(\d+),(\d+),(\w+),(\d+),(\d+)\)',seed):
-        actual.add((names.get(a,a),int(x),int(y),names.get(b,b),int(tx),int(ty)))
-    drift=[dict(edge=e,issue='missing-server-door') for e in sorted(expected-actual)]
-    drift += [dict(edge=e,issue='unpinned-server-door') for e in sorted(actual-expected)]
+    if 'WorldMaps.Seed(envir,root)' not in seed:drift.append(dict(issue='server-registry-not-connected'))
     ids=set(maps)|{p['source'] for p in portals}|{p['target'] for p in portals}|{n['map'] for n in npcs}
     records=[]
     for mid in sorted(ids):

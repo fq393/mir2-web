@@ -4,6 +4,7 @@ project_root="$(cd "$(dirname "$0")/.." && pwd)"
 creator="$project_root/.runtime/cocos/CocosCreator.app/Contents/MacOS/CocosCreator"
 if [ ! -x "$creator" ]; then echo 'Cocos Creator is missing. Run bash tools/setup-cocos.sh'; exit 1; fi
 if [ ! -f "$project_root/client/assets/resources/mir/manifest.json" ]; then echo 'Converted assets are missing. See docs/asset-sources.md'; exit 1; fi
+python3 "$project_root/tools/export-world-registry.py"
 mkdir -p "$project_root/.runtime"
 "$project_root/.runtime/assets-venv/bin/python" "$project_root/tools/export-web-ui.py" > "$project_root/.runtime/web-ui-export.log"
 "$project_root/.runtime/assets-venv/bin/python" "$project_root/tools/convert-healing.py"

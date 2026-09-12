@@ -1,0 +1,93 @@
+{
+  "map": "0106",
+  "name": "比奇服装店",
+  "spawn": {
+    "x": 8,
+    "y": 24
+  },
+  "mapSources": [
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Data/Objects.wil",
+      "sha256": "80b27c1be115a19c9d8baac878e90e182c9543ddb0640fda8626b90c636690f0"
+    },
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Data/Objects.WIX",
+      "sha256": "199be3894f277cb4e8ac16e222d7dcda725f2e1fc620d207f432367509afc503"
+    },
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Map/0106.map",
+      "sha256": "eb5361adfcb1a7576759733386cff453d59e16388047fb32dbfa2c394c28a74c"
+    }
+  ],
+  "exteriorSource": {
+    "local": "raw-assets/client-176/传奇私服1.76客户/Map/0.map",
+    "sha256": "ef70bd5f5425f7f9dc79cb1ea6957f771c7293d55a554b3ba6239aba372fa370"
+  },
+  "portalSource": "https://github.com/mrzhqiang/mirserver-1.76/blob/39e17246a32247a2c43c4cc481e97e88c692fa53/Mir200/Envir/MapInfo.txt#L94-L101",
+  "portals": [
+    [
+      "0",
+      307,
+      310,
+      "0106",
+      8,
+      24
+    ],
+    [
+      "0",
+      307,
+      311,
+      "0106",
+      9,
+      23
+    ],
+    [
+      "0106",
+      9,
+      25,
+      "0",
+      307,
+      312
+    ],
+    [
+      "0106",
+      9,
+      24,
+      "0",
+      308,
+      311
+    ],
+    [
+      "0",
+      317,
+      301,
+      "0106",
+      21,
+      11
+    ],
+    [
+      "0",
+      317,
+      302,
+      "0106",
+      20,
+      12
+    ],
+    [
+      "0106",
+      21,
+      13,
+      "0",
+      318,
+      302
+    ],
+    [
+      "0106",
+      21,
+      12,
+      "0",
+      318,
+      303
+    ]
+  ]
+}

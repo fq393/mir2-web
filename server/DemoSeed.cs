@@ -20,28 +20,10 @@ static class DemoSeed
             }
         }
         envir.LoadDB();
+        Mir2.WebHost.WorldMaps.Seed(envir,root);
         var map=envir.MapInfoList.Single(m=>m.FileName=="0");
-        map.Title="比奇省";
-        // Door coordinates only: pinned candidate MapInfo.txt lines 85-92.
-        // Its unrelated FIGHT flag and economy are deliberately not imported.
-        var jewellery=envir.MapInfoList.FirstOrDefault(m=>m.FileName=="0105");
-        if(jewellery==null){jewellery=new MapInfo{Index=++envir.MapIndex,FileName="0105",Title="首饰店",Light=LightSetting.Normal};envir.MapInfoList.Add(jewellery);}
-        void Door(MapInfo from,int x,int y,MapInfo to,int tx,int ty){
-            var point=new Point(x,y);var entry=from.Movements.FirstOrDefault(m=>m.Source==point);
-            if(entry==null){entry=new MovementInfo{Source=point};from.Movements.Add(entry);}
-            entry.MapIndex=to.Index;entry.Destination=new Point(tx,ty);entry.NeedHole=false;entry.NeedMove=false;
-        }
-        Door(map,295,284,jewellery,8,24);Door(map,295,285,jewellery,9,23);
-        Door(jewellery,9,25,map,295,286);Door(jewellery,9,24,map,296,285);
-        Door(map,305,275,jewellery,20,12);Door(map,305,276,jewellery,21,11);
-        Door(jewellery,21,12,map,306,276);Door(jewellery,21,13,map,306,277);
-        JewellerySeed.Apply(envir,root,jewellery);
-        // Pinned MapInfo.txt 200-203: boundary village jewellery room, both doors.
-        var boundary=envir.MapInfoList.FirstOrDefault(m=>m.FileName=="0141");
-        if(boundary==null){boundary=new MapInfo{Index=++envir.MapIndex,FileName="0141",Title="边界村首饰店",Light=LightSetting.Normal};envir.MapInfoList.Add(boundary);}
-        Door(map,302,622,boundary,2,11);Door(map,311,631,boundary,17,26);
-        Door(boundary,2,12,map,302,623);Door(boundary,17,27,map,311,632);
-        JewellerySeed.Apply(envir,root,boundary);
+        JewellerySeed.Apply(envir,root,envir.MapInfoList.Single(m=>m.FileName=="0105"));
+        JewellerySeed.Apply(envir,root,envir.MapInfoList.Single(m=>m.FileName=="0141"));
 
         // Candidate StartPoint column 5 is range (Delphi LocalDB.LoadStartPoint).
         // Keep existing restart locations and administrator zones intact.
@@ -73,10 +55,7 @@ static class DemoSeed
             potion.Stats=new Stats {[Stat.HP]=spec.HP,[Stat.MP]=spec.MP};
         }
         if(!envir.MagicInfoList.Any(m=>m.Spell==Spell.FireBall)) envir.MagicInfoList.Add(new MagicInfo {Name="FireBall",Spell=Spell.FireBall,BaseCost=1,Level1=1,Level2=2,Level3=3,Need1=100,Need2=100,Need3=100,PowerBase=12,PowerBonus=2,MPowerBase=12,MPowerBonus=2,Range=9});
-        var bookroom=envir.MapInfoList.FirstOrDefault(m=>m.FileName=="0132");
-        if(bookroom==null){bookroom=new MapInfo{Index=++envir.MapIndex,FileName="0132",Title="边界书店",Light=LightSetting.Normal};envir.MapInfoList.Add(bookroom);}
-        Door(map,282,636,bookroom,13,15);Door(map,282,635,bookroom,14,15);Door(map,283,635,bookroom,15,14);
-        Door(bookroom,14,16,map,283,637);Door(bookroom,15,15,map,283,636);Door(bookroom,16,14,map,284,636);
+        var bookroom=envir.MapInfoList.Single(m=>m.FileName=="0132");
         BookshopSeed.Apply(envir,root,map);
         BookshopSeed.Apply(envir,root,bookroom);
         WildlifeSeed.Apply(envir,root,map);

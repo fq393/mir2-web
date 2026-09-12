@@ -10,10 +10,10 @@
   "summary": {
     "mapIds": 286,
     "resourcesFound": 274,
-    "configured": 4,
+    "configured": 5,
     "portals": 1302,
     "npcRows": 172,
-    "activeDoorChecks": 18,
+    "activeDoorChecks": 26,
     "activeDoorFailures": 0
   },
   "maps": [
@@ -139,9 +139,9 @@
         }
       ],
       "resourceFound": true,
-      "converted": false,
-      "configured": false,
-      "playtestStatus": "not-accepted",
+      "converted": true,
+      "configured": true,
+      "playtestStatus": "see-existing-evidence",
       "npcCount": 1,
       "outgoing": 4
     },
@@ -19220,11 +19220,55 @@
     {
       "edge": [
         "0",
+        307,
+        310,
+        "0106",
+        8,
+        24
+      ],
+      "issues": []
+    },
+    {
+      "edge": [
+        "0",
+        307,
+        311,
+        "0106",
+        9,
+        23
+      ],
+      "issues": []
+    },
+    {
+      "edge": [
+        "0",
         311,
         631,
         "0141",
         17,
         26
+      ],
+      "issues": []
+    },
+    {
+      "edge": [
+        "0",
+        317,
+        301,
+        "0106",
+        21,
+        11
+      ],
+      "issues": []
+    },
+    {
+      "edge": [
+        "0",
+        317,
+        302,
+        "0106",
+        20,
+        12
       ],
       "issues": []
     },
@@ -19269,6 +19313,50 @@
         "0",
         306,
         277
+      ],
+      "issues": []
+    },
+    {
+      "edge": [
+        "0106",
+        9,
+        24,
+        "0",
+        308,
+        311
+      ],
+      "issues": []
+    },
+    {
+      "edge": [
+        "0106",
+        9,
+        25,
+        "0",
+        307,
+        312
+      ],
+      "issues": []
+    },
+    {
+      "edge": [
+        "0106",
+        21,
+        12,
+        "0",
+        318,
+        303
+      ],
+      "issues": []
+    },
+    {
+      "edge": [
+        "0106",
+        21,
+        13,
+        "0",
+        318,
+        302
       ],
       "issues": []
     },

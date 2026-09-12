@@ -137,6 +137,7 @@ try {
     Console.WriteLine("PASS immutable game-thread vitals, final HP/MP/weight, disconnect cleanup.");
     Check(checkedGoods==11,"missing stock");
     Console.WriteLine("PASS 11 real Crystal purchases: exact gold/durability/bag slot/replies; level/slot gates; insufficient gold, full bag and unknown stock do not mutate inventory or gold.");
+    WorldMapTests.Run(sourceRoot,envir);
 } finally {Directory.SetCurrentDirectory(sourceRoot);Directory.Delete(sandbox,true);}
 static void Check(bool ok,string message){if(!ok)throw new Exception(message);}
 class RecordingPlayer:PlayerObject {

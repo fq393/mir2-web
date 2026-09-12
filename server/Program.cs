@@ -41,9 +41,7 @@ Settings.MonsterRarityEnabled = false; // No later rarity/elite multipliers in t
 Settings.AllowStartGame = true;
 Settings.IPBlockSeconds = 0; // Several browser sessions share the loopback address.
 Settings.MaxIP = 16;
-var mapPath = Path.Combine(repoRoot, "raw-assets", "Map_0.map");
-if (!File.Exists(mapPath)) throw new FileNotFoundException("Run the resource fetch first: real map0 required", mapPath);
-File.Copy(mapPath, Path.Combine(Settings.MapPath, "0.map"), true);
+WorldMaps.Install(repoRoot);
 var envir = Envir.Main;
 // The optional Crystal status service has a hard-coded port 3000; disable it for this isolated host.
 typeof(Envir).GetField("StatusPortEnabled", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(envir, false);
@@ -55,13 +53,6 @@ if (!File.Exists(Envir.DatabasePath))
     envir.MapIndex = 1;
     envir.SaveDB();
 }
-foreach(var roomId in new[]{"0105","0141","0132"}) {
- var roomPath=Path.Combine(repoRoot,$"raw-assets/client-176/传奇私服1.76客户/Map/{roomId}.map");
- using var roomPin=JsonDocument.Parse(File.ReadAllText(Path.Combine(repoRoot,roomId=="0105"?"tools/interior-inputs.json":$"tools/interior-{roomId}-inputs.json")));
- var expected=roomPin.RootElement.GetProperty("mapSources").EnumerateArray().Single(s=>s.GetProperty("path").GetString()!.EndsWith($"Map/{roomId}.map")).GetProperty("sha256").GetString();
- if(!Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(roomPath))).Equals(expected,StringComparison.OrdinalIgnoreCase))throw new InvalidDataException("Original room map hash mismatch");
- File.Copy(roomPath,Path.Combine(Settings.MapPath,roomId+".map"),true);
-}
 DemoSeed.Apply(envir, dataDir, repoRoot);
 var logTask = Task.Run(async () => {
     while (true) { while (MessageQueue.Instance.MessageLog.TryDequeue(out var message)) Console.WriteLine("Crystal " + message.Trim()); await Task.Delay(100); }
@@ -69,7 +60,7 @@ var logTask = Task.Run(async () => {
 envir.Start();
 // Immutable door locations: movement still goes through Crystal's door and collision checks.
 var doorTiles=new Dictionary<(string,int,int),byte>();
-foreach(var id in new[]{"0","0105","0141","0132"}){
+foreach(var id in WorldMaps.Load(repoRoot).Select(m=>m.Id)){
  var bytes=File.ReadAllBytes(Path.Combine(Settings.MapPath,id+".map"));
  bool crystal=id=="0";int header=crystal?8:52,stride=crystal?26:12;
  int width=BitConverter.ToInt16(bytes,crystal?4:0),height=BitConverter.ToInt16(bytes,crystal?6:2);
