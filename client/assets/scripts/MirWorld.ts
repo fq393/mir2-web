@@ -435,6 +435,10 @@ export class MirWorld extends Component {
     }
     private changeMap(id:string,location?:Point,direction?:number):boolean {
         const target=this.maps.get(id);
+        // A merchant quote belongs to the map/NPC interaction that issued it.
+        // Invalidate its request too, so a late response cannot restore the old quote.
+        this.tradeRequest++;this.tradeItem=null;this.tradeQuote=null;
+        this.npcId=0;this.npcPage=[];this.goods=[];this.selectedGood=null;this.shopDetail=null;this.shopTop=0;
         this.clearMovement();this.clearLoot();this.menu.active=false;if(this.targetText)this.targetText.string='';this.selected=0;this.magicTarget=0;this.hovered=0;
         if(!target){this.serverReady=false;this.world.active=false;this.statusText=`地图 ${id} 尚未接入`;return false;}
         // Resources/collision metadata are prepared before connecting, so following
