@@ -435,6 +435,9 @@ export class MirWorld extends Component {
     }
     private changeMap(id:string,location?:Point,direction?:number):boolean {
         const target=this.maps.get(id);
+        // A held pointer can enter a door before its mouse/touch release arrives.
+        // Consume that release in the new map; the next pointerdown resets this flag.
+        this.uiGesture=true;
         // A merchant quote belongs to the map/NPC interaction that issued it.
         // Invalidate its request too, so a late response cannot restore the old quote.
         this.tradeRequest++;this.tradeItem=null;this.tradeQuote=null;
