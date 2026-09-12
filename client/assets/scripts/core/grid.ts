@@ -6,7 +6,8 @@ const clear = (g: Grid, p: Point): boolean => p.x >= 0 && p.y >= 0 && p.x < g.wi
 export function canStep(g: Grid, from: Point, to: Point): boolean {
     const dx = Math.abs(to.x-from.x), dy = Math.abs(to.y-from.y);
     if (dx > 1 || dy > 1 || (!dx && !dy) || !clear(g, to)) return false;
-    return !(dx && dy) || (clear(g, {x:from.x,y:to.y}) && clear(g,{x:to.x,y:from.y}));
+    // Crystal HumanObject.Walk and Delphi CanWalk validate the destination cell.
+    return true;
 }
 export function directionTo(from: Point, to: Point): number {
     const x = Math.sign(to.x-from.x), y = Math.sign(to.y-from.y);
@@ -68,8 +69,7 @@ export function findPath(g: Grid, start: Point, goal: Point): Point[] {
         for(const d of directions){
             const nx=x+d.x,ny=y+d.y;
             if(!walkable(nx,ny))continue;
-            // Same diagonal corner rule as canStep, using cached occupancy.
-            if(d.x&&d.y&&(!walkable(x,ny)||!walkable(nx,y)))continue;
+            // Match canStep: diagonal movement does not occupy the side cells.
             const id=ny*width+nx;
             if(costs[id]>=0&&costs[id]<=cost)continue;
             costs[id]=cost;previous[id]=current.id;

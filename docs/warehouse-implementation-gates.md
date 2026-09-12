@@ -23,3 +23,18 @@
 5. 实际存入→离店→重登→取回；比对唯一ID、额外属性、持久、数量，验证无丢失或复制。
 
 来源均为固定候选代码或客户端资源；仓库归属与容量尚未认证，不先写死数值。
+
+## 2026-09-12 补充：角色归属的候选源码证据
+
+固定提交仍为 pangliang/MirServer-Delphi 的 f829679d24acb3a097d396d737ab067db2c88ca2；这是一份含后期扩展的候选源码，不能宣称完整等同2003官方1.76。
+
+- Common/Grobal2.pas：THumData 从1411行开始，以sChrName标识角色，1467行含StorageItems；普通仓库属于角色数据。
+- EM2Engine/ObjBase.pas：TPlayObject持有m_StorageItemList；普通ClientStorageItem校验物品MakeIndex、名称、商人存储权限及同地图距离，再移入角色仓库。
+- 该文件另有BigStorage扩展，不纳入复古范围。
+- 容量存在冲突：Grobal2的MAXSTORAGEITEM=50，但TStorageItems为array[0..45]。需要沿普通仓库实际限制和存档读写继续确认，不能任选一个数字。
+
+与Crystal.Account.Storage的差异已经有具体证据。接入时必须明确选择角色仓库的持久化方式，并测试同账号另一角色不能误见或取走物品；不能仅修改前端显示制造角色隔离。
+
+来源：https://github.com/pangliang/MirServer-Delphi/blob/f829679d24acb3a097d396d737ab067db2c88ca2/Common/Grobal2.pas 与同提交EM2Engine/ObjBase.pas。
+
+进一步追踪：普通ClientStorageItem在ObjBase.pas的22825行实际检查m_StorageItemList.Count < MAXBAGITEM；同提交Grobal2.pas的MAXBAGITEM=46，匹配StorageItems[0..45]。因此该候选普通仓库实际为46格，而MAXSTORAGEITEM=50不是此路径的有效容量。该值仅认证此候选实现，仍需与目标1.76客户端/资料对应，不将后期版本容量直接宣称为官方1.76。
