@@ -38,3 +38,8 @@
 来源：https://github.com/pangliang/MirServer-Delphi/blob/f829679d24acb3a097d396d737ab067db2c88ca2/Common/Grobal2.pas 与同提交EM2Engine/ObjBase.pas。
 
 进一步追踪：普通ClientStorageItem在ObjBase.pas的22825行实际检查m_StorageItemList.Count < MAXBAGITEM；同提交Grobal2.pas的MAXBAGITEM=46，匹配StorageItems[0..45]。因此该候选普通仓库实际为46格，而MAXSTORAGEITEM=50不是此路径的有效容量。该值仅认证此候选实现，仍需与目标1.76客户端/资料对应，不将后期版本容量直接宣称为官方1.76。
+
+## 当前落地进度
+
+- [x] 角色仓库存档基础与同文件快照扩展、旧档读取及角色隔离测试，见character-storage-persistence.md。
+- [ ] 0140/NPC、存取业务、失败回滚和原界面仍未接入；上述基础不代表完整仓库可用。

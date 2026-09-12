@@ -61,6 +61,22 @@ text=text.replace(anchor,'''        public void SaveTradeAccountsOrThrow(PlayerO
         }
 
 '''+anchor)
+# Optional versioned character-storage trailer lives in the same atomic account file.
+# Existing snapshots without a trailer remain readable; unknown/corrupt trailers fail closed.
+save_start=text.index('        private void SaveAccounts(Stream stream)')
+save_end=text.index('        private void SaveGuilds(',save_start)
+section=text[save_start:save_end]
+ending='            }\n        }\n\n'
+assert section.endswith(ending)
+section=section[:-len(ending)]+'                Mir2.WebHost.CharacterStorage.Write(writer, AccountList);\n'+ending
+text=text[:save_start]+section+text[save_end:]
+load_start=text.index('        public void LoadAccounts()')
+load_end=text.index('        public void LoadGuilds()',load_start)
+section=text[load_start:load_end]
+ending='                }\n            }\n        }\n\n'
+assert section.endswith(ending)
+section=section[:-len(ending)]+'                    Mir2.WebHost.CharacterStorage.Read(reader, this);\n'+ending
+text=text[:load_start]+section+text[load_end:]
 out=root/'server/engine/generated/Envir.cs';out.parent.mkdir(parents=True,exist_ok=True)
 if not out.exists() or out.read_text()!=text: out.write_text(text)
 

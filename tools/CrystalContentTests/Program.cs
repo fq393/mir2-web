@@ -121,6 +121,7 @@ try {
     MerchantTests.Run(root,envir,connection);
     PlayerTradeTests.Run(envir,connection);
     TradeSnapshotTests.Run(envir);
+    CharacterStorageTests.Run(envir);
     TradeProcessTests.Run();
     PlayerDropTests.Run(envir,connection);
     SkillBindingTests.Run();
