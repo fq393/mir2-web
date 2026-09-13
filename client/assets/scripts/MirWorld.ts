@@ -85,7 +85,7 @@ export class MirWorld extends Component {
     private authoritativeMaxHP=0;private authoritativeMaxMP=0;private experience=0;private maxExperience=0;private bagWeight=0;private maxBagWeight=0;private magics:any[]=[];private expBar!:Sprite;private weightBar!:Sprite;
     private job=0;private hpBase!:Sprite;private hp=0;private mp=0;private gold=0;private level=1;private inventory:any[]=[];private equipment:any[]=[];
     private stats!:Label;private targetText!:Label;private logText!:Label;private menu!:Node;
-    private storageItems:any[]=[];private storageDeposit=true;private storageItem:any=null;private storageCarry:any=null;private storageToken='';private storageRequest=0;private storageWaiting=false;private storageTop=0;
+    private storageItems:any[]=[];private storageDeposit=true;private storageItem:any=null;private storageCarry:any=null;private storageMove:{from:number;to:number;request:number;at:number}|null=null;private storageToken='';private storageRequest=0;private storageWaiting=false;private storageTop=0;
     private tradeMode="sell";private tradeItem:any=null;private tradeQuote:any=null;private tradeRequest=0;
     private lastMoveAcceptedAt=-Infinity;private autoAttack=false;private runRequested=false;private healthPoll=0;private dayIcon?:Sprite;
     private logs:string[]=[];private npcPage:string[]=[];private menuKind='';private npcId=0;private goods:any[]=[];private lastAttack=0;
@@ -490,7 +490,7 @@ export class MirWorld extends Component {
         if(event.type==='targetHealth'){const target=this.peers.get(event.objectId);if(target){target.hp=event.percent;target.healthUntil=Date.now()+2000;}return;}
         if(event.type==='goldDropResult'){if(event.request!==this.goldDropPending)return;this.goldDropPending=0;if(!event.success)this.notice(event.message??'无法丢弃金币。');return;}
         if(event.type==='packet'){this.packet(event.packet,event.data);return;}
-        if(event.type==='disconnected'){this.carryGold=false;this.goldDropPending=0;this.goldDrop?.reset();this.magicTarget=0;this.playerTrade?.reset();this.playerTradePreview=false;if(this.playerTradeButton)this.playerTradeButton.active=false;this.pendingDrop=null;this.windowDrag=null;this.attributes=null;this.characterValues=[];this.skillRequest++;this.skillPending=false;this.selectedEquipment=-1;this.equipmentPending=false;this.selectedBag=-1;this.bagMovePending=false;this.cancelStorage();this.tradeRequest++;this.tradeItem=null;this.tradeQuote=null;this.chatInput?.setActive(false);this.logs=[];if(this.logText)this.logText.string='';if(this.menu)this.menu.active=false;if(this.targetText)this.targetText.string='';this.party?.reset();this.clearLoot();this.pendingUses.clear();this.fireTargets.clear();this.serverReady=false;this.clearMovement();this.peers.forEach(p=>{p.node.destroy();p.label?.node.destroy();p.healthBar?.node.destroy();});this.peers.clear();return;}
+        if(event.type==='disconnected'){this.carryGold=false;this.goldDropPending=0;this.goldDrop?.reset();this.magicTarget=0;this.playerTrade?.reset();this.playerTradePreview=false;if(this.playerTradeButton)this.playerTradeButton.active=false;this.pendingDrop=null;this.windowDrag=null;this.attributes=null;this.characterValues=[];this.skillRequest++;this.skillPending=false;this.selectedEquipment=-1;this.equipmentPending=false;this.selectedBag=-1;this.bagMovePending=false;this.storageMove=null;this.cancelStorage();this.tradeRequest++;this.tradeItem=null;this.tradeQuote=null;this.chatInput?.setActive(false);this.logs=[];if(this.logText)this.logText.string='';if(this.menu)this.menu.active=false;if(this.targetText)this.targetText.string='';this.party?.reset();this.clearLoot();this.pendingUses.clear();this.fireTargets.clear();this.serverReady=false;this.clearMovement();this.peers.forEach(p=>{p.node.destroy();p.label?.node.destroy();p.healthBar?.node.destroy();});this.peers.clear();return;}
         if(event.type==='vitals'){const d=this.normalize(event.data);if(d.objectid!==this.ownId)return;this.authoritativeMaxHP=d.maxhp;this.authoritativeMaxMP=d.maxmp;this.bagWeight=d.bagweight;this.maxBagWeight=d.maxbagweight;this.handWeight=d.handweight;this.maxHandWeight=d.maxhandweight;this.wearWeight=d.wearweight;this.maxWearWeight=d.maxwearweight;this.attributes=d.attributes??null;return;}
         if(event.type==='transport')this.statusText='正在进入游戏';
         if(event.type==='ready') {this.carryGold=false;this.goldDropPending=0;this.goldDrop?.reset();this.magicTarget=0;this.playerTrade?.reset();this.playerTradePreview=event.playerTradePreview===true;if(this.playerTradeButton)this.playerTradeButton.active=this.playerTradePreview;this.windowPositions={bag:{x:0,y:0},character:{x:568,y:0}};this.windowOrder=['bag','character'];this.windowDrag=null;this.characterPage=0;this.skillPage=0;this.skillReturnBag=false;this.attributes=null;this.characterValues=[];this.chatInput?.setActive(true);this.gender=event.gender??0;this.hairShape=event.hair??0;this.missingActors.clear();this.characterName=event.name??'旅人';if(this.ownLabel)this.ownLabel.string=this.characterName;
@@ -802,6 +802,7 @@ export class MirWorld extends Component {
     }
     private positionCarriedItem():void {if(this.carrySprite?.node.active)this.carrySprite.node.setPosition(this.mousePoint.x-18,-this.mousePoint.y+16);}
     private syncCarriedItem():void {
+        if(this.storageMove&&Date.now()-this.storageMove.at>5000){this.storageMove=null;this.bagMovePending=false;this.serverReady=false;this.cancelStorage();this.notice('物品移动结果待同步，正在重新连接');this.connection?.reconnect();}
         if(this.goldDropPending&&Date.now()-this.goldDropAt>5000){this.goldDropPending=0;this.serverReady=false;this.connection?.reconnect();}
         if(this.pendingDrop&&Date.now()-this.pendingDropAt>5000){this.pendingDrop=null;this.bagMovePending=false;this.serverReady=false;this.notice('丢弃结果待同步，正在重新连接');this.connection?.reconnect();}
 
@@ -871,11 +872,7 @@ export class MirWorld extends Component {
                 const hidden=item&&[this.storageItem,this.storageCarry].some(v=>v&&String(v.uniqueid)===String(item.uniqueid));
                 if(item&&!hidden)this.nativeItem(bag,item,x,y,()=>{});
                 const hit=this.makeNode('仓库包裹格 '+slot,bag);hit.setPosition(x,-y);hit.getComponent(UITransform)!.setAnchorPoint(0,1);hit.getComponent(UITransform)!.setContentSize(36,32);
-                this.nativeClick(hit,()=>{
-                    if(!this.storageDeposit||this.storageWaiting)return;
-                    if(this.storageCarry){this.storageCarry=null;this.showStorage();return;}
-                    if(item&&!hidden){this.storageCarry=item;this.clearItemTooltip();this.showStorage();}
-                });
+                this.nativeClick(hit,()=>this.storageBagCell(slot));
                 if(item&&!hidden)this.bindItemTooltip(hit,item,bag);continue;
             }
             if(!item)continue;
@@ -983,8 +980,25 @@ export class MirWorld extends Component {
         if(!this.connection?.send({type:'storagePrepare',request:++this.storageRequest,npcId:this.npcId,uniqueId:String(item.uniqueid),from,to,deposit})){this.storageWaiting=false;this.notice('连接已断开。');}
         this.showStorage();
     }
+    private storageBagCell(slot:number):void {
+        if(!this.storageDeposit||this.storageWaiting||this.bagMovePending||slot<6||slot>=46)return;
+        const item=this.inventory[slot];
+        if(!this.storageCarry){
+            if(item&&String(item.uniqueid)!==String(this.storageItem?.uniqueid)){this.storageCarry=item;this.clearItemTooltip();this.showStorage();}
+            return;
+        }
+        const from=this.inventory.findIndex(i=>i&&String(i.uniqueid)===String(this.storageCarry.uniqueid));
+        if(from<6)return;
+        if(from===slot){this.storageCarry=null;this.showStorage();return;}
+        // Moving either slot invalidates a prepared storage address. Re-prepare
+        // the same staged instance only after the authoritative move reply.
+        if(this.storageToken)this.connection?.send({type:'storageCancel',request:this.storageRequest});
+        this.storageToken='';this.storageRequest++;
+        this.storageMove={from,to:slot,request:this.storageRequest,at:Date.now()};this.bagMovePending=true;
+        if(!this.connection?.send({type:'moveItem',from,to:slot})){this.bagMovePending=false;this.storageMove=null;this.notice('连接已断开，请重新登录核对物品。');}
+    }
     private storageSpot():void {
-        if(this.storageWaiting)return;
+        if(this.storageWaiting||this.bagMovePending)return;
         const carried=this.storageCarry,staged=this.storageItem;
         if(!carried){
             if(staged){this.cancelStorage();this.storageCarry=staged;this.showStorage();}
@@ -997,7 +1011,7 @@ export class MirWorld extends Component {
         this.prepareStorage(carried,true);
     }
     private commitStorage():void {
-        const token=this.storageToken;if(!token||this.storageWaiting)return;
+        const token=this.storageToken;if(!token||this.storageWaiting||this.bagMovePending)return;
         this.storageToken='';this.storageWaiting=true;
         if(!this.connection?.send({type:'storageCommit',request:this.storageRequest,token})){this.storageWaiting=false;this.notice('连接已断开，请重新登录核对物品。');}
         this.showStorage();
@@ -1224,10 +1238,18 @@ export class MirWorld extends Component {
         }
         if(name==='NPCResponse')this.showNPC(d.page??[]);
         if(name==='MoveItem'&&d.grid===1){
+            const storageMove=this.storageMove;this.storageMove=null;
             this.bagMovePending=false;this.selectedBag=-1;
             if(d.success&&Number.isInteger(d.from)&&Number.isInteger(d.to)&&d.from>=0&&d.to>=0&&d.from<this.inventory.length&&d.to<this.inventory.length){const item=this.inventory[d.from];this.inventory[d.from]=this.inventory[d.to];this.inventory[d.to]=item;if(this.bagSwapSource===d.from&&this.inventory[d.from]){this.selectedBag=d.from;this.selectedBagAt=0;}}
             else if(!d.success)this.notice('物品移动未成功，背包保持原状。');
             this.bagSwapSource=-1;this.refreshBelt();if(this.menu.active&&this.menuKind==='inventory')this.showInventory();
+            if(this.menu.active&&this.menuKind==='storage'){
+                if(storageMove&&storageMove.request===this.storageRequest&&storageMove.from===d.from&&storageMove.to===d.to){
+                    if(d.success){this.storageCarry=this.inventory[d.from]??null;if(this.storageCarry&&String(this.storageCarry.uniqueid)===String(this.storageItem?.uniqueid))this.storageCarry=null;}
+                    if(this.storageItem){this.prepareStorage(this.storageItem,true);return;}
+                }
+                this.showStorage();
+            }
         }
         if(name==='SellItem'){
             if(d.success){const i=this.inventory.findIndex(v=>v&&String(v.uniqueid)===String(d.uniqueid));if(i>=0){if(this.inventory[i].count<=d.count)this.inventory[i]=null;else this.inventory[i].count-=d.count;}this.refreshBelt();}

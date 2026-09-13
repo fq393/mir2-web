@@ -684,3 +684,15 @@ test('full warehouse and pending requests preserve carried items; carrying block
   w.storageItems=[null];w.storageWaiting=true;w.storageSpot();assert.equal(w.storageCarry,item);assert.equal(w.storageItem,null);
   w.destination=()=>assert.fail('carried item must not walk');w.onMouse({});w.onTouch({});
 });
+
+test('warehouse bag relocation waits for authority and re-prepares the staged identity',()=>{
+ const w=world(),a={uniqueid:'a'},b={uniqueid:'b'},sent=[];
+ w.menu={active:true};w.menuKind='storage';w.showStorage=()=>{};w.clearItemTooltip=()=>{};w.refreshBelt=()=>{};w.inventory=Array(46).fill(null);w.inventory[6]=a;w.inventory[7]=b;w.storageItems=[null];w.storageCarry=a;w.storageItem=b;w.storageToken='stale';w.connection.send=p=>(sent.push(p),true);
+ w.storageBagCell(7);assert.equal(w.inventory[6],a);assert.equal(w.inventory[7],b);assert.equal(w.bagMovePending,true);assert.equal(w.storageToken,'');
+ w.storageBagCell(8);assert.equal(sent.filter(p=>p.type==='moveItem').length,1);
+ w.packet('MoveItem',{Grid:1,From:6,To:7,Success:true});assert.equal(w.inventory[7],a);assert.equal(w.inventory[6],b);assert.equal(w.storageCarry,null);assert.equal(sent.at(-1).type,'storagePrepare');assert.equal(sent.at(-1).uniqueId,'b');assert.equal(sent.at(-1).from,6);
+});
+test('cancelled warehouse relocation still applies its reply without restoring carried selection',()=>{
+ const w=world(),a={uniqueid:'a'},b={uniqueid:'b'};w.menu={active:true};w.menuKind='storage';w.showStorage=()=>{};w.clearItemTooltip=()=>{};w.refreshBelt=()=>{};w.inventory=Array(46).fill(null);w.inventory[6]=a;w.inventory[7]=b;w.storageCarry=a;
+ w.storageBagCell(7);w.cancelStorage();w.packet('MoveItem',{Grid:1,From:6,To:7,Success:true});assert.equal(w.inventory[7],a);assert.equal(w.inventory[6],b);assert.equal(w.storageCarry,null);assert.equal(w.storageItem,null);
+});
