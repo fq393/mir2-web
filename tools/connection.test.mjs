@@ -670,3 +670,17 @@ test('gold carry opens amount dialog only on ground, sends once, and waits for i
  w.serverEvent({type:'goldDropResult',request:999,success:true});assert.ok(w.goldDropPending);
  w.serverEvent({type:'goldDropResult',request:sent[0].request,success:true});assert.equal(w.goldDropPending,0);assert.equal(w.gold,100);
 });
+
+test('warehouse circle stages and swaps exact instances without mutating inventory',()=>{
+  const w=world(),a={uniqueid:'a',currentdura:1234},b={uniqueid:'b',addedstats:{maxdc:3}},sent=[];
+  w.menuKind='storage';w.showStorage=()=>{};w.storageItems=[null];w.inventory=Array(46).fill(null);w.inventory[6]=a;w.inventory[7]=b;w.connection.send=p=>(sent.push(p),true);
+  w.storageCarry=a;w.storageSpot();assert.equal(w.storageItem,a);assert.equal(w.storageCarry,null);assert.equal(w.inventory[6],a);assert.equal(sent.at(-1).type,'storagePrepare');
+  w.storageWaiting=false;w.storageToken='old';w.storageCarry=b;w.storageSpot();assert.equal(w.storageItem,b);assert.equal(w.storageCarry,a);assert.equal(sent.at(-1).uniqueId,'b');assert.equal(w.inventory[7],b);
+  w.storageWaiting=false;w.storageCarry=null;w.storageSpot();assert.equal(w.storageCarry,b);assert.equal(w.storageItem,null);assert.equal(w.storageToken,'');
+  w.cancelStorage();assert.equal(w.storageCarry,null);assert.equal(w.inventory[6],a);assert.equal(w.inventory[7],b);
+});
+test('full warehouse and pending requests preserve carried items; carrying blocks world clicks',()=>{
+  const w=world(),item={uniqueid:'a'};w.notice=()=>{};w.storageCarry=item;w.storageItems=[{uniqueid:'stored'}];w.storageSpot();assert.equal(w.storageCarry,item);assert.equal(w.storageItem,null);
+  w.storageItems=[null];w.storageWaiting=true;w.storageSpot();assert.equal(w.storageCarry,item);assert.equal(w.storageItem,null);
+  w.destination=()=>assert.fail('carried item must not walk');w.onMouse({});w.onTouch({});
+});

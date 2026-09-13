@@ -85,7 +85,7 @@ export class MirWorld extends Component {
     private authoritativeMaxHP=0;private authoritativeMaxMP=0;private experience=0;private maxExperience=0;private bagWeight=0;private maxBagWeight=0;private magics:any[]=[];private expBar!:Sprite;private weightBar!:Sprite;
     private job=0;private hpBase!:Sprite;private hp=0;private mp=0;private gold=0;private level=1;private inventory:any[]=[];private equipment:any[]=[];
     private stats!:Label;private targetText!:Label;private logText!:Label;private menu!:Node;
-    private storageItems:any[]=[];private storageDeposit=true;private storageItem:any=null;private storageToken='';private storageRequest=0;private storageWaiting=false;private storageTop=0;
+    private storageItems:any[]=[];private storageDeposit=true;private storageItem:any=null;private storageCarry:any=null;private storageToken='';private storageRequest=0;private storageWaiting=false;private storageTop=0;
     private tradeMode="sell";private tradeItem:any=null;private tradeQuote:any=null;private tradeRequest=0;
     private lastMoveAcceptedAt=-Infinity;private autoAttack=false;private runRequested=false;private healthPoll=0;private dayIcon?:Sprite;
     private logs:string[]=[];private npcPage:string[]=[];private menuKind='';private npcId=0;private goods:any[]=[];private lastAttack=0;
@@ -219,7 +219,7 @@ export class MirWorld extends Component {
         if(rect?.width&&rect.height){const x=(event.clientX-rect.left)*800/rect.width,y=(event.clientY-rect.top)*600/rect.height;
             this.uiGesture=event.target!==canvas||blocksWorld(x,y,this.menu?.active?this.panelRects:[],this.hudRows)||(this.miniMap?.blocksWorld(x,y)??false);
         }
-        if(!this.carryGold&&!this.goldDrop?.active&&!this.goldDropPending&&!this.uiGesture&&!event.altKey&&!this.accounts?.active&&this.selectedBag<6&&this.selectedEquipment<0&&(event.button===0||event.button===2)&&rect){this.mousePoint={x:(event.clientX-rect.left)*800/rect.width,y:(event.clientY-rect.top)*600/rect.height};this.heldButton=event.button;this.heldTick=0;}
+        if(!this.storageCarry&&!this.carryGold&&!this.goldDrop?.active&&!this.goldDropPending&&!this.uiGesture&&!event.altKey&&!this.accounts?.active&&this.selectedBag<6&&this.selectedEquipment<0&&(event.button===0||event.button===2)&&rect){this.mousePoint={x:(event.clientX-rect.left)*800/rect.width,y:(event.clientY-rect.top)*600/rect.height};this.heldButton=event.button;this.heldTick=0;}
         if(event.button!==0||event.target!==document.querySelector('canvas')||this.accounts?.active||!this.menu.active||this.menuKind!=='inventory')return;
         this.trackPointer(event);const p=this.mousePoint;
         const id=[...this.windowOrder].reverse().find(id=>{const r=this.inventoryWindows.get(id)?.rect;return r&&p.x>=r.x&&p.x<r.x+r.w&&p.y>=r.y&&p.y<r.y+r.h;});if(!id)return;
@@ -250,8 +250,8 @@ export class MirWorld extends Component {
     private preventContext=(e:Event):void=>{e.preventDefault();if(this.carryGold)this.uiGesture=true;this.carryGold=false;this.heldButton=null;if(!this.bagMovePending&&!this.equipmentPending){this.selectedBag=-1;this.selectedEquipment=-1;this.clearItemTooltip();}};
     private onKeyUp(e:EventKeyboard):void {this.keys.delete(e.keyCode);}
     private pauseInput():void {this.queuedCast=null;this.heldButton=null;this.pointerAlt=false;this.autoAttack=false;this.runRequested=false;this.windowDrag=null;this.sound.stop();this.keys.clear();this.path=[];}
-    private onMouse(e:EventMouse):void {if(this.goldDrop?.active)return;if(this.carryGold){if(e.getButton()===0&&!this.uiGesture){const p=e.getUILocation();this.dropCarriedGold({x:p.x,y:600-p.y});}return;}if(e.getButton()===0&&!this.uiGesture&&this.selectedBag>=6){const p=e.getUILocation();if(this.dropCarried({x:p.x,y:600-p.y}))return;}if(this.uiGesture||this.accounts?.active||this.selectedBag>=6||this.selectedEquipment>=0||this.equipmentPending||this.windowDrag||Date.now()<this.dragMouseUntil)return;this.sound.unlock();if(e.getButton()!==0&&e.getButton()!==2)return;this.runRequested=e.getButton()===2;const p=e.getUILocation();if(this.miniMap?.blocksWorld(p.x,600-p.y))return;if(this.pointerAlt||this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT)){this.harvestAt({x:p.x,y:600-p.y});return;}this.destination(p);}
-    private onTouch(e:EventTouch):void {if(this.goldDrop?.active)return;if(this.carryGold){if(!this.uiGesture){const p=e.getUILocation();this.dropCarriedGold({x:p.x,y:600-p.y});}return;}if(this.uiGesture||this.accounts?.active||this.selectedBag>=6||this.selectedEquipment>=0||this.equipmentPending||this.windowDrag||Date.now()<this.dragMouseUntil)return;this.sound.unlock();const p=e.getUILocation();if(this.miniMap?.blocksWorld(p.x,600-p.y))return;if(this.pointerAlt||this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT)){this.harvestAt({x:p.x,y:600-p.y});return;}this.destination(p);}
+    private onMouse(e:EventMouse):void {if(this.storageCarry)return;if(this.goldDrop?.active)return;if(this.carryGold){if(e.getButton()===0&&!this.uiGesture){const p=e.getUILocation();this.dropCarriedGold({x:p.x,y:600-p.y});}return;}if(e.getButton()===0&&!this.uiGesture&&this.selectedBag>=6){const p=e.getUILocation();if(this.dropCarried({x:p.x,y:600-p.y}))return;}if(this.uiGesture||this.accounts?.active||this.selectedBag>=6||this.selectedEquipment>=0||this.equipmentPending||this.windowDrag||Date.now()<this.dragMouseUntil)return;this.sound.unlock();if(e.getButton()!==0&&e.getButton()!==2)return;this.runRequested=e.getButton()===2;const p=e.getUILocation();if(this.miniMap?.blocksWorld(p.x,600-p.y))return;if(this.pointerAlt||this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT)){this.harvestAt({x:p.x,y:600-p.y});return;}this.destination(p);}
+    private onTouch(e:EventTouch):void {if(this.storageCarry)return;if(this.goldDrop?.active)return;if(this.carryGold){if(!this.uiGesture){const p=e.getUILocation();this.dropCarriedGold({x:p.x,y:600-p.y});}return;}if(this.uiGesture||this.accounts?.active||this.selectedBag>=6||this.selectedEquipment>=0||this.equipmentPending||this.windowDrag||Date.now()<this.dragMouseUntil)return;this.sound.unlock();const p=e.getUILocation();if(this.miniMap?.blocksWorld(p.x,600-p.y))return;if(this.pointerAlt||this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT)){this.harvestAt({x:p.x,y:600-p.y});return;}this.destination(p);}
     private pickGold():void {
         if(!this.serverReady||this.hp<=0||this.goldDropPending||this.bagMovePending||this.equipmentPending||this.selectedBag>=6||this.selectedEquipment>=0)return;
         if(this.menuKind!=='inventory')return;
@@ -814,7 +814,7 @@ export class MirWorld extends Component {
         }else this.equipmentPendingAt=0;
         if(!this.ready||!this.serverReady||this.accounts?.active||!this.menu.active||this.menuKind!=='inventory'){this.selectedBag=-1;this.selectedEquipment=-1;}
         if(!this.bagOpen)this.selectedBag=-1;if(!this.characterOpen)this.selectedEquipment=-1;
-        const item=this.selectedEquipment>=0?this.equipment[this.selectedEquipment]:this.selectedBag>=6?this.inventory[this.selectedBag]:null;
+        const item=this.menu.active&&this.menuKind==='storage'?this.storageCarry:this.selectedEquipment>=0?this.equipment[this.selectedEquipment]:this.selectedBag>=6?this.inventory[this.selectedBag]:null;
         for(const [slot,node] of this.equipmentIcons)if(node.isValid)node.active=slot!==this.selectedEquipment;
         for(const [slot,node] of this.bagIcons)if(node.isValid)node.active=slot!==this.selectedBag;
         if(this.carryGold&&(!this.serverReady||this.hp<=0||!this.menu.active||!this.bagOpen||this.menuKind!=='inventory'))this.carryGold=false;
@@ -867,8 +867,19 @@ export class MirWorld extends Component {
                 hit.on(Node.EventType.MOUSE_UP,(event:EventMouse)=>{event.propagationStopped=true;if(event.getButton()===0&&Date.now()-this.lastBagTouch>700)this.bagCell(slot);});
                 if(item)this.bindItemTooltip(hit,item,bag);continue;
             }
-            if(!item||this.menuKind==='storage'&&this.storageDeposit&&this.storageItem&&String(item.uniqueid)===String(this.storageItem.uniqueid))continue;
-            this.nativeItem(bag,item,x,y,()=>{if(this.menuKind==='storage'){if(this.storageDeposit)this.prepareStorage(item,true);return;}if(this.menuKind==='merchant'){this.requestTrade(item);return;}const info=item.info??this.itemInfo.get(item.itemindex);const target=equipmentTarget(info?.type,this.equipment);if(info?.type===13||info?.type===20)this.useInventoryItem(item);else if(target>=0)this.connection?.send({type:'equip',uniqueId:String(item.uniqueid),slot:target});},this.menuKind!=='merchant'&&this.menuKind!=='storage'&&(item.info??this.itemInfo.get(item.itemindex))?.type===20,bag);
+            if(this.menuKind==='storage'){
+                const hidden=item&&[this.storageItem,this.storageCarry].some(v=>v&&String(v.uniqueid)===String(item.uniqueid));
+                if(item&&!hidden)this.nativeItem(bag,item,x,y,()=>{});
+                const hit=this.makeNode('仓库包裹格 '+slot,bag);hit.setPosition(x,-y);hit.getComponent(UITransform)!.setAnchorPoint(0,1);hit.getComponent(UITransform)!.setContentSize(36,32);
+                this.nativeClick(hit,()=>{
+                    if(!this.storageDeposit||this.storageWaiting)return;
+                    if(this.storageCarry){this.storageCarry=null;this.showStorage();return;}
+                    if(item&&!hidden){this.storageCarry=item;this.clearItemTooltip();this.showStorage();}
+                });
+                if(item&&!hidden)this.bindItemTooltip(hit,item,bag);continue;
+            }
+            if(!item)continue;
+            this.nativeItem(bag,item,x,y,()=>{if(this.menuKind==='merchant'){this.requestTrade(item);return;}const info=item.info??this.itemInfo.get(item.itemindex);const target=equipmentTarget(info?.type,this.equipment);if(info?.type===13||info?.type===20)this.useInventoryItem(item);else if(target>=0)this.connection?.send({type:'equip',uniqueId:String(item.uniqueid),slot:target});},this.menuKind!=='merchant'&&this.menuKind!=='storage'&&(item.info??this.itemInfo.get(item.itemindex))?.type===20,bag);
         }
     }
     private itemHint(item:any):string {return this.itemName(item);}
@@ -951,7 +962,7 @@ export class MirWorld extends Component {
 
     private cancelStorage():void {
         if(this.storageWaiting||this.storageToken||this.menuKind==='storage')this.connection?.send({type:'storageCancel',request:this.storageRequest});
-        this.storageRequest++;this.storageWaiting=false;this.storageToken='';this.storageItem=null;
+        this.storageRequest++;this.storageWaiting=false;this.storageToken='';this.storageItem=null;this.storageCarry=null;
     }
     private closeStorage(back=false):void {
         this.cancelStorage();this.clearItemTooltip();this.menu.active=false;
@@ -972,6 +983,19 @@ export class MirWorld extends Component {
         if(!this.connection?.send({type:'storagePrepare',request:++this.storageRequest,npcId:this.npcId,uniqueId:String(item.uniqueid),from,to,deposit})){this.storageWaiting=false;this.notice('连接已断开。');}
         this.showStorage();
     }
+    private storageSpot():void {
+        if(this.storageWaiting)return;
+        const carried=this.storageCarry,staged=this.storageItem;
+        if(!carried){
+            if(staged){this.cancelStorage();this.storageCarry=staged;this.showStorage();}
+            return;
+        }
+        // FState.DSellDlgSpotClick: put the carried instance in the circle;
+        // an existing circle item becomes the carried instance. No bag mutation.
+        if(!this.storageItems.some(i=>!i)){this.notice('仓库已满。');return;}
+        this.cancelStorage();this.storageCarry=staged;
+        this.prepareStorage(carried,true);
+    }
     private commitStorage():void {
         const token=this.storageToken;if(!token||this.storageWaiting)return;
         this.storageToken='';this.storageWaiting=true;
@@ -985,7 +1009,8 @@ export class MirWorld extends Component {
             // Delphi DSellDlg / dmStorage: native operation frame, title without a price.
             const dialog=this.nativeWindow(this.menu,'ui:ClassicPrguse:392',328,163);
             this.nativeField(dialog,'保管物品',8,3,103,16,12,Color.WHITE);this.closeNative(dialog,115,0);
-            if(this.storageItem){this.nativeItem(dialog,this.storageItem,39,77,()=>{this.cancelStorage();this.showStorage();});this.nativeLabel(dialog,this.itemName(this.storageItem),5,37,10,123,Color.WHITE);}
+            if(this.storageItem){this.nativeItem(dialog,this.storageItem,39,77,()=>{});this.nativeLabel(dialog,this.itemName(this.storageItem),5,37,10,123,Color.WHITE);}
+            const spot=this.makeNode('仓库存入圈',dialog);spot.setPosition(27,-67);spot.getComponent(UITransform)!.setAnchorPoint(0,1);spot.getComponent(UITransform)!.setContentSize(70,70);this.nativeClick(spot,()=>this.storageSpot());
             const button=this.nativeImage(dialog,'ui:ClassicPrguse:393',85,150);
             if(this.storageToken&&!this.storageWaiting)this.nativeClick(button.node,()=>this.commitStorage());else button.color=new Color(130,130,130,255);
         }else{
