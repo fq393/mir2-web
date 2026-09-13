@@ -9,7 +9,7 @@ public static class StorageTransfers
     public static void Commit(Envir envir, PlayerObject player, uint npcId, ulong uniqueId, int from, int to, bool deposit)
         => Apply(player, npcId, uniqueId, from, to, deposit, () => envir.SaveStorageAccountsOrThrow(player));
 
-    public static void Apply(PlayerObject player, uint npcId, ulong uniqueId, int from, int to, bool deposit, Action persist)
+    public static UserItem[] ValidateAccess(PlayerObject player, uint npcId)
     {
         if (player?.Info == null || player.Account == null || player.Dead || player.CurrentMap == null)
             throw new InvalidOperationException("当前不能办理仓库业务。");
@@ -23,6 +23,12 @@ public static class StorageTransfers
             throw new InvalidOperationException("请先结束当前交易。");
         var storage = CharacterStorage.Get(player.Info);
         if (storage.Length == 0) throw new InvalidOperationException("仓库尚未开启。");
+        return storage;
+    }
+
+    public static UserItem Validate(PlayerObject player, uint npcId, ulong uniqueId, int from, int to, bool deposit)
+    {
+        var storage = ValidateAccess(player, npcId);
         var source = deposit ? player.Info.Inventory : storage;
         var destination = deposit ? storage : player.Info.Inventory;
         if (from < 0 || from >= source.Length || to < 0 || to >= destination.Length)
@@ -36,6 +42,15 @@ public static class StorageTransfers
         // Delphi ClientTakeBackStorageItem checks IsAddWeightAvailable before AddItemToBag.
         if (!deposit && player.Info.Inventory.Where(i => i != null).Sum(i => (long)i.Weight) + item.Weight > player.Stats[Stat.BagWeight])
             throw new InvalidOperationException("包裹负重不足。");
+        return item;
+    }
+
+    public static void Apply(PlayerObject player, uint npcId, ulong uniqueId, int from, int to, bool deposit, Action persist)
+    {
+        var item = Validate(player, npcId, uniqueId, from, to, deposit);
+        var storage = CharacterStorage.Get(player.Info);
+        var source = deposit ? player.Info.Inventory : storage;
+        var destination = deposit ? storage : player.Info.Inventory;
         ArgumentNullException.ThrowIfNull(persist);
         source[from] = null; destination[to] = item;
         try { player.RefreshBagWeight(); persist(); }

@@ -44,6 +44,28 @@ static class StorageTransferTests
             Check(storage[0]==item&&role.Inventory[6]==null,"failed withdrawal lost item");
             Move(false,0,6);Check(saves==2&&storage[0]==null&&role.Inventory[6]==item&&item.AddedStats[Stat.MaxDC]==3&&item.CurrentDura==1234,"withdrawal changed instance");
             Reject(()=>Move(false,0,7));Check(saves==2,"duplicate withdrawal persisted");
+            // Single-use confirmations are connection-owned, even when the same item returns to its old slot.
+            var session=new StorageSession();
+            string Prepare()=>session.Prepare(p,npc.ObjectID,item.UniqueID,6,0,true);
+            var cancelled=Prepare();session.Cancel();Reject(()=>session.Apply(p,cancelled,()=>saves++));
+            var replaced=Prepare();var latest=Prepare();Reject(()=>session.Apply(p,replaced,()=>saves++));
+            Reject(()=>session.Apply(p,latest,()=>saves++)); // Wrong token also consumes the current request.
+            var otherSession=new StorageSession();var foreign=Prepare();Reject(()=>otherSession.Apply(p,foreign,()=>saves++));
+            session.Apply(p,foreign,()=>saves++);Move(false,0,6);
+            Reject(()=>session.Apply(p,foreign,()=>saves++));Check(storage[0]==null&&role.Inventory[6]==item,"old token replay after item returned");
+            var failure=Prepare();try{session.Apply(p,failure,()=>throw new IOException("Synthetic session disk failure"));throw new Exception("session swallowed failure");}catch(IOException){}
+            Reject(()=>session.Apply(p,failure,()=>saves++));Check(storage[0]==null&&role.Inventory[6]==item,"session failure rollback/retry");
+            var changedPage=Prepare();var originalPage=p.NPCPage;p.NPCPage=new NPCPage(NPCScript.StorageKey);
+            Reject(()=>session.Apply(p,changedPage,()=>saves++));p.NPCPage=originalPage;
+            var changedRole=Prepare();p.Info=new CharacterInfo();Reject(()=>session.Apply(p,changedRole,()=>saves++));p.Info=role;
+            var staleDestination=Prepare();storage[0]=envir.CreateFreshItem(item.Info);Reject(()=>session.Apply(p,staleDestination,()=>saves++));storage[0]=null;
+            var invalidReplacement=Prepare();Reject(()=>session.Prepare(p,npc.ObjectID,item.UniqueID+1,6,0,true));Reject(()=>session.Apply(p,invalidReplacement,()=>saves++));
+            var disconnected=Prepare();session.Close();Reject(()=>session.Apply(p,disconnected,()=>saves++));Reject(()=>Prepare());
+            // A reconnect starts with authoritative arrays, not the previous connection's pending request.
+            var reconnect=new StorageSession();Reject(()=>reconnect.Apply(p,disconnected,()=>saves++));
+            var reconnectToken=reconnect.Prepare(p,npc.ObjectID,item.UniqueID,6,0,true);reconnect.Apply(p,reconnectToken,()=>saves++);Move(false,0,6);
+            Check(role.Inventory[6]==item&&storage.All(i=>i==null),"session scenarios changed final accounting");
+            Console.WriteLine("PASS warehouse sessions: cancellation, replacement, foreign/replayed tokens, replay after item returns, failed-save consumption, role/page/destination changes, close and reconnect.");
             // Registration and actual durable file path, not an injected success callback.
             envir.AccountList.Clear();envir.AccountList.Add(account);envir.Players.Add(p);
             StorageTransfers.Commit(envir,p,npc.ObjectID,item.UniqueID,6,1,true);

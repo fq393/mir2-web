@@ -100,6 +100,7 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey, IReadOnlyDi
     string accountId = "", password = "", characterName = "";
     bool protocolReady,guest,authBusy,authenticated;
     MerchantQuote? tradeQuote;string tradeToken="";
+    readonly StorageSession storageSession = new();
     readonly List<SelectInfo> characters=new();
     uint objectId;
     WorldVitals? lastVitals;
@@ -113,6 +114,7 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey, IReadOnlyDi
     readonly List<int> learnedSpells = new();
     static readonly MethodInfo readPacket = typeof(Packet).GetMethod("ReadPacket", BindingFlags.Instance | BindingFlags.NonPublic)!;
     public void Dispose() {
+        storageSession.Close();
         tcp.Dispose();
         if(slot>=0) {Interlocked.Exchange(ref slots[slot],0);slot=-1;}
     }
@@ -165,6 +167,7 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey, IReadOnlyDi
             Console.WriteLine("Bridge: " + e);
             if(ws.State == WebSocketState.Open) await Send(new { type = "error", message = e.Message, source = "crystal-bridge" }, CancellationToken.None);
         } finally {
+            storageSession.Close();
             lifetime.Cancel();
             if(ws.State == WebSocketState.Open) await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Crystal session ended", CancellationToken.None);
         }
@@ -181,6 +184,8 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey, IReadOnlyDi
             // Decode directly to avoid mutating Packet.IsServer, used concurrently by Crystal's listener.
             using var ms = new MemoryStream(p.Compressed ? Functions.DecompressBytes(payload) : payload);
             readPacket.Invoke(p, new object[] {new BinaryReader(ms)});
+            // Crystal sends account-shared storage here; the web client uses per-character storageState only.
+            if (p is S.UserStorage) continue;
             if (p is not S.UserInformation && p is not S.LoginSuccess && p is not S.NewAccount && p is not S.Login && p is not S.KeepAlive)
                 await Send(new {type="packet",source="crystal-tcp",packet=p.GetType().Name,data=JsonSerializer.SerializeToElement(p,p.GetType(),packetJson)},ct);
             switch(p) {
@@ -219,6 +224,7 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey, IReadOnlyDi
                     authBusy=false;characters.RemoveAll(c=>c.Index==deleted.CharacterIndex);
                     await Send(new{type="auth",stage="characters",deletedIndex=deleted.CharacterIndex,characterLimit=classicCharacterLimit,characters=JsonSerializer.SerializeToElement(characters,packetJson)},ct);break;
                 case S.LogOutSuccess logout:
+                    storageSession.Cancel();
                     objectId=0;currentHP=0;lastVitals=null;authBusy=false;tradeQuote=null;tradeToken="";peers.Clear();learnedSpells.Clear();
                     while(pending.TryDequeue(out _)){}locationReply?.TrySetResult();locationReply=null;
                     characters.Clear();characters.AddRange(logout.Characters);
@@ -247,6 +253,7 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey, IReadOnlyDi
                     break;
                 case S.MapInformation map: currentMap=map.FileName; break;
                 case S.MapChanged map:
+                    storageSession.Cancel();
                     currentMap=map.FileName;lastLocation=map.Location;peers.Clear();
                     while(pending.TryDequeue(out _)){} locationReply?.TrySetResult();locationReply=null;
                     break;
@@ -255,7 +262,7 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey, IReadOnlyDi
                 case S.RemoveMagic removedMagic:
                     if(removedMagic.PlaceId>=0&&removedMagic.PlaceId<learnedSpells.Count)learnedSpells.RemoveAt(removedMagic.PlaceId);break;
                 case S.HealthChanged health: currentHP=health.HP; break;
-                case S.ObjectDied dead when dead.ObjectID==objectId: currentHP=0; break;
+                case S.ObjectDied dead when dead.ObjectID==objectId: storageSession.Cancel();currentHP=0; break;
                 case S.ObjectPlayer peer:
                     peers[peer.ObjectID]=peer.Name;
                     await Send(new {type="peer",source="crystal-tcp",packet="ObjectPlayer",id=peer.ObjectID,name=peer.Name,x=peer.Location.X,y=peer.Location.Y,direction=(int)peer.Direction},ct); break;
@@ -269,6 +276,12 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey, IReadOnlyDi
             }
         }
     }
+    // Materialize both arrays on the world thread; never serialize live UserItem arrays later.
+    static object StorageState(Server.MirObjects.PlayerObject player) => new {
+        npcId=player.NPCObjectID, capacity=CharacterStorage.Get(player.Info).Length,
+        inventory=DemoSeed.Items(player.Info.Inventory), storage=DemoSeed.Items(CharacterStorage.Get(player.Info)),
+        bagWeight=player.CurrentBagWeight, maxBagWeight=player.Stats[Stat.BagWeight]
+    };
     async Task ReceiveBrowser(CancellationToken ct) {
         var buffer = new byte[4096];
         while(!ct.IsCancellationRequested) {
@@ -317,6 +330,7 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey, IReadOnlyDi
                 int Num(string k,int fallback=0)=>r.TryGetProperty(k,out var v)?v.GetInt32():fallback;
                 ulong Id(string k)=>r.GetProperty(k).ValueKind==JsonValueKind.String?ulong.Parse(r.GetProperty(k).GetString()!):r.GetProperty(k).GetUInt64();
                 if(command is "attack" or "cast" or "harvest" && (Num("direction")<0 || Num("direction")>7)) throw new InvalidDataException("direction must be 0..7");
+                if(command is "npc" or "restart") storageSession.Cancel();
                 if(command=="restart"){await Write(new C.LogOut(),ct);continue;}
                 // Invitation/window QA only; item and gold routes remain closed until their UI is verified.
                 if(command is "playerTradeRequest" or "playerTradeReply" or "playerTradeCancel"){
@@ -342,6 +356,47 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey, IReadOnlyDi
                         var bindings=await WorldRequests.Run(e=>SkillBindings.Apply(e.Players.FirstOrDefault(p=>p.ObjectID==objectId),spell,key),ct);
                         await Send(new{type="skillBindings",request,success=true,bindings,message="技能键位已保存。"},ct);
                     }catch(InvalidOperationException ex){await Send(new{type="skillBindings",request,success=false,message=ex.Message},ct);}
+                    continue;
+                }
+                if(command is "storageState" or "storagePrepare" or "storageCommit" or "storageCancel"){
+                    int request=r.TryGetProperty("request",out var requestValue)&&requestValue.ValueKind==JsonValueKind.Number&&requestValue.TryGetInt32(out var requestNumber)?requestNumber:0;
+                    try{
+                        if(command=="storageCancel"){
+                            storageSession.Cancel();
+                            await Send(new{type="storageResult",request,success=true,cancelled=true},ct);
+                        }else if(command=="storageCommit"){
+                            if(!r.TryGetProperty("token",out var tokenValue)||tokenValue.ValueKind!=JsonValueKind.String)throw new InvalidOperationException("本次存取已失效，请重新选择物品。");
+                            var token=tokenValue.GetString()??"";
+                            var state=await WorldRequests.Run(e=>{
+                                var player=e.Players.FirstOrDefault(p=>p.ObjectID==objectId);
+                                storageSession.Commit(e,player,token);
+                                return StorageState(player!);
+                            },ct);
+                            await Send(new{type="storageResult",request,success=true,state},ct);
+                        }else{
+                            if(!r.TryGetProperty("npcId",out var npcValue)||npcValue.ValueKind!=JsonValueKind.Number||!npcValue.TryGetUInt32(out var npcId))throw new InvalidOperationException("请选择有效的保管员。");
+                            if(command=="storageState"){
+                                storageSession.Cancel();
+                                var state=await WorldRequests.Run(e=>{
+                                    var player=e.Players.FirstOrDefault(p=>p.ObjectID==objectId);
+                                    StorageTransfers.ValidateAccess(player,npcId);
+                                    return StorageState(player!);
+                                },ct);
+                                await Send(new{type="storageState",request,success=true,state},ct);
+                            }else{
+                                if(!r.TryGetProperty("uniqueId",out var uidValue)||!ulong.TryParse(uidValue.ToString(),out var uid)||
+                                   !r.TryGetProperty("from",out var fromValue)||fromValue.ValueKind!=JsonValueKind.Number||!fromValue.TryGetInt32(out var from)||
+                                   !r.TryGetProperty("to",out var toValue)||toValue.ValueKind!=JsonValueKind.Number||!toValue.TryGetInt32(out var to)||
+                                   !r.TryGetProperty("deposit",out var depositValue)||depositValue.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+                                    throw new InvalidOperationException("请选择有效的存取物品与位置。");
+                                bool deposit=depositValue.GetBoolean();
+                                var token=await WorldRequests.Run(e=>storageSession.Prepare(e.Players.FirstOrDefault(p=>p.ObjectID==objectId),npcId,uid,from,to,deposit),ct);
+                                await Send(new{type="storagePrepared",request,success=true,token},ct);
+                            }
+                        }
+                    }catch(InvalidOperationException ex){storageSession.Cancel();await Send(new{type="storageResult",request,success=false,message=ex.Message},ct);}
+                    catch(IOException){storageSession.Cancel();await Send(new{type="storageResult",request,success=false,message="仓库保存失败，物品已保留原位，请重新选择。"},ct);}
+                    catch(UnauthorizedAccessException){storageSession.Cancel();await Send(new{type="storageResult",request,success=false,message="仓库保存失败，物品已保留原位，请重新选择。"},ct);}
                     continue;
                 }
                 if(command is "tradeQuote" or "tradeCommit"){

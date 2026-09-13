@@ -1,6 +1,6 @@
 # B03 仓库存取事务
 
-状态：后端存取核心已实现并回归，尚未提供网页请求入口、NPC和窗口。
+状态：后端存取核心及网页协议已实现并回归；原版NPC、地图和窗口尚未开放。协议验收见 [仓库网页协议](storage-protocol.md)。
 
 ## 实现范围
 
@@ -10,7 +10,7 @@ StorageTransfers.Commit在世界线程操作角色仓库；源槽位与物品Uni
 
 旧Delphi普通ClientTakeBackStorageItem先调用IsAddWeightAvailable再AddItemToBag，因此补足当前Crystal原取回方法没有的负重校验。固定来源为pangliang/MirServer-Delphi f829679d24acb3a097d396d737ab067db2c88ca2 的EM2Engine/ObjBase.pas（普通仓库分支约22939行）；禁止存入标记和NPC页检查复用固定Crystal语义。
 
-物品移动后调用SaveStorageAccountsOrThrow，复用已有整份账号文件同步落盘和原子替换。失败恢复背包、仓库和负重并抛出错误；核心不会提前发出成功包。未来网页桥接必须仅在Commit成功返回后发布状态。
+物品移动后调用SaveStorageAccountsOrThrow，复用已有整份账号文件同步落盘和原子替换。失败恢复背包、仓库和负重并抛出错误；核心不会提前发出成功包。网页桥接仅在Commit成功返回后发布完整包裹/角色仓库状态。
 
 ## 验证
 
@@ -27,7 +27,7 @@ StorageTransferTests使用临时账号文件及合成2格仓库：
 
 ## 下一步（未完成）
 
-- [ ] 网页协议：绑定当前会话、单次操作令牌/请求顺序、取消与断线语义。当前源槽+ID拒绝立即重复，不能代替完整会话重放保护。
+- [x] 网页协议：绑定当前会话、单次确认令牌、请求关联、取消、断线与重连状态；真实WebSocket测试通过。
 - [ ] 明确容量来源配置并接入0140、保管员与两门点。
 - [ ] 原存入操作框、取回列表、悬停属性与保存成功后的背包更新。
 - [ ] 实际浏览器存取、退出重登、同账号双角色及双会话测试。
