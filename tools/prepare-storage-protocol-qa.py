@@ -5,11 +5,15 @@ import json
 import re
 import secrets
 import shutil
+import sys
 
 root = Path(__file__).resolve().parent.parent
-qa = root / '.runtime/storage-protocol-qa'
+native = sys.argv[1:] == ['--native-ui']
+assert not sys.argv[1:] or native, 'Expected --native-ui or no arguments'
+qa = root / ('.runtime/warehouse-ui-qa' if native else '.runtime/storage-protocol-qa')
 (qa / 'server').mkdir(parents=True, exist_ok=True)
 (qa / 'STORAGE_PROTOCOL_QA_ONLY').touch()
+if native: (qa / 'WAREHOUSE_UI_QA').touch()
 for name in ['raw-assets', 'tools']:
     path = qa / name
     if not path.exists():

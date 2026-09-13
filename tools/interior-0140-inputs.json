@@ -1,0 +1,53 @@
+{
+  "map": "0140",
+  "name": "边界仓库",
+  "spawn": {
+    "x": 2,
+    "y": 10
+  },
+  "mapSources": [
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Data/Objects2.wil",
+      "sha256": "ff2730552e57007d0b4853fa18d119af2a6314f6d5404402b15138ab5849fed2"
+    },
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Data/Objects2.WIX",
+      "sha256": "38cdbef3b586e39c66f175183bef5aff480768e5dbec8e08d6b22f6b6deea729"
+    },
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Data/Objects3.wil",
+      "sha256": "03662dce4b451535a4be91e94745bda57c10f4aa33735033e84c34346ef50163"
+    },
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Data/Objects3.WIX",
+      "sha256": "a00a376b60a79c0fc55e875424cc31e376ed5aa6f7f74b0030bc6cf6d298874f"
+    },
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Map/0140.map",
+      "sha256": "679ffed7be2e314494f2be87f614a679ff3bc2e4e9974859deba5ba47b1659bb"
+    }
+  ],
+  "exteriorSource": {
+    "local": "raw-assets/client-176/传奇私服1.76客户/Map/0.map",
+    "sha256": "ef70bd5f5425f7f9dc79cb1ea6957f771c7293d55a554b3ba6239aba372fa370"
+  },
+  "portalSource": "https://github.com/mrzhqiang/mirserver-1.76/blob/39e17246a32247a2c43c4cc481e97e88c692fa53/Mir200/Envir/MapInfo.txt#L205-L206",
+  "portals": [
+    [
+      "0",
+      307,
+      627,
+      "0140",
+      2,
+      10
+    ],
+    [
+      "0140",
+      2,
+      11,
+      "0",
+      306,
+      628
+    ]
+  ]
+}

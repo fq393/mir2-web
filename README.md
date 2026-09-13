@@ -136,4 +136,4 @@ npm test
 
 比奇完整度与后续验收：[逐项覆盖表](docs/bichon-coverage.md)、[死亡灰度与旧货实例保护](docs/death-gray-and-used-goods.md)。NPC、普通生物及玩家交易仍按任务清单逐项完成，已通过局部回归不等于全系统验收。
 
-仓库当前进度：角色存档、存取事务和网页协议已完成自动化验证，原地图/NPC/窗口待接；详见[仓库协议与验收](docs/storage-protocol.md)。
+仓库当前进度：0140地图、原保管员和原框体存取主流程已接入，离店重登取回通过浏览器验收；拖动物品入圈、满仓与双窗口细节仍待补，见[仓库界面与验收](docs/warehouse-native-ui.md)。

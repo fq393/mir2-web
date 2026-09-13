@@ -60,6 +60,7 @@ static class DemoSeed
         BookshopSeed.Apply(envir,root,bookroom);
         WildlifeSeed.Apply(envir,root,map);
         MerchantSeed.Apply(envir,root,map);
+        WarehouseSeed.Apply(envir,root);
         var guide=envir.NPCInfoList.FirstOrDefault(n=>n.FileName=="BichonGuide");
         if(guide==null) { guide=new NPCInfo {Index=++envir.NPCIndex,FileName="BichonGuide",Name="比奇向导",Image=0,Colour=Color.White,Rate=100};envir.NPCInfoList.Add(guide); }
         guide.MapIndex=map.Index;

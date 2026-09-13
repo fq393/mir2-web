@@ -1,0 +1,14 @@
+{
+  "newCharacterCapacity": 46,
+  "capacitySource": "pangliang/MirServer-Delphi@f829679d24acb3a097d396d737ab067db2c88ca2 EM2Engine/ObjBase.pas ClientStorageItem: Count < MAXBAGITEM; Common/Grobal2.pas MAXBAGITEM=46, TStorageItems[0..45]",
+  "sourceStatus": "candidate implementation; not certified official 2003 1.76",
+  "npc": {
+    "file": "BoundaryWarehouse",
+    "map": "0140",
+    "name": "边界村保管员",
+    "x": 8,
+    "y": 9,
+    "image": 9
+  },
+  "npcSource": "mrzhqiang/mirserver-1.76@39e17246a32247a2c43c4cc481e97e88c692fa53 Mir200/Envir/MerChant.txt:57"
+}

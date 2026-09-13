@@ -23,7 +23,12 @@ static class WorldMapTests {
    var npc=envir.NPCInfoList.Single(n=>n.FileName=="BichonCityTailor");
    Check(npc.MapIndex==ids["0106"]&&npc.Location==new Point(19,6)&&npc.Image==7,"city tailor placed outside original room");
    Check(File.ReadAllText(Path.Combine(Server.Settings.NPCPath,"BichonCityTailor.txt")).Contains("[@SREPAIR]"),"tailor repair missing");
-   Console.WriteLine($"PASS registry: stable map IDs, {checkedDoors} pinned doors and city tailor identity.");
+   WarehouseSeed.Apply(envir,root);WarehouseSeed.Apply(envir,root);
+   var keeper=envir.NPCInfoList.Single(n=>n.FileName=="BoundaryWarehouse");
+   Check(keeper.MapIndex==ids["0140"]&&keeper.Location==new Point(8,9)&&keeper.Image==9&&keeper.Name=="边界村保管员","warehouse identity differs from source");
+   var warehouseScript=File.ReadAllText(Path.Combine(Server.Settings.NPCPath,"BoundaryWarehouse.txt"));
+   Check(warehouseScript.Contains("<存入物品/@STORAGE>")&&warehouseScript.Contains("<取回物品/@STORAGE>"),"warehouse services missing");
+   Console.WriteLine($"PASS registry: stable map IDs, {checkedDoors} pinned doors and city tailor/warehouse identities.");
   }finally{envir.MapInfoList.Clear();envir.MapInfoList.AddRange(before);envir.MapIndex=index;}
  }
 }

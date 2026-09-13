@@ -379,7 +379,7 @@ sealed class BridgeSession(WebSocket ws, int port, string bridgeKey, IReadOnlyDi
                                 storageSession.Cancel();
                                 var state=await WorldRequests.Run(e=>{
                                     var player=e.Players.FirstOrDefault(p=>p.ObjectID==objectId);
-                                    StorageTransfers.ValidateAccess(player,npcId);
+                                    WarehouseSeed.Open(player!,npcId);
                                     return StorageState(player!);
                                 },ct);
                                 await Send(new{type="storageState",request,success=true,state},ct);

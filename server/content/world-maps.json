@@ -28,6 +28,12 @@
       "name": "比奇服装店",
       "source": "raw-assets/client-176/传奇私服1.76客户/Map/0106.map",
       "pin": "tools/interior-0106-inputs.json"
+    },
+    {
+      "id": "0140",
+      "name": "边界仓库",
+      "source": "raw-assets/client-176/传奇私服1.76客户/Map/0140.map",
+      "pin": "tools/interior-0140-inputs.json"
     }
   ]
 }

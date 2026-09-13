@@ -9,7 +9,7 @@ public static class StorageTransfers
     public static void Commit(Envir envir, PlayerObject player, uint npcId, ulong uniqueId, int from, int to, bool deposit)
         => Apply(player, npcId, uniqueId, from, to, deposit, () => envir.SaveStorageAccountsOrThrow(player));
 
-    public static UserItem[] ValidateAccess(PlayerObject player, uint npcId)
+    public static UserItem[] ValidateAccess(PlayerObject player, uint npcId, bool requireInitialized = true)
     {
         if (player?.Info == null || player.Account == null || player.Dead || player.CurrentMap == null)
             throw new InvalidOperationException("当前不能办理仓库业务。");
@@ -22,7 +22,7 @@ public static class StorageTransfers
         if (player.TradePartner != null || player.Info.Trade.Any(i => i != null))
             throw new InvalidOperationException("请先结束当前交易。");
         var storage = CharacterStorage.Get(player.Info);
-        if (storage.Length == 0) throw new InvalidOperationException("仓库尚未开启。");
+        if (requireInitialized && storage.Length == 0) throw new InvalidOperationException("仓库尚未开启。");
         return storage;
     }
 

@@ -10,7 +10,7 @@ import {ChatInput} from './platform/ChatInput';
 import {ATTACK_MODES} from './core/social';
 import {weaponAttackSound,equipmentSound,itemDescription,itemHintPosition,itemRequirements,compactBagDescription} from './core/itemStats';
 import {CLASSIC,worldToScreen,screenToCell,blocksWorld,PanelRect,JEWELLERY_SLOTS} from './core/classicLayout';
-import {gainItem,consumeItem,equipmentTarget} from './core/inventory';
+import {gainItem,consumeItem,equipmentTarget,storageDurability} from './core/inventory';
 import {healthWidth,showHealth} from './core/health';
 import {MirAudio} from './platform/MirAudio';
 import {stepSound} from './core/stepSound';
@@ -85,6 +85,7 @@ export class MirWorld extends Component {
     private authoritativeMaxHP=0;private authoritativeMaxMP=0;private experience=0;private maxExperience=0;private bagWeight=0;private maxBagWeight=0;private magics:any[]=[];private expBar!:Sprite;private weightBar!:Sprite;
     private job=0;private hpBase!:Sprite;private hp=0;private mp=0;private gold=0;private level=1;private inventory:any[]=[];private equipment:any[]=[];
     private stats!:Label;private targetText!:Label;private logText!:Label;private menu!:Node;
+    private storageItems:any[]=[];private storageDeposit=true;private storageItem:any=null;private storageToken='';private storageRequest=0;private storageWaiting=false;private storageTop=0;
     private tradeMode="sell";private tradeItem:any=null;private tradeQuote:any=null;private tradeRequest=0;
     private lastMoveAcceptedAt=-Infinity;private autoAttack=false;private runRequested=false;private healthPoll=0;private dayIcon?:Sprite;
     private logs:string[]=[];private npcPage:string[]=[];private menuKind='';private npcId=0;private goods:any[]=[];private lastAttack=0;
@@ -200,7 +201,7 @@ export class MirWorld extends Component {
         if(e.keyCode===KeyCode.ENTER){this.saveSkillKey();return;}
         if(!this.skillPending&&e.keyCode>=KeyCode.F1&&e.keyCode<=KeyCode.F8){this.bindingKey=e.keyCode-KeyCode.F1+1;this.showSkillKeys(this.bindingSpell,false);}
         return;
-    }if(e.keyCode===KeyCode.KEY_G){this.party?.toggle();return;}if(e.keyCode===KeyCode.KEY_H&&(this.keys.has(KeyCode.CTRL_LEFT)||this.keys.has(KeyCode.CTRL_RIGHT))){this.connection?.send({type:"attackMode",mode:(this.attackMode+1)%6});return;}if(e.keyCode===KeyCode.KEY_X&&(this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT))){this.clearMovement();this.connection?.send({type:'restart'});return;}this.sound.unlock();if(e.keyCode===KeyCode.KEY_B||e.keyCode===KeyCode.F9){this.showInventory('bag');return;}if(e.keyCode===KeyCode.F10){this.showInventory('character');return;}if(e.keyCode===KeyCode.F11){this.toggleSkills();return;}if(e.keyCode>=KeyCode.DIGIT_1&&e.keyCode<=KeyCode.DIGIT_6){this.usePotion(this.inventory[e.keyCode-KeyCode.DIGIT_1]);return;}if(e.keyCode>=KeyCode.F1&&e.keyCode<=KeyCode.F8){this.castKey(e.keyCode-KeyCode.F1+1);return;}if(e.keyCode===KeyCode.SPACE){this.autoAttack=true;this.attack();return;}if(e.keyCode===KeyCode.KEY_M){this.miniMap?.toggle();return;}if(e.keyCode===KeyCode.ESCAPE){if(this.carryGold){this.carryGold=false;return;}if(this.playerTrade?.active){this.playerTrade.cancel();return;}this.queuedCast=null;this.miniMap?.close();if(this.selectedBag>=6||this.selectedEquipment>=0){this.selectedBag=-1;this.selectedEquipment=-1;return;}this.menu.active=false;if(this.targetText)this.targetText.string='';this.selected=0;this.magicTarget=0;this.autoAttack=false;return;}this.pickupTarget=0;this.autoAttack=false;this.queuedCast=null;this.keys.add(e.keyCode);this.path=[];if(this.ready&&!this.step)this.beginStep();}
+    }if(e.keyCode===KeyCode.KEY_G){this.party?.toggle();return;}if(e.keyCode===KeyCode.KEY_H&&(this.keys.has(KeyCode.CTRL_LEFT)||this.keys.has(KeyCode.CTRL_RIGHT))){this.connection?.send({type:"attackMode",mode:(this.attackMode+1)%6});return;}if(e.keyCode===KeyCode.KEY_X&&(this.keys.has(KeyCode.ALT_LEFT)||this.keys.has(KeyCode.ALT_RIGHT))){this.clearMovement();this.connection?.send({type:'restart'});return;}this.sound.unlock();if(e.keyCode===KeyCode.KEY_B||e.keyCode===KeyCode.F9){this.showInventory('bag');return;}if(e.keyCode===KeyCode.F10){this.showInventory('character');return;}if(e.keyCode===KeyCode.F11){this.toggleSkills();return;}if(e.keyCode>=KeyCode.DIGIT_1&&e.keyCode<=KeyCode.DIGIT_6){this.usePotion(this.inventory[e.keyCode-KeyCode.DIGIT_1]);return;}if(e.keyCode>=KeyCode.F1&&e.keyCode<=KeyCode.F8){this.castKey(e.keyCode-KeyCode.F1+1);return;}if(e.keyCode===KeyCode.SPACE){this.autoAttack=true;this.attack();return;}if(e.keyCode===KeyCode.KEY_M){this.miniMap?.toggle();return;}if(e.keyCode===KeyCode.ESCAPE){if(this.menu.active&&this.menuKind==='storage'){this.closeStorage();return;}if(this.carryGold){this.carryGold=false;return;}if(this.playerTrade?.active){this.playerTrade.cancel();return;}this.queuedCast=null;this.miniMap?.close();if(this.selectedBag>=6||this.selectedEquipment>=0){this.selectedBag=-1;this.selectedEquipment=-1;return;}this.menu.active=false;if(this.targetText)this.targetText.string='';this.selected=0;this.magicTarget=0;this.autoAttack=false;return;}this.pickupTarget=0;this.autoAttack=false;this.queuedCast=null;this.keys.add(e.keyCode);this.path=[];if(this.ready&&!this.step)this.beginStep();}
     // Keep pointer coordinates available across Cocos UI hit regions. Capture them
     // before dispatch, using the same 800x600 transform as rendering.
     private trackPointer=(event:PointerEvent):void=>{
@@ -214,6 +215,7 @@ export class MirWorld extends Component {
     private windowPointerDown=(event:PointerEvent):void=>{
         this.heldButton=null;this.pointerAlt=event.altKey;this.uiGesture=false;
         const canvas=typeof document!=='undefined'?document.querySelector('canvas'):null,rect=canvas?.getBoundingClientRect();
+        if(event.button===2&&event.target===canvas&&this.menu.active&&this.menuKind==='storage'){this.uiGesture=true;this.cancelStorage();this.showStorage();event.preventDefault();return;}
         if(rect?.width&&rect.height){const x=(event.clientX-rect.left)*800/rect.width,y=(event.clientY-rect.top)*600/rect.height;
             this.uiGesture=event.target!==canvas||blocksWorld(x,y,this.menu?.active?this.panelRects:[],this.hudRows)||(this.miniMap?.blocksWorld(x,y)??false);
         }
@@ -440,7 +442,7 @@ export class MirWorld extends Component {
         this.uiGesture=true;
         // A merchant quote belongs to the map/NPC interaction that issued it.
         // Invalidate its request too, so a late response cannot restore the old quote.
-        this.tradeRequest++;this.tradeItem=null;this.tradeQuote=null;
+        this.cancelStorage();this.tradeRequest++;this.tradeItem=null;this.tradeQuote=null;
         this.npcId=0;this.npcPage=[];this.goods=[];this.selectedGood=null;this.shopDetail=null;this.shopTop=0;
         this.clearMovement();this.clearLoot();this.menu.active=false;if(this.targetText)this.targetText.string='';this.selected=0;this.magicTarget=0;this.hovered=0;
         if(!target){this.serverReady=false;this.world.active=false;this.statusText=`地图 ${id} 尚未接入`;return false;}
@@ -458,6 +460,16 @@ export class MirWorld extends Component {
         if(event.type==='restartRejected'){this.exitToLogin=false;this.notice(event.message);return;}
         if(event.type==='auth'&&event.stage==='characters'&&this.serverReady){this.serverReady=false;this.clearMovement();this.menu.active=false;this.clearLoot();if(this.exitToLogin){this.exitToLogin=false;this.connection?.reconnect();}return;}
 
+        if(event.type==='storageState'||event.type==='storagePrepared'||event.type==='storageResult'){
+            // Successful committed state must update the bag even if the user closed the window meanwhile.
+            if(event.success&&event.state){const state=this.normalize(event.state);this.inventory=state.inventory;this.storageItems=state.storage;this.bagWeight=state.bagweight;this.maxBagWeight=state.maxbagweight;this.refreshBelt();if(this.menu.active&&this.menuKind==='inventory')this.showInventory();}
+            if(event.request!==this.storageRequest)return;
+            this.storageWaiting=false;
+            if(!event.success){this.storageToken='';this.storageItem=null;this.notice(event.message??'仓库操作未成功。');}
+            else if(event.type==='storagePrepared')this.storageToken=event.token;
+            else {this.storageToken='';this.storageItem=null;}
+            if(this.menu.active&&this.menuKind==='storage')this.showStorage();return;
+        }
         if(event.type==='tradeQuote'&&event.request===this.tradeRequest&&this.menu.active&&this.menuKind==='merchant'){this.tradeQuote={token:event.token,quote:this.normalize(event.quote)};this.showMerchant();return;}
         if(event.type==='tradeResult'&&event.request===this.tradeRequest){this.tradeQuote=null;if(event.success)this.tradeItem=null;this.notice(event.message);if(this.menu.active&&this.menuKind==='merchant')this.showMerchant();return;}
 
@@ -478,7 +490,7 @@ export class MirWorld extends Component {
         if(event.type==='targetHealth'){const target=this.peers.get(event.objectId);if(target){target.hp=event.percent;target.healthUntil=Date.now()+2000;}return;}
         if(event.type==='goldDropResult'){if(event.request!==this.goldDropPending)return;this.goldDropPending=0;if(!event.success)this.notice(event.message??'无法丢弃金币。');return;}
         if(event.type==='packet'){this.packet(event.packet,event.data);return;}
-        if(event.type==='disconnected'){this.carryGold=false;this.goldDropPending=0;this.goldDrop?.reset();this.magicTarget=0;this.playerTrade?.reset();this.playerTradePreview=false;if(this.playerTradeButton)this.playerTradeButton.active=false;this.pendingDrop=null;this.windowDrag=null;this.attributes=null;this.characterValues=[];this.skillRequest++;this.skillPending=false;this.selectedEquipment=-1;this.equipmentPending=false;this.selectedBag=-1;this.bagMovePending=false;this.tradeRequest++;this.tradeItem=null;this.tradeQuote=null;this.chatInput?.setActive(false);this.logs=[];if(this.logText)this.logText.string='';if(this.menu)this.menu.active=false;if(this.targetText)this.targetText.string='';this.party?.reset();this.clearLoot();this.pendingUses.clear();this.fireTargets.clear();this.serverReady=false;this.clearMovement();this.peers.forEach(p=>{p.node.destroy();p.label?.node.destroy();p.healthBar?.node.destroy();});this.peers.clear();return;}
+        if(event.type==='disconnected'){this.carryGold=false;this.goldDropPending=0;this.goldDrop?.reset();this.magicTarget=0;this.playerTrade?.reset();this.playerTradePreview=false;if(this.playerTradeButton)this.playerTradeButton.active=false;this.pendingDrop=null;this.windowDrag=null;this.attributes=null;this.characterValues=[];this.skillRequest++;this.skillPending=false;this.selectedEquipment=-1;this.equipmentPending=false;this.selectedBag=-1;this.bagMovePending=false;this.cancelStorage();this.tradeRequest++;this.tradeItem=null;this.tradeQuote=null;this.chatInput?.setActive(false);this.logs=[];if(this.logText)this.logText.string='';if(this.menu)this.menu.active=false;if(this.targetText)this.targetText.string='';this.party?.reset();this.clearLoot();this.pendingUses.clear();this.fireTargets.clear();this.serverReady=false;this.clearMovement();this.peers.forEach(p=>{p.node.destroy();p.label?.node.destroy();p.healthBar?.node.destroy();});this.peers.clear();return;}
         if(event.type==='vitals'){const d=this.normalize(event.data);if(d.objectid!==this.ownId)return;this.authoritativeMaxHP=d.maxhp;this.authoritativeMaxMP=d.maxmp;this.bagWeight=d.bagweight;this.maxBagWeight=d.maxbagweight;this.handWeight=d.handweight;this.maxHandWeight=d.maxhandweight;this.wearWeight=d.wearweight;this.maxWearWeight=d.maxwearweight;this.attributes=d.attributes??null;return;}
         if(event.type==='transport')this.statusText='正在进入游戏';
         if(event.type==='ready') {this.carryGold=false;this.goldDropPending=0;this.goldDrop?.reset();this.magicTarget=0;this.playerTrade?.reset();this.playerTradePreview=event.playerTradePreview===true;if(this.playerTradeButton)this.playerTradeButton.active=this.playerTradePreview;this.windowPositions={bag:{x:0,y:0},character:{x:568,y:0}};this.windowOrder=['bag','character'];this.windowDrag=null;this.characterPage=0;this.skillPage=0;this.skillReturnBag=false;this.attributes=null;this.characterValues=[];this.chatInput?.setActive(true);this.gender=event.gender??0;this.hairShape=event.hair??0;this.missingActors.clear();this.characterName=event.name??'旅人';if(this.ownLabel)this.ownLabel.string=this.characterName;
@@ -608,7 +620,7 @@ export class MirWorld extends Component {
     private nativeCrop(parent:Node,key:string,x:number,y:number,rx:number,ry:number,w:number,h:number):Sprite {
         const original=this.frames.get(key)!;const sprite=this.nativeImage(parent,key,x,y);sprite.spriteFrame=original.sprite.clone();sprite.spriteFrame.rect=new Rect(original.meta.x+rx,original.meta.y+ry,w,h);sprite.spriteFrame.originalSize=new Size(w,h);sprite.spriteFrame.offset=new Vec2();sprite.sizeMode=Sprite.SizeMode.CUSTOM;sprite.node.getComponent(UITransform)!.setContentSize(w,h);return sprite;
     }
-    private closeNative(parent:Node,x:number,y:number,action:()=>void=()=>{this.menu.active=false;if(this.targetText)this.targetText.string='';}):void {const button=this.nativeCrop(parent,'ui:ClassicPrguse:370',x,y,8,40,15,23);this.nativeClick(button.node,action);}
+    private closeNative(parent:Node,x:number,y:number,action:()=>void=()=>{if(this.menuKind==='storage'){this.closeStorage();return;}this.menu.active=false;if(this.targetText)this.targetText.string='';}):void {const button=this.nativeCrop(parent,'ui:ClassicPrguse:370',x,y,8,40,15,23);this.nativeClick(button.node,action);}
     private nativeWindow(parent:Node,key:string,x:number,y:number):Node {
         const id=this.menuKind==='inventory'?(key==='ui:ClassicPrguse:3'?'bag':key==='ui:ClassicPrguse:370'?'character':null):null;
         if(id){x=this.windowPositions[id].x;y=this.windowPositions[id].y;}
@@ -708,6 +720,7 @@ export class MirWorld extends Component {
         this.fillProgress(this.expBar,this.experience,this.maxExperience);this.fillProgress(this.weightBar,this.bagWeight,this.maxBagWeight);
     }
     private showInventory(page?:string):void {
+        if(this.menuKind==='storage')this.cancelStorage();
         this.targetText.string='';
         if(!this.serverReady){this.notice('正在连接服务器，请稍候');return;}
         if(!this.menu.active||this.menuKind!=='inventory'){this.bagOpen=false;this.characterOpen=false;this.selectedBag=-1;this.selectedEquipment=-1;}
@@ -838,7 +851,7 @@ export class MirWorld extends Component {
         const bag=this.nativeWindow(this.menu,'ui:ClassicPrguse:3',x,0);
         // FState.DGold / MShare.DlgConf: original purse icon, independent of its amount.
         const purse=this.nativeImage(bag,'ui:ClassicPrguse:29',10,190);this.nativeClick(purse.node,()=>this.pickGold());
-        this.closeNative(bag,309,202,()=>{if(this.menuKind==='shop'){this.shopBagOpen=false;this.showShop();}else this.showInventory('bag');if(this.targetText)this.targetText.string='';});this.nativeField(bag,'金币',65,182,32,18,12,C.gold);this.bagGold=this.nativeField(bag,String(this.gold),101,182,100,18,12,Color.WHITE);
+        this.closeNative(bag,309,202,()=>{if(this.menuKind==='storage'){this.closeStorage();return;}if(this.menuKind==='shop'){this.shopBagOpen=false;this.showShop();}else this.showInventory('bag');if(this.targetText)this.targetText.string='';});this.nativeField(bag,'金币',65,182,32,18,12,C.gold);this.bagGold=this.nativeField(bag,String(this.gold),101,182,100,18,12,Color.WHITE);
         // User-requested Chinese text over the baked USE glyphs; preserve the original frame.
         const useText=this.makeNode('包裹使用中文',bag);useText.setPosition(256,-184);const cover=useText.addComponent(Graphics);cover.fillColor=new Color(10,20,53,255);cover.rect(0,-15,40,15);cover.fill();
         this.nativeField(bag,'使用',256,183,40,18,12,Color.YELLOW,Label.HorizontalAlign.CENTER);
@@ -854,8 +867,8 @@ export class MirWorld extends Component {
                 hit.on(Node.EventType.MOUSE_UP,(event:EventMouse)=>{event.propagationStopped=true;if(event.getButton()===0&&Date.now()-this.lastBagTouch>700)this.bagCell(slot);});
                 if(item)this.bindItemTooltip(hit,item,bag);continue;
             }
-            if(!item)continue;
-            this.nativeItem(bag,item,x,y,()=>{if(this.menuKind==='merchant'){this.requestTrade(item);return;}const info=item.info??this.itemInfo.get(item.itemindex);const target=equipmentTarget(info?.type,this.equipment);if(info?.type===13||info?.type===20)this.useInventoryItem(item);else if(target>=0)this.connection?.send({type:'equip',uniqueId:String(item.uniqueid),slot:target});},this.menuKind!=='merchant'&&(item.info??this.itemInfo.get(item.itemindex))?.type===20,bag);
+            if(!item||this.menuKind==='storage'&&this.storageDeposit&&this.storageItem&&String(item.uniqueid)===String(this.storageItem.uniqueid))continue;
+            this.nativeItem(bag,item,x,y,()=>{if(this.menuKind==='storage'){if(this.storageDeposit)this.prepareStorage(item,true);return;}if(this.menuKind==='merchant'){this.requestTrade(item);return;}const info=item.info??this.itemInfo.get(item.itemindex);const target=equipmentTarget(info?.type,this.equipment);if(info?.type===13||info?.type===20)this.useInventoryItem(item);else if(target>=0)this.connection?.send({type:'equip',uniqueId:String(item.uniqueid),slot:target});},this.menuKind!=='merchant'&&this.menuKind!=='storage'&&(item.info??this.itemInfo.get(item.itemindex))?.type===20,bag);
         }
     }
     private itemHint(item:any):string {return this.itemName(item);}
@@ -909,6 +922,7 @@ export class MirWorld extends Component {
         return icon;
     }
     private showNPC(page:string[]):void {
+        if(this.menuKind==='storage')this.cancelStorage();
         this.npcPage=page;this.menuKind='npc';this.menu.children.slice().forEach(c=>c.destroy());this.panelRects=[];this.menu.active=true;
         this.renderNPCDialog();
     }
@@ -917,7 +931,8 @@ export class MirWorld extends Component {
         // FState.DMerchantDlgDirectPaint draws script text at (30,20), not a separate merchant-name heading.
         const dialog=this.nativeWindow(this.menu,'ui:ClassicPrguse:384',0,0);this.closeNative(dialog,399,1);let y=20;
         page.forEach(line=>{const links=Array.from(line.matchAll(/<([^/<>]+)\/([^<>]+)>/g));const plain=line.replace(/<[^<>]+>/g,'').replace(/\\/g,'').trim();if(plain){this.nativeField(dialog,plain,30,y,365,16,12,Color.WHITE);y+=16;}
-            links.forEach(match=>{this.npcLink(dialog,match[1],y,()=>{if(/exit/i.test(match[2])){this.menu.active=false;if(this.targetText)this.targetText.string='';return;}this.connection?.send({type:'npc',id:this.npcId,key:`[@${match[2].replace(/^@/,'').toUpperCase()}]`});});y+=16;});});
+            links.forEach(match=>{this.npcLink(dialog,match[1],y,()=>{if(/storage/i.test(match[2]))this.storageDeposit=!match[1].includes('取回');if(/exit/i.test(match[2])){this.menu.active=false;if(this.targetText)this.targetText.string='';return;}this.connection?.send({type:'npc',id:this.npcId,key:`[@${match[2].replace(/^@/,'').toUpperCase()}]`});});y+=16;});});
+        if(this.menuKind==='storage')this.npcLink(dialog,'返回',Math.max(132,y+16),()=>this.closeStorage(true));
         if(this.menuKind==='shop')this.npcLink(dialog,'返回',Math.max(132,y+16),()=>this.shopBack());
     }
     private npcLink(parent:Node,text:string,y:number,action:()=>void):void {
@@ -934,6 +949,65 @@ export class MirWorld extends Component {
         this.showShop();
     }
 
+    private cancelStorage():void {
+        if(this.storageWaiting||this.storageToken||this.menuKind==='storage')this.connection?.send({type:'storageCancel',request:this.storageRequest});
+        this.storageRequest++;this.storageWaiting=false;this.storageToken='';this.storageItem=null;
+    }
+    private closeStorage(back=false):void {
+        this.cancelStorage();this.clearItemTooltip();this.menu.active=false;
+        if(this.targetText)this.targetText.string='';
+        if(back)this.connection?.send({type:'npc',id:this.npcId,key:'[@MAIN]'});
+    }
+    private openStorage():void {
+        this.cancelStorage();this.pauseInput();this.selectedBag=-1;this.selectedEquipment=-1;
+        this.storageItems=[];this.storageTop=0;this.storageWaiting=true;this.showStorage();
+        this.connection?.send({type:'storageState',request:++this.storageRequest,npcId:this.npcId});
+    }
+    private prepareStorage(item:any,deposit:boolean):void {
+        if(this.storageWaiting)return;
+        const from=deposit?this.inventory.findIndex(i=>i&&String(i.uniqueid)===String(item.uniqueid)):this.storageItems.findIndex(i=>i&&String(i.uniqueid)===String(item.uniqueid));
+        const to=deposit?this.storageItems.findIndex(i=>!i):this.inventory.findIndex((i,index)=>index>=6&&index<46&&!i);
+        if(from<0||to<0){this.notice(deposit?'仓库已满。':'包裹已满。');return;}
+        this.storageItem=item;this.storageToken='';this.storageWaiting=true;
+        if(!this.connection?.send({type:'storagePrepare',request:++this.storageRequest,npcId:this.npcId,uniqueId:String(item.uniqueid),from,to,deposit})){this.storageWaiting=false;this.notice('连接已断开。');}
+        this.showStorage();
+    }
+    private commitStorage():void {
+        const token=this.storageToken;if(!token||this.storageWaiting)return;
+        this.storageToken='';this.storageWaiting=true;
+        if(!this.connection?.send({type:'storageCommit',request:this.storageRequest,token})){this.storageWaiting=false;this.notice('连接已断开，请重新登录核对物品。');}
+        this.showStorage();
+    }
+    private showStorage():void {
+        this.clearItemTooltip();this.menuKind='storage';this.menu.children.slice().forEach(c=>c.destroy());this.panelRects=[];this.menu.active=true;
+        this.renderNPCDialog();this.renderBag(464);
+        if(this.storageDeposit){
+            // Delphi DSellDlg / dmStorage: native operation frame, title without a price.
+            const dialog=this.nativeWindow(this.menu,'ui:ClassicPrguse:392',328,163);
+            this.nativeField(dialog,'保管物品',8,3,103,16,12,Color.WHITE);this.closeNative(dialog,115,0);
+            if(this.storageItem){this.nativeItem(dialog,this.storageItem,39,77,()=>{this.cancelStorage();this.showStorage();});this.nativeLabel(dialog,this.itemName(this.storageItem),5,37,10,123,Color.WHITE);}
+            const button=this.nativeImage(dialog,'ui:ClassicPrguse:393',85,150);
+            if(this.storageToken&&!this.storageWaiting)this.nativeClick(button.node,()=>this.commitStorage());else button.color=new Color(130,130,130,255);
+        }else{
+            // FState BoStorageMenu: names + current/max durability, not shop prices or a second bag grid.
+            const dialog=this.nativeWindow(this.menu,'ui:ClassicPrguse:385',0,176);
+            this.nativeField(dialog,'物品列表',19,9,127,16,12,Color.WHITE);this.nativeField(dialog,'持久',156,9,100,16,12,Color.WHITE);
+            const rows=this.storageItems.filter(Boolean);this.storageTop=Math.min(this.storageTop,Math.max(0,rows.length-1));
+            rows.slice(this.storageTop,this.storageTop+10).forEach((item,i)=>{
+                const selected=this.storageItem&&String(this.storageItem.uniqueid)===String(item.uniqueid),color=selected?Color.RED:Color.WHITE;
+                const row=this.makeNode('仓库物品 '+this.itemName(item),dialog);row.setPosition(14,-(32+i*13));row.getComponent(UITransform)!.setAnchorPoint(0,1);row.getComponent(UITransform)!.setContentSize(265,13);
+                this.nativeClick(row,()=>this.prepareStorage(item,false));this.bindItemTooltip(row,item);
+                if(selected)this.nativeLabel(dialog,'•',10,38+i*13,12,10,Color.RED);
+                this.nativeField(dialog,this.itemName(item),19,32+i*13,127,13,12,color);
+                this.nativeField(dialog,`${storageDurability(item.currentdura??0)}/${storageDurability(item.maxdura??0)}`,156,32+i*13,100,13,12,color);
+            });
+            this.nativeButton(dialog,'ui:ClassicPrguse:388',43,175,()=>{this.storageTop=Math.max(0,this.storageTop-9);this.showStorage();});
+            this.nativeButton(dialog,'ui:ClassicPrguse:387',90,175,()=>{if(this.storageTop+10<rows.length)this.storageTop+=9;this.showStorage();});
+            const button=this.nativeImage(dialog,'ui:ClassicPrguse:386',215,171);
+            if(this.storageToken&&!this.storageWaiting)this.nativeClick(button.node,()=>this.commitStorage());else button.color=new Color(130,130,130,255);
+            this.nativeButton(dialog,'ui:ClassicPrguse:64',291,0,()=>this.closeStorage(true));
+        }
+    }
     private requestTrade(item:any):void {
         this.tradeItem=item;this.tradeQuote=null;this.tradeRequest++;
         this.connection?.send({type:'tradeQuote',request:this.tradeRequest,uniqueId:String(item.uniqueid),mode:this.tradeMode});this.showMerchant();
@@ -1140,6 +1214,7 @@ export class MirWorld extends Component {
             for(const bag of [this.inventory,this.equipment]){const item=bag.find(v=>v&&String(v.uniqueid)===String(d.uniqueid));if(item){item.currentdura=d.currentdura;item.maxdura=d.maxdura;}}
             if(this.menuKind==='merchant'&&this.menu.active)this.showMerchant();
         }
+        if(name==='NPCStorage'){this.openStorage();return;}
         if(name==='NPCSell')this.showMerchant('sell');
         if(name==='NPCRepair')this.showMerchant('repair');
         if(name==='NPCSRepair')this.showMerchant('special');

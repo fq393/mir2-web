@@ -19,3 +19,9 @@ export function equipmentTarget(type:number,equipment:any[]):number {
  if(type===7)return !equipment[8]?8:7;
  return -1;
 }
+
+/** ClMain storage list uses Delphi Round(Dura / 1000), including ties to even. */
+export function storageDurability(value:number):number {
+    const whole=Math.floor(value/1000),remainder=value%1000;
+    return whole+(remainder>500||remainder===500&&whole%2===1?1:0);
+}
