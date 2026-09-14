@@ -10,10 +10,10 @@
   "summary": {
     "mapIds": 286,
     "resourcesFound": 274,
-    "configured": 6,
+    "configured": 9,
     "portals": 1302,
     "npcRows": 172,
-    "activeDoorChecks": 28,
+    "activeDoorChecks": 34,
     "activeDoorFailures": 0
   },
   "maps": [
@@ -75,9 +75,9 @@
         }
       ],
       "resourceFound": true,
-      "converted": false,
-      "configured": false,
-      "playtestStatus": "not-accepted",
+      "converted": true,
+      "configured": true,
+      "playtestStatus": "see-existing-evidence",
       "npcCount": 1,
       "outgoing": 1
     },
@@ -171,9 +171,9 @@
         }
       ],
       "resourceFound": true,
-      "converted": false,
-      "configured": false,
-      "playtestStatus": "not-accepted",
+      "converted": true,
+      "configured": true,
+      "playtestStatus": "see-existing-evidence",
       "npcCount": 1,
       "outgoing": 2
     },
@@ -187,9 +187,9 @@
         }
       ],
       "resourceFound": true,
-      "converted": false,
-      "configured": false,
-      "playtestStatus": "not-accepted",
+      "converted": true,
+      "configured": true,
+      "playtestStatus": "see-existing-evidence",
       "npcCount": 1,
       "outgoing": 1
     },
@@ -19253,6 +19253,17 @@
     {
       "edge": [
         "0",
+        308,
+        264,
+        "0102",
+        3,
+        7
+      ],
+      "issues": []
+    },
+    {
+      "edge": [
+        "0",
         311,
         631,
         "0141",
@@ -19280,6 +19291,28 @@
         "0106",
         20,
         12
+      ],
+      "issues": []
+    },
+    {
+      "edge": [
+        "0",
+        326,
+        288,
+        "0108",
+        10,
+        12
+      ],
+      "issues": []
+    },
+    {
+      "edge": [
+        "0102",
+        3,
+        8,
+        "0",
+        308,
+        265
       ],
       "issues": []
     },
@@ -19368,6 +19401,39 @@
         "0",
         318,
         302
+      ],
+      "issues": []
+    },
+    {
+      "edge": [
+        "0108",
+        4,
+        15,
+        "0109",
+        7,
+        6
+      ],
+      "issues": []
+    },
+    {
+      "edge": [
+        "0108",
+        10,
+        13,
+        "0",
+        326,
+        289
+      ],
+      "issues": []
+    },
+    {
+      "edge": [
+        "0109",
+        8,
+        6,
+        "0108",
+        4,
+        14
       ],
       "issues": []
     },

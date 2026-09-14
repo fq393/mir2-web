@@ -25,6 +25,26 @@ static class MerchantSeed {
    npc.Name=spec.Name;npc.MapIndex=map.Index;npc.Location=new Point(spec.X,spec.Y);npc.Image=(ushort)spec.Image;npc.Rate=100;npc.Colour=Color.Lime;
    File.WriteAllText(Path.Combine(Settings.NPCPath,spec.File+".txt"),"[@MAIN]\n#SAY\n你需要什么药品？\\\n<购买药品/@BUY>\\\n<关闭/@EXIT>\n\n[@BUY]\n#SAY\n请选择药品。\n\n[TRADE]\nBichonHealthSmall 1\nBichonManaSmall 1\n");
   }
+  // Candidate MerChant.txt room-local entries; stock stays narrow until exact 1.76 tables are sourced.
+  using(var rooms=JsonDocument.Parse(File.ReadAllText(Path.Combine(root,"server/content/city-interior-shops.json"))))
+  foreach(var row in rooms.RootElement.GetProperty("shops").EnumerateArray()){
+   var mapId=row.GetProperty("map").GetString()!;var file=row.GetProperty("file").GetString()!;
+   // MerchantTests also exercise this seeder against an intentionally sparse
+   // synthetic world. A full server always registers the pinned maps first;
+   // WorldMapTests asserts that the complete runtime does so.
+   var room=envir.MapInfoList.FirstOrDefault(m=>m.FileName==mapId);
+   if(room==null)continue;
+   var npc=envir.NPCInfoList.FirstOrDefault(n=>n.FileName==file);
+   if(npc==null){npc=new NPCInfo{Index=++envir.NPCIndex,FileName=file};envir.NPCInfoList.Add(npc);}
+   npc.Name=row.GetProperty("name").GetString()!;npc.MapIndex=room.Index;
+   npc.Location=new Point(row.GetProperty("x").GetInt32(),row.GetProperty("y").GetInt32());
+   npc.Image=row.GetProperty("image").GetUInt16();npc.Rate=100;npc.Colour=Color.Lime;
+   var service=row.GetProperty("service").GetString();
+   var script=service=="meat"
+    ? "[@MAIN]\n#SAY\n我这里收购新鲜的肉。\\\n<卖肉/@SELL>\\\n<离开/@EXIT>\n\n[@SELL]\n#SAY\n请选择背包中的肉。\n\n[TYPES]\n"+(int)ItemType.Meat+"\n"
+    : "[@MAIN]\n#SAY\n你需要什么药品？\\\n<购买药品/@BUY>\\\n<关闭/@EXIT>\n\n[@BUY]\n#SAY\n请选择药品。\n\n[TRADE]\nBichonHealthSmall 1\nBichonManaSmall 1\n";
+   File.WriteAllText(Path.Combine(Settings.NPCPath,file+".txt"),script);
+  }
  }
  static void ApplyEquipmentShops(Envir envir,string root,MapInfo map){
   using var document=JsonDocument.Parse(File.ReadAllText(Path.Combine(root,"server/content/equipment-shops.json")));

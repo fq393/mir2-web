@@ -34,6 +34,24 @@
       "name": "边界仓库",
       "source": "raw-assets/client-176/传奇私服1.76客户/Map/0140.map",
       "pin": "tools/interior-0140-inputs.json"
+    },
+    {
+      "id": "0109",
+      "name": "比奇药品屋",
+      "source": "raw-assets/client-176/传奇私服1.76客户/Map/0109.map",
+      "pin": "tools/interior-0109-inputs.json"
+    },
+    {
+      "id": "0102",
+      "name": "比奇肉店",
+      "source": "raw-assets/client-176/传奇私服1.76客户/Map/0102.map",
+      "pin": "tools/interior-0102-inputs.json"
+    },
+    {
+      "id": "0108",
+      "name": "比奇药店",
+      "source": "raw-assets/client-176/传奇私服1.76客户/Map/0108.map",
+      "pin": "tools/interior-0108-inputs.json"
     }
   ]
 }

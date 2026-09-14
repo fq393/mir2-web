@@ -1,0 +1,57 @@
+{
+  "map": "0108",
+  "name": "比奇药店",
+  "spawn": {
+    "x": 10,
+    "y": 12
+  },
+  "mapSources": [
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Data/Objects.wil",
+      "sha256": "80b27c1be115a19c9d8baac878e90e182c9543ddb0640fda8626b90c636690f0"
+    },
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Data/Objects.WIX",
+      "sha256": "199be3894f277cb4e8ac16e222d7dcda725f2e1fc620d207f432367509afc503"
+    },
+    {
+      "path": "raw-assets/client-176/传奇私服1.76客户/Map/0108.map",
+      "sha256": "d6727ef204bf25df10c35a3c47d6a693827b8c1c3d0cac5a35d7cf1efb91b3b9"
+    }
+  ],
+  "exteriorSource": {
+    "local": "raw-assets/client-176/传奇私服1.76客户/Map/0.map",
+    "sha256": "ef70bd5f5425f7f9dc79cb1ea6957f771c7293d55a554b3ba6239aba372fa370"
+  },
+  "portalSource": "raw-assets/reference-server176/MapInfo.txt:52-59 (candidate Mir2 server map table; not official-client certification)",
+  "portals": [
+    [
+      "0",
+      326,
+      288,
+      "0108",
+      10,
+      12
+    ],
+    [
+      "0108",
+      10,
+      13,
+      "0",
+      326,
+      289
+    ],
+    [
+      "0108",
+      4,
+      15,
+      "0109",
+      7,
+      6
+    ]
+  ],
+  "npcSource": {
+    "local": "raw-assets/reference-server176/MerChant.txt",
+    "sha256": "4dc310f4594b717ed9dcf7b82eee589a04fb7ebcc2b8e17cb77c64299db41f9a"
+  }
+}

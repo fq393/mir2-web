@@ -9,7 +9,7 @@ map_id=sys.argv[1] if len(sys.argv)>1 else '0105'
 m.MAP_ID=map_id;m.OUT=ROOT/f'client/assets/resources/mir/maps/{map_id}'
 pin=json.loads((ROOT/('tools/interior-inputs.json' if map_id=='0105' else f'tools/interior-{map_id}-inputs.json')).read_text());m.PORTALS=[tuple(p) for p in pin['portals']];assert hashlib.sha256((ROOT/pin['exteriorSource']['local']).read_bytes()).hexdigest()==pin['exteriorSource']['sha256']
 d=json.loads((m.OUT/'manifest.json').read_text());assert d['sources']==pin['mapSources'] and d['portals']==pin['portals'];w,h,cells=m.read_map(m.SOURCE/f'Map/{map_id}.map')
-assert (len(cells),len(d['frames']))=={'0105':(783,217),'0141':(864,307),'0132':(528,136),'0106':(783,216),'0140':(340,116)}[map_id]
+assert (len(cells),len(d['frames']))=={'0105':(783,217),'0141':(864,307),'0132':(528,136),'0106':(783,216),'0140':(340,116),'0102':(225,54),'0108':(270,88),'0109':(150,35)}[map_id]
 exported=json.loads((m.OUT/'cells.json').read_text())['cells']
 assert len(exported)==len(cells)
 for original,actual in zip(cells,exported):
@@ -29,11 +29,15 @@ for lib in sorted({int(k.split(':')[1]) for k in d['frames']}):
  for i,(im,meta) in m.wil.read_library(path,subset).items():
   f=subset[i];got=atlases[f['atlas']].crop((f['x'],f['y'],f['x']+f['w'],f['y']+f['h']))
   assert got.tobytes()==im.tobytes();assert f['offsetX']==meta['offsetX'] and f['offsetY']==meta['offsetY']
-main=(m.SOURCE/'Map/0.map').read_bytes()
+room_cache={map_id:(w,h,cells)}
+exterior=m.read_map(m.SOURCE/'Map/0.map');room_cache['0']=(exterior[0],exterior[1],exterior[2])
 def blocked(id,x,y):
- if id==map_id:return cells[y*w+x]['blocked']
- back,_,front=struct.unpack_from('<HHH',main,52+(x*700+y)*12)
- return bool((back|front)&32768)
+ if id not in room_cache:
+  rw,rh,rc=m.read_map(m.SOURCE/f'Map/{id}.map');room_cache[id]=(rw,rh,rc)
+  # read_map stores row-major cells; retain dimensions with the map cache.
+ rw,rh,rc=room_cache[id]
+ if x<0 or y<0 or x>=rw or y>=rh:raise AssertionError(f'Portal outside {id}: {(x,y)}')
+ return rc[y*rw+x]['blocked']
 for src,x,y,dest,tx,ty in m.PORTALS:
  assert not blocked(src,x,y),(src,x,y)
  assert not blocked(dest,tx,ty),(dest,tx,ty)

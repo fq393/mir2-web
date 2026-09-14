@@ -1,0 +1,36 @@
+{
+  "status": "NPC map/name/position/sprite are candidate records from the pinned server dump; official 1.76/client identity remains unverified. Item stock intentionally limited to existing small potions.",
+  "source": {
+    "path": "raw-assets/reference-server176/MerChant.txt",
+    "sha256": "4dc310f4594b717ed9dcf7b82eee589a04fb7ebcc2b8e17cb77c64299db41f9a"
+  },
+  "shops": [
+    {
+      "map": "0102",
+      "file": "BichonMeatShop",
+      "name": "比奇屠夫",
+      "x": 9,
+      "y": 7,
+      "image": 11,
+      "service": "meat"
+    },
+    {
+      "map": "0108",
+      "file": "BichonCityPharmacy",
+      "name": "比奇赖家店老板",
+      "x": 7,
+      "y": 7,
+      "image": 1,
+      "service": "small-potions"
+    },
+    {
+      "map": "0109",
+      "file": "BichonCityPotionHouse",
+      "name": "比奇杳水店老板",
+      "x": 4,
+      "y": 8,
+      "image": 9,
+      "service": "small-potions"
+    }
+  ]
+}
