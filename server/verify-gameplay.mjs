@@ -3,11 +3,12 @@ import fs from 'node:fs';
 import {setTimeout as delay} from 'node:timers/promises';
 const report={time:new Date().toISOString(),success:false,checks:[],events:[]};
 const ws=new WebSocket('ws://127.0.0.1:17080/ws');let self;const entities=new Map();let seq=0;
-ws.onmessage=({data})=>{const e=JSON.parse(data);report.events.push(e);if(e.type==='ready')self=e;if(e.type==='state')Object.assign(self,e);if(e.type==='packet'){const d=e.data;if(d.ObjectID&&d.Location)entities.set(d.ObjectID,{...entities.get(d.ObjectID),...d});if(e.packet==='ObjectDied'){const m=entities.get(d.ObjectID);if(m)m.Dead=true;}if(e.packet==='ObjectRemove')entities.delete(d.ObjectID);}};
+let guestRequested=false;
+ws.onmessage=({data})=>{const e=JSON.parse(data);if(e.type==='auth'&&e.stage==='login'&&!e.message&&!guestRequested){guestRequested=true;ws.send(JSON.stringify({type:'guest'}));}report.events.push(e);if(e.type==='ready')self=e;if(e.type==='state')Object.assign(self,e);if(e.type==='packet'){const d=e.data;if(d.ObjectID&&d.Location)entities.set(d.ObjectID,{...entities.get(d.ObjectID),...d});if(e.packet==='ObjectDied'){const m=entities.get(d.ObjectID);if(m)m.Dead=true;}if(e.packet==='ObjectRemove')entities.delete(d.ObjectID);}};
 async function wait(pred,from=0,timeout=8000){const end=Date.now()+timeout;while(Date.now()<end){let e=report.events.slice(from).find(pred);if(e)return e;await delay(40);}throw Error('Packet timeout '+pred);}
 function send(command){ws.send(JSON.stringify(command));}
 const dirs=[[0,-1],[1,-1],[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1]];const dir=(a,b)=>dirs.findIndex(([x,y])=>x===Math.sign(b.X-a.x)&&y===Math.sign(b.Y-a.y));
-const map=fs.readFileSync(new URL('../raw-assets/Map_0.map',import.meta.url)),h=map.readUInt16LE(6),width=map.readUInt16LE(4);
+const map=fs.readFileSync(new URL('../assets/server-maps/0.map',import.meta.url)),h=map.readUInt16LE(6),width=map.readUInt16LE(4);
 function blocked(x,y){if(x<0||y<0||x>=width||y>=h)return true;const o=8+(x*h+y)*26;return !!((map.readUInt32LE(o+2)&0x20000000)||(map.readUInt16LE(o+12)&0x8000));}
 async function approach(target,radius){for(let n=0;n<60;n++){if(Math.max(Math.abs(self.x-target.X),Math.abs(self.y-target.Y))<=radius)return;let queue=[{x:self.x,y:self.y,path:[]}],seen=new Set();let path;for(let i=0;i<queue.length&&i<10000;i++){let q=queue[i];if(Math.max(Math.abs(q.x-target.X),Math.abs(q.y-target.Y))<=radius){path=q.path;break;}for(let d=0;d<8;d++){let x=q.x+dirs[d][0],y=q.y+dirs[d][1],key=x+','+y;if(seen.has(key)||blocked(x,y))continue;if([...entities.values()].some(e=>!e.Dead&&e.Location.X===x&&e.Location.Y===y))continue;seen.add(key);queue.push({x,y,path:[...q.path,d]});}}if(!path?.length)throw Error('No path');await delay(650);let mark=report.events.length;send({type:'walk',direction:path[0],seq:++seq});await wait(e=>e.type==='state'&&e.seq===seq,mark);}}
 try{

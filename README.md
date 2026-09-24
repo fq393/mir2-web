@@ -72,7 +72,7 @@ bash tools/setup-assets.sh
 .runtime/assets-venv/bin/python tools/export-auth-assets.py
 ```
 
-[素材来源](docs/asset-sources.md)、[原生UI](docs/native-ui.md)、[文字排版](docs/native-text-layout.md)、[音频映射](docs/audio-sources.md)、[首饰对照](docs/jewellery-sources.md)。仓库包含网页运行所需的转换图集、地图数据、界面图和音频；不包含原客户端压缩包、原始 WIL/WIX/Lib 文件、运行环境、账号存档及游戏截图。转换成果不代表取得原游戏美术或音频的版权。首次运行仍需按上方步骤安装依赖与构建客户端和服务端。
+[素材来源](docs/asset-sources.md)、[原生UI](docs/native-ui.md)、[文字排版](docs/native-text-layout.md)、[音频映射](docs/audio-sources.md)、[首饰对照](docs/jewellery-sources.md)。仓库包含网页运行所需的转换图集、地图数据、服务端地图、界面图和音频；不包含原客户端压缩包、原始 WIL/WIX/Lib 文件、运行环境、账号存档及游戏截图。转换成果不代表取得原游戏美术或音频的版权。首次运行仍需按上方步骤安装依赖与构建客户端和服务端。
 
 完整[模块目录与版本边界](docs/module-catalogue.md)记录系统范围和待核对项。
 
@@ -93,6 +93,7 @@ npm test
 # 完成Cocos导入/构建后
 ./node_modules/.bin/tsc -p client/tsconfig.json --noEmit --skipLibCheck
 .runtime/dotnet/dotnet build server/Mir2.Headless.csproj
+# 以下逐帧来源测试需要自行准备未上传的原客户端及参考文件
 .runtime/dotnet/dotnet run --project tools/CrystalContentTests -- "$PWD"
 .runtime/assets-venv/bin/python tools/test-ui.py
 .runtime/assets-venv/bin/python tools/test-harvest-assets.py
@@ -106,9 +107,9 @@ npm test
 
 源码测试无需商业资源；.NET测试需要先由启动脚本准备固定上游。原包像素校验须有本地资源，Paradox交叉校验另需可用的pxlib。每轮还需浏览器实景验证，不以构建通过代替玩法验收。
 
-## GitHub源码导出
+## GitHub仓库
 
-开发机早期Git历史包含本地生成资源，首次上传使用`tools/export-source.py`生成独立、无这些二进制历史的源码工作副本，位于`.runtime/github-source`。导出不改变原工作树或删除素材；后续更新在该副本提交并推送。不要从早期资源历史执行镜像推送。
+公开仓库已包含网页运行资源和服务端所需的九张地图；原始客户端、Crystal检出、构建工具及账号存档仍在忽略目录。更新本地开发分支时先核对与远端`main`的差异，不要直接镜像推送早期资源历史。
 
 上游代码与素材权利分别保留给相应权利人；本仓库不重新授权游戏资源，见[第三方说明](docs/third-party.md)。
 

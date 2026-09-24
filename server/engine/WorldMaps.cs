@@ -16,6 +16,12 @@ public static class WorldMaps {
  public static void Install(string root){
   foreach(var map in Load(root)){
    var source=Path.Combine(root,map.Source);
+   // A clean checkout contains the verified runtime map bytes, but not the
+   // original client archive used by the conversion tools.
+   if(!File.Exists(source))source=Path.Combine(root,"assets/server-maps",map.Id+".map");
+   if(!File.Exists(source))throw new FileNotFoundException("World map resource is missing: "+map.Id,source);
+   if(map.Id=="0"&&!Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(source))).Equals("ED4783215FFA989658F79892C2DD6720753FB111E1102CB14DA8E6182D88D7F6",StringComparison.OrdinalIgnoreCase))
+    throw new InvalidDataException("Original map hash mismatch: 0");
    if(map.Pin!=null){using var pin=JsonDocument.Parse(File.ReadAllText(Path.Combine(root,map.Pin)));
     var expected=pin.RootElement.GetProperty("mapSources").EnumerateArray().Single(s=>s.GetProperty("path").GetString()==map.Source).GetProperty("sha256").GetString();
     if(!Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(source))).Equals(expected,StringComparison.OrdinalIgnoreCase))throw new InvalidDataException("Original map hash mismatch: "+map.Id);

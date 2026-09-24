@@ -1,6 +1,6 @@
 # Crystal resources and full Bichon conversion
 
-The browser uses real Crystal map and sprite resources from the public [MirFiles Crystal patch](https://www.mirfiles.com/resources/mir2/crystal/patch/), downloaded on 2026-09-07. All 700×700 source cells are exported. Artwork is not generated or replaced with placeholder drawings. Public access does not transfer ownership of the original game artwork; the source files remain in ignored `raw-assets/`.
+The browser uses real Crystal map and sprite resources from the public [MirFiles Crystal patch](https://www.mirfiles.com/resources/mir2/crystal/patch/), downloaded on 2026-09-07. All 700×700 source cells are exported. Artwork is not generated or replaced with placeholder drawings. Public access does not transfer ownership of the original game artwork. The original image libraries remain in ignored `raw-assets/`; the nine map files needed by the local server are bundled in `assets/server-maps/` and checked against their pinned hashes at startup.
 
 ## Source and decoding contract
 
