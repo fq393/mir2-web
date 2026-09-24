@@ -2,7 +2,7 @@ import {readFile,writeFile,cp} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 const dir=new URL('../build/web/',import.meta.url);
 await cp(new URL('../client/assets/resources/mir/webui/',import.meta.url),new URL('webui/',dir),{recursive:true});
-await cp(new URL('../.runtime/auth-web/',import.meta.url),new URL('webui/auth/',dir),{recursive:true});
+await cp(new URL('../assets/auth-web/',import.meta.url),new URL('webui/auth/',dir),{recursive:true});
 const settingsPath=new URL('src/settings.json',dir);
 const settings=JSON.parse(await readFile(settingsPath,'utf8'));
 // Paired with NEAREST textures: MSAA otherwise exposes black clear color at

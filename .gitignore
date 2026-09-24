@@ -22,5 +22,4 @@ tools/CrystalContentTests/obj/
 server/engine/generated/
 
 .source-export.json
-client/assets/resources/mir/
 docs/qa/

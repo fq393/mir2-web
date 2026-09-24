@@ -1,0 +1,57 @@
+{
+  "maps": [
+    {
+      "id": "0",
+      "name": "比奇省",
+      "source": "raw-assets/Map_0.map"
+    },
+    {
+      "id": "0105",
+      "name": "首饰店",
+      "source": "raw-assets/client-176/传奇私服1.76客户/Map/0105.map",
+      "pin": "tools/interior-inputs.json"
+    },
+    {
+      "id": "0141",
+      "name": "边界村首饰店",
+      "source": "raw-assets/client-176/传奇私服1.76客户/Map/0141.map",
+      "pin": "tools/interior-0141-inputs.json"
+    },
+    {
+      "id": "0132",
+      "name": "边界书店",
+      "source": "raw-assets/client-176/传奇私服1.76客户/Map/0132.map",
+      "pin": "tools/interior-0132-inputs.json"
+    },
+    {
+      "id": "0106",
+      "name": "比奇服装店",
+      "source": "raw-assets/client-176/传奇私服1.76客户/Map/0106.map",
+      "pin": "tools/interior-0106-inputs.json"
+    },
+    {
+      "id": "0140",
+      "name": "边界仓库",
+      "source": "raw-assets/client-176/传奇私服1.76客户/Map/0140.map",
+      "pin": "tools/interior-0140-inputs.json"
+    },
+    {
+      "id": "0109",
+      "name": "比奇药品屋",
+      "source": "raw-assets/client-176/传奇私服1.76客户/Map/0109.map",
+      "pin": "tools/interior-0109-inputs.json"
+    },
+    {
+      "id": "0102",
+      "name": "比奇肉店",
+      "source": "raw-assets/client-176/传奇私服1.76客户/Map/0102.map",
+      "pin": "tools/interior-0102-inputs.json"
+    },
+    {
+      "id": "0108",
+      "name": "比奇药店",
+      "source": "raw-assets/client-176/传奇私服1.76客户/Map/0108.map",
+      "pin": "tools/interior-0108-inputs.json"
+    }
+  ]
+}

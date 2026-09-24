@@ -50,11 +50,18 @@ npm start
 npm ci
 bash tools/setup-cocos.sh
 bash tools/setup-dotnet.sh
+# 地图、角色、界面和音频转换资源已随仓库提供
+npm run build
+npm start
+```
+
+如需从原始资源重新导出、校验或扩充素材，再自行准备原客户端并解包至 `raw-assets/client-176/`，核对输入清单中的路径和哈希后执行：
+
+```sh
 bash tools/setup-assets.sh
 # 原地图/Crystal素材获取；详见素材说明，首次可能需要ego-browser
 .runtime/assets-venv/bin/python tools/fetch-assets.py
 .runtime/assets-venv/bin/python tools/convert-assets.py
-# 自行准备原客户端并解包至 raw-assets/client-176/，核对输入清单中的路径和哈希
 .runtime/assets-venv/bin/python tools/convert-ui.py
 .runtime/assets-venv/bin/python tools/convert-classic-npcs.py
 .runtime/assets-venv/bin/python tools/convert-classic-players.py
@@ -62,11 +69,10 @@ bash tools/setup-assets.sh
 .runtime/assets-venv/bin/python tools/convert-interiors.py
 .runtime/assets-venv/bin/python tools/convert-interiors.py 0141
 .runtime/assets-venv/bin/python tools/fetch-audio.py
-npm run build
-npm start
+.runtime/assets-venv/bin/python tools/export-auth-assets.py
 ```
 
-[素材来源](docs/asset-sources.md)、[原生UI](docs/native-ui.md)、[文字排版](docs/native-text-layout.md)、[音频映射](docs/audio-sources.md)、[首饰对照](docs/jewellery-sources.md)。本仓库**不包含原客户端、原资源、转换图集/音频、运行环境、账号存档及游戏截图**；缺少资源时不能只clone后直接打开游戏。
+[素材来源](docs/asset-sources.md)、[原生UI](docs/native-ui.md)、[文字排版](docs/native-text-layout.md)、[音频映射](docs/audio-sources.md)、[首饰对照](docs/jewellery-sources.md)。仓库包含网页运行所需的转换图集、地图数据、界面图和音频；不包含原客户端压缩包、原始 WIL/WIX/Lib 文件、运行环境、账号存档及游戏截图。转换成果不代表取得原游戏美术或音频的版权。首次运行仍需按上方步骤安装依赖与构建客户端和服务端。
 
 完整[模块目录与版本边界](docs/module-catalogue.md)记录系统范围和待核对项。
 
